@@ -13,8 +13,8 @@
     </header>
 
     <section class="add-section">
-        <h2>Agregar un individuo</h2>
-        <a th:href="@{/anexar}" class="btn btn-primary">Agregar individuos</a>
+        <h2>Agregar un persona</h2>
+        <a th:href="@{/anexar}" class="btn btn-primary">Agregar personas</a>
         <a th:href="@{/dashboardADMIN}" class="btn btn-primary">Regresar</a>
     </section>
 
@@ -22,7 +22,7 @@
         <h2>Lista de Individuos</h2>
 
         <!-- Tabla con datos de Spring Boot -->
-        <div th:if="${individuos != null and !individuos.empty}" class="table-container">
+        <div th:if="${personas != null and !personas.empty}" class="table-container">
             <table class="data-table">
                 <thead>
                 <tr>
@@ -35,15 +35,15 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="individuo : ${individuos}">
-                    <td th:text="${individuo.nombre}"></td>
-                    <td th:text="${individuo.apellido}"></td>
-                    <td th:text="${individuo.edad}"></td>
-                    <td th:text="${individuo.correo}"></td>
-                    <td th:text="${individuo.telefono}"></td>
+                <tr th:each="persona : ${personas}">
+                    <td th:text="${persona.nombre}"></td>
+                    <td th:text="${persona.apellido}"></td>
+                    <td th:text="${persona.edad}"></td>
+                    <td th:text="${persona.correo}"></td>
+                    <td th:text="${persona.telefono}"></td>
                     <td class="actions">
-                        <a th:href="@{/cambiar/} + ${individuo.id_individuo}" class="btn btn-edit">Editar</a>
-                        <a th:href="@{/borrar/} + ${individuo.id_individuo}" class="btn btn-delete">Eliminar</a>
+                        <a th:href="@{/cambiar/} + ${persona.id_individuo}" class="btn btn-edit">Editar</a>
+                        <a th:href="@{/borrar/} + ${persona.id_individuo}" class="btn btn-delete">Eliminar</a>
                     </td>
                 </tr>
                 </tbody>
@@ -51,7 +51,7 @@
         </div>
 
         <!-- Mensaje cuando no hay datos -->
-        <div th:if="${individuos == null or individuos.empty}" class="empty-message">
+        <div th:if="${personas == null or personas.empty}" class="empty-message">
             <p>La lista no tiene información para mostrar.</p>
         </div>
     </section>

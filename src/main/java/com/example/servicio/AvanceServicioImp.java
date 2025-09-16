@@ -1,13 +1,15 @@
 package com.example.servicio;
 
 import com.example.dao.AvanceDao;
-import com.example.dao.MatrizDao;
+import com.example.dao.APUDao;
+import com.example.domain.Apu;
 import com.example.domain.Avance;
-import com.example.domain.Matriz;
+import com.example.domain.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -17,7 +19,7 @@ public class AvanceServicioImp implements AvanceServicio{
     private AvanceDao avanceDao;
 
     @Autowired
-    private MatrizDao mateDao;
+    private APUDao mateDao;
 
     @Override
     @Transactional(readOnly = true)
@@ -59,45 +61,39 @@ public class AvanceServicioImp implements AvanceServicio{
 
     @Override
     @Transactional(readOnly = true)
-    public List<Avance> buscarPorIdUsuario(String idUsuario) {
-        return avanceDao.findByIdUsuario(idUsuario);
+    public List<Avance> buscarPorIdUsuario(Integer idUsuario) {
+        return avanceDao.findByIdUsuario_IdUsuario(idUsuario);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Avance> buscarPorIdObra(Integer idObra) {
-        return avanceDao.findByIdObra(idObra);
+        return avanceDao.findByIdObra_IdObra(idObra);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Avance> buscarPorIdMatriz(Integer idMatriz) {
-        return avanceDao.findByIdMatriz(idMatriz);
+        return avanceDao.findByApu_IdAPU(idMatriz);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Avance> buscarPorFecha(String fecha) {
-        return avanceDao.findByFecha(fecha);
+    public List<Avance> buscarPorFecha(LocalDate fecha) {
+        return avanceDao.findByFechaAvance(fecha);
     }
+
+
 
     @Override
     @Transactional(readOnly = true)
-    public List<Avance> buscarPorFechaConteniendo(String fecha) {
-        return avanceDao.findByFechaContaining(fecha);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Avance> buscarPorUsuarioYFecha(String idUsuario, String fecha) {
-        return avanceDao.findByIdUsuarioAndFecha(idUsuario, fecha);
+    public List<Avance> buscarPorUsuarioYFecha(Usuario idUsuario, String fecha) {
+        return avanceDao.findByIdUsuarioAndFechaAvance(idUsuario, LocalDate.parse(fecha));
     }
 
 
-    public List<Matriz> listarMateriales() {
-        return (List<Matriz>) mateDao.findAll();
+    public List<Apu> listarMateriales() {
+        return (List<Apu>) mateDao.findAll();
     }
-
-
 
 }

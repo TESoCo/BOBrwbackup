@@ -2,15 +2,15 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Modificar individuo</title>
+    <title>Modificar persona</title>
 </head>
 <body>
-<h1>Modificar individuos</h1>
+<h1>Modificar personas</h1>
 <br>
 <a th:href="@{/}">Regresar</a>
 <br>
 <br>
-<form th:action="@{/salvar}" method="post" th:object="${individuo}">
+<form th:action="@{/salvar}" method="post" th:object="${persona}">
     <input type="hidden" name="id_individuo" th:field="*{id_individuo}">
     <label>Nombre:</label>
     <input type="text" name="nombre" th:field="*{nombre}">

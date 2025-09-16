@@ -31,9 +31,9 @@
         <div class="menu">
             <a class="enlace" th:href="@{/indice}"><i class="bx bxs-user-detail"></i><span>Gestion de Usuarios</span></a>
             <a class="enlace" th:href="@{/inventario}"><i class="bx bx-box"></i><span>Inventario</span></a>
-            <a class="enlace" th:href="@{/avances}"><i class="bx bx-buildings"></i><span>Avances</span></a>
+            <a class="enlace" th:href="@{/avances/inicioAvances}"><i class="bx bx-buildings"></i><span>Avances</span></a>
             <a class="enlace" th:href="@{/contratista}"><i class="bx bx-receipt"></i><span>Contratista</span></a>
-            <a class="enlace" th:href="@{/presupuesto}"><i class="bx bx-money-withdraw"></i><span>Presupuesto</span></a>
+            <a class="enlace" th:href="@{/presupuestos/inicioPresupuestos}"><i class="bx bx-money-withdraw"></i><span>Presupuesto</span></a>
             <a class="enlace" href="proveedores.html"><i class="bx bx-hard-hat"></i><span>Proveedores</span></a>
             <a class="enlace" href="#reportes"><i class="bx bx-line-chart"></i><span>Reportes</span></a>
             <a class="enlace" href="#configuracion"><i class="bx bx-cog"></i><span>Configuración</span></a>
@@ -54,10 +54,13 @@
 
             <div class="form-content">
                 <form th:action="@{/guardarInv}" method="post" th:object="${inventario}">
+                    <!-- Hidden field for usuario (automatically set by controller) -->
+                    <input type="hidden" th:field="*{idUsuario.idUsuario}" />
+
                     <div class="form-group">
-                        <label>Nombre Gestor:</label>
-                        <input type="text" name="nombreGestor" th:field="*{nombreGestor}" placeholder="Nombre del gestor">
-                        <span class="error-message" th:if="${#fields.hasErrors('nombreGestor')}" th:errors="*{nombreGestor}">Campo obligatorio</span>
+                        <label>Usuario Actual:</label>
+                        <input type="text" th:value="${inventario.idUsuario.nombreUsuario} + ' ' + ${inventario.idUsuario.apellidoUsuario}"
+                               readonly class="readonly-field">
                     </div>
 
                     <div class="form-group">
@@ -66,44 +69,60 @@
                         <span class="error-message" th:if="${#fields.hasErrors('nombreobra')}" th:errors="*{nombreobra}">Campo obligatorio</span>
                     </div>
 
-                    <div class="form-group">
-                        <label>Tipo de Registro:</label>
-                        <select name="tipoRegistro" th:field="*{tipoRegistro}">
-                            <option value="">-- Seleccione --</option>
-                            <option value="Ingreso">Ingreso</option>
-                            <option value="Consumo">Consumo</option>
-                        </select>
-                        <span class="error-message" th:if="${#fields.hasErrors('tipoRegistro')}" th:errors="*{tipoRegistro}">Campo obligatorio</span>
-                    </div>
-
+                    <!-- Fecha Ingreso -->
                     <div class="form-group">
                         <label>Fecha:</label>
-                        <input type="date" name="fecha" th:field="*{fecha}">
-                        <span class="error-message" th:if="${#fields.hasErrors('fecha')}" th:errors="*{fecha}">Campo obligatorio</span>
+                        <input type="date" name="fecha" th:field="*{fechaIngreso}">
+                        <span class="error-message" th:if="${#fields.hasErrors('fechaIngreso')}" th:errors="*{fechaIngreso}">Campo obligatorio</span>
                     </div>
 
-                    <div class="form-group">
-                        <label>Unidad de Medida:</label>
-                        <input type="text" name="unidadMedida" th:field="*{unidadMedida}">
-                        <span class="error-message" th:if="${#fields.hasErrors('unidadMedida')}" th:errors="*{unidadMedida}">Campo obligatorio</span>
-                    </div>
-
+                    <!-- Cantidad Material -->
                     <div class="form-group">
                         <label>Cantidad:</label>
-                        <input type="number" name="cantidad" th:field="*{cantidad}" placeholder="Ingrese cantidad" min="0">
-                        <span class="error-message" th:if="${#fields.hasErrors('cantidad')}" th:errors="*{cantidad}">Campo obligatorio</span>
+                                           </div>
+
+
+                    <!-- Unidad Inventario -->
+                    <div class="form-group">
+                        <label>Unidad de Medida:</label>
+                        <input type="text" name="unidadMedida" th:field="*{unidadInv}">
+                        <span class="error-message" th:if="${#fields.hasErrors('unidadInv')}" th:errors="*{unidadInv}">Campo obligatorio</span>
                     </div>
 
-                    <div class="form-group">
-                        <label>Material:</label>
-                        <input type="text" name="material" th:field="*{material}">
-                        <span class="error-message" th:if="${#fields.hasErrors('material')}" th:errors="*{material}">Campo obligatorio</span>
-                    </div>
 
-                    <div class="form-group">
-                        <label>Precio por Unidad de medida:</label>
-                        <input type="number" name="precioUnidad" th:field="*{precioUnidad}" min="0">
-                        <span class="error-message" th:if="${#fields.hasErrors('precioUnidad')}" th:errors="*{precioUnidad}">Campo obligatorio</span>
+                    <!-- Materiales Section - Multiple materials can be added -->
+                    <div class="materials-section">
+                        <h3><i class='bx bx-list-plus'></i> Materiales</h3>
+
+                        <div class="material-items" id="materialItems">
+                            <!-- Dynamic material items will be added here -->
+                            <div class="material-item">
+                                <div class="form-group">
+                                    <label>Material:</label>
+                                    <select name="materialIds" class="material-select">
+                                        <option value="">-- Seleccionar Material --</option>
+                                        <option th:each="material : ${materiales}"
+                                                th:value="${material.idMaterial}"
+                                                th:text="${material.especificaciones}"></option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Cantidad para este material:</label>
+
+                                    <input type="number" name="cantidad" th:field="*{cantidadMat}" placeholder="Ingrese cantidad" min="0">
+                                    <span class="error-message" th:if="${#fields.hasErrors('cantidadMat')}" th:errors="*{cantidadMat}">Campo obligatorio</span>
+
+
+                                </div>
+                                <button type="button" class="btn-remove-material" onclick="removeMaterial(this)">
+                                    <i class='bx bx-trash'></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-add-material" onclick="addMaterial()">
+                            <i class='bx bx-plus'></i> Agregar otro material
+                        </button>
                     </div>
 
                     <div class="submit-btn">
@@ -115,6 +134,27 @@
     </div>
 </main>
 
+<script>
+    // JavaScript to handle dynamic material addition/removal
+    function addMaterial() {
+        const materialItems = document.getElementById('materialItems');
+        const newMaterialItem = materialItems.firstElementChild.cloneNode(true);
+
+        // Clear the values in the new item
+        newMaterialItem.querySelector('.material-select').value = '';
+        newMaterialItem.querySelector('.material-quantity').value = '';
+
+        materialItems.appendChild(newMaterialItem);
+    }
+
+    function removeMaterial(button) {
+        const materialItems = document.getElementById('materialItems');
+        if (materialItems.children.length > 1) {
+            const materialItem = button.closest('.material-item');
+            materialItem.remove();
+        }
+    }
+</script>
 
 </body>
 </html>

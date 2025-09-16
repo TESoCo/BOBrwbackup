@@ -21,7 +21,7 @@ public class PermisoServicioImpl implements PermisoServicio {
 
     @Override
     public void guardar(Permiso permiso) {
-
+        permisoDao.save(permiso);
     }
 
     @Override

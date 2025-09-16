@@ -1,8 +1,11 @@
 package com.example.servicio;
 
+import com.example.domain.Apu;
 import com.example.domain.Avance;
 import com.example.domain.Matriz;
+import com.example.domain.Usuario;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface AvanceServicio {
@@ -19,19 +22,19 @@ public interface AvanceServicio {
 
     // New search methods
     List<Avance> buscarPorIdAvance(Integer idAvance);
-    List<Avance> buscarPorIdUsuario(String idUsuario);
+    List<Avance> buscarPorIdUsuario(Integer idUsuario);
     List<Avance> buscarPorIdObra(Integer idObra);
     List<Avance> buscarPorIdMatriz(Integer idMatriz);
 
-    List<Avance> buscarPorFecha(String fecha);
-    List<Avance> buscarPorFechaConteniendo(String fecha);
+    List<Avance> buscarPorFecha(LocalDate fecha);
+
 
 
 
     // Combined search methods
-    List<Avance> buscarPorUsuarioYFecha(String id_usuario, String fecha);
+    List<Avance> buscarPorUsuarioYFecha(Usuario id_usuario, String fecha);
 
 
 
-    public List<Matriz> listarMateriales();
+    public List<Apu> listarMateriales();
 }

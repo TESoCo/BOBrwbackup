@@ -4,33 +4,58 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Map;
 
 @Data
 @Entity
-@Table(name = "avance")
+@Table(name = "contexto_avance")
 
+@SecondaryTables({
+        @SecondaryTable(name = "FECHA_AVANCE", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Avance")),
+        @SecondaryTable(name = "CANTIDAD_AVANCE", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Avance")),
+        @SecondaryTable(name = "avance", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Avance")
+        )
+        
+})
 
 public class Avance implements Serializable{
+    private static final long serialVersionUID = 1L;
+
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_avance")
     private Integer idAvance;
 
-    @Column(name = "id_usuario", nullable = false)
-    private String idUsuario;
+    // From CONTEXTO_AVANCE
+    @ManyToOne
+    @JoinColumn(name = "id_Obra")
+    private Obra idObra;
 
-    @Column(name = "id_obra", nullable = false)
-    private Integer idObra;
+    @ManyToOne
+    @JoinColumn(name = "id_Contratista")
+    private Contratista idContratista;
 
-    @Column(name = "fecha")
-    private String fecha;
+    @ManyToOne
+    @JoinColumn(name = "id_Usuario", nullable = false)
+    private Usuario idUsuario;
 
-    @Column(name = "id_matriz", nullable = false)
-    private Integer idMatriz;
 
-    @Column(name = "cantidad", nullable = false)
-    private Double cantidad;
+    @ManyToOne
+    @JoinColumn(name = "id_APU")
+    private Apu apu;
+
+    // From FECHA_AVANCE
+    @Column(name = "Fecha_Avance", table = "FECHA_AVANCE")
+    private LocalDate fechaAvance;
+
+
+    // From CANTIDAD_AVANCE
+    @Column(name = "Cant_Ejec", table = "CANTIDAD_AVANCE")
+    private Double cantEjec;
+
+
 
 }

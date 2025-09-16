@@ -86,7 +86,7 @@
             </thead>
             <tbody>
             <tr th:each="inv : ${inventarios}">
-                <td th:text="${inv.id_inventario}"></td>
+                <td th:text="${inv.id_Inventario}"></td>
                 <td th:text="${inv.nombreGestor}"></td>
                 <td th:text="${inv.nombreobra}"></td>
                 <td th:text="${inv.tipoRegistro}"></td>
@@ -96,7 +96,7 @@
                 <td th:text="${inv.material}"></td>
                 <td th:text="${inv.precioUnidad}"></td>
                 <td>
-                    <a th:href="@{/borrarInv/{id}(id=${inv.id_inventario})}"
+                    <a th:href="@{/borrarInv/{id}(id=${inv.id_Inventario})}"
                        onclick="return confirm('¿Estás seguro de que quieres eliminar este registro?');">Eliminar</a>
                 </td>
             </tr>

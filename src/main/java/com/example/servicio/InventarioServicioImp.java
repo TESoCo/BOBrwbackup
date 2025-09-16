@@ -1,6 +1,8 @@
 package com.example.servicio;
 
 import com.example.dao.InventarioDao;
+import com.example.dao.ObraDao;
+import com.example.dao.UsuarioDao;
 import com.example.domain.Inventario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,12 @@ public class InventarioServicioImp implements InventarioServicio {
 
     @Autowired
     private InventarioDao inventarioDao;
+
+    @Autowired
+    private UsuarioDao usuarioDao;
+
+    @Autowired
+    private ObraDao obraDao;
 
     @Override
     @Transactional(readOnly = true)
@@ -51,13 +59,16 @@ public class InventarioServicioImp implements InventarioServicio {
     @Override
     @Transactional(readOnly = true)
     public List<Inventario> buscarPorNombreGestor(String nombreGestor) {
-        return inventarioDao.findByNombreGestorContainingIgnoreCase(nombreGestor);
+        return inventarioDao.findByIdUsuario_idUsuario(usuarioDao.findBynombreUsuario(nombreGestor).getIdUsuario() );
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Inventario> buscarPorNombreObra(String nombreObra) {
-        return inventarioDao.findByNombreobraContainingIgnoreCase(nombreObra);
+        return obraDao.findByNombreObra(nombreObra).stream()
+                .findFirst()
+                .map(obra -> inventarioDao.findByIdObra(obra))
+                .orElse(Collections.emptyList());
     }
 
     @Override
@@ -66,7 +77,7 @@ public class InventarioServicioImp implements InventarioServicio {
         try {
             // Convertir String a LocalDate
             LocalDate fechaBusqueda = LocalDate.parse(fecha);
-            return inventarioDao.findByFecha(fechaBusqueda);
+            return inventarioDao.findByFechaIngreso(fechaBusqueda);
         } catch (DateTimeParseException e) {
             System.err.println("Formato de fecha inválido: " + fecha);
             return Collections.emptyList();

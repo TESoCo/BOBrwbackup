@@ -96,7 +96,7 @@
                     <td th:text="${inv.material}"></td>
                     <td th:text="${inv.precioUnidad}"></td>
                     <td>
-                        <a class="action-link" th:href="|@{/cambiarInv/{id}(id=${inv.id_inventario})}#formulario|">
+                        <a class="action-link" th:href="|@{/cambiarInv/{id}(id=${inv.id_Inventario})}#formulario|">
                             <i class='bx bx-edit'></i> Modificar
                         </a>
 
@@ -108,8 +108,8 @@
             <div class="form-container" id="formulario">
                 <div class="form-header">
                     <h2>
-                    <span th:if="${inventario.id_inventario != null}">
-                        Editando Registro ID: <span th:text="${inventario.id_inventario}"></span>
+                    <span th:if="${inventario.id_Inventario != null}">
+                        Editando Registro ID: <span th:text="${inventario.id_Inventario}"></span>
                     </span>
                         <span th:if="${inventario.id_inventario == null}">Actualizar Registro</span>
                     </h2>

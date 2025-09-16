@@ -1,4 +1,12 @@
 package com.example.dao;
 
-public interface MaterialDao {
+import com.example.domain.Apu;
+import com.example.domain.Material;
+import org.springframework.data.repository.CrudRepository;
+
+import java.util.List;
+
+public interface MaterialDao extends CrudRepository<Material, Integer> {
+
+
 }

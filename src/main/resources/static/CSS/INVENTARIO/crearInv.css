@@ -717,3 +717,63 @@ footer {
         font-size: 1.05rem;
     }
 }
+
+.readonly-field {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 4px;
+    color: #666;
+}
+
+.materials-section {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.materials-section h3 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+}
+
+.material-item {
+    border: 1px solid #eee;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    position: relative;
+}
+
+.btn-add-material {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-remove-material {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.btn-add-material:hover {
+    background-color: #218838;
+}
+
+.btn-remove-material:hover {
+    background-color: #c82333;
+}

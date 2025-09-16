@@ -19,5 +19,5 @@ public class Permiso implements Serializable {
     private String nombre;
 
     @ManyToMany(mappedBy = "permisos")
-    private List<Perfil> perfiles;
+    private List<Rol> perfiles;
 }

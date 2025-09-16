@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agregar individuo</title>
+    <title>Agregar persona</title>
     <link rel="stylesheet" href="CSS/agregar-styles.css">
 </head>
 <body>
 <div class="container">
     <header>
-        <h1>Agregar Individuo</h1>
-        <p>Completa el formulario para agregar un nuevo individuo al sistema</p>
+        <h1>Agregar Persona</h1>
+        <p>Completa el formulario para agregar neuva persona al sistema</p>
     </header>
 
     <section class="navigation-section">
@@ -20,7 +20,7 @@
 
     <section class="form-section">
         <div class="form-container">
-            <form th:action="@{/salvar}" method="post" th:object="${individuo}" class="form-grid">
+            <form th:action="@{/salvar}" method="post" th:object="${persona}" class="form-grid">
 
                 <div class="form-group">
                     <label for="nombre">Nombre:</label>

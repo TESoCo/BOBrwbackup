@@ -24,7 +24,10 @@ public class UsuarioDetailsServices implements UserDetailsService {
             throw new UsernameNotFoundException("Usuario NO encontrado");
         }
 
-        String role = usuario.getPerfil().getDescripcion_perfil().toUpperCase();
+        // Handle case where rol might be null
+        String role = (usuario.getRol() != null && usuario.getRol().getDescripRol() != null)
+                ? usuario.getRol().getDescripRol().toUpperCase()
+                : "USER";
 
         return User.builder()
                 .username(usuario.getNombreUsuario())
