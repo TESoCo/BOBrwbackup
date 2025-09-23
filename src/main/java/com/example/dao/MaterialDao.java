@@ -6,7 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 
-public interface MaterialDao extends CrudRepository<Material, Integer> {
+public interface MaterialDao extends CrudRepository<Material, Long> {
 
 
 }

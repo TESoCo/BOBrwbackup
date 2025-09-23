@@ -1,6 +1,7 @@
 package com.example.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -9,14 +10,11 @@ import java.util.Map;
 
 @Data
 @Entity
-@Table(name = "contexto_avance")
+@Table(name = "avance")
 
 @SecondaryTables({
-        @SecondaryTable(name = "FECHA_AVANCE", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Avance")),
-        @SecondaryTable(name = "CANTIDAD_AVANCE", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Avance")),
-        @SecondaryTable(name = "avance", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Avance")
-        )
-        
+        @SecondaryTable(name = "fecha_avance", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Avance")),
+        @SecondaryTable(name = "cantidad_avance", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Avance"))
 })
 
 public class Avance implements Serializable{
@@ -27,10 +25,10 @@ public class Avance implements Serializable{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_avance")
-    private Integer idAvance;
+    private Long idAvance;
 
     // From CONTEXTO_AVANCE
-    @ManyToOne
+    @ManyToOne//una obra puede crear muchos avances
     @JoinColumn(name = "id_Obra")
     private Obra idObra;
 
@@ -39,23 +37,25 @@ public class Avance implements Serializable{
     private Contratista idContratista;
 
     @ManyToOne
-    @JoinColumn(name = "id_Usuario", nullable = false)
+    @JoinColumn(name = "id_Usuario")
     private Usuario idUsuario;
-
 
     @ManyToOne
     @JoinColumn(name = "id_APU")
-    private Apu apu;
+    private Apu idApu;
+
+    @NotEmpty
+    @Column(name = "anular", unique = true)
+    private boolean anular;
 
     // From FECHA_AVANCE
-    @Column(name = "Fecha_Avance", table = "FECHA_AVANCE")
+    @Column(name = "Fecha_Avance", table = "fecha_avance")
     private LocalDate fechaAvance;
 
 
     // From CANTIDAD_AVANCE
-    @Column(name = "Cant_Ejec", table = "CANTIDAD_AVANCE")
+    @Column(name = "Cant_Ejec", table = "cantidad_avance")
     private Double cantEjec;
-
 
 
 }

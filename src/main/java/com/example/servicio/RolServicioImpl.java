@@ -14,7 +14,7 @@ public class RolServicioImpl implements RolServicio {
     private RolDao rolDao;
 
     @Override
-    public Rol buscarPorId(Integer id) {
+    public Rol buscarPorId(Long id) {
         return rolDao.findById(id).orElse(null);
     }
 

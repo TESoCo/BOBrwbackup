@@ -4,7 +4,7 @@ import com.example.domain.Obra;
 import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
-public interface ObraDao extends CrudRepository<Obra, Integer> {
+public interface ObraDao extends CrudRepository<Obra, Long> {
 
     // Find budgets by exact work name match (case-sensitive)
     List<Obra> findByNombreObra(String nombreObra);

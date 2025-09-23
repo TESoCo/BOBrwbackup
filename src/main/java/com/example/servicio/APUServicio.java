@@ -8,7 +8,7 @@ public interface APUServicio {
 
     List<Apu> listarElementos();
 
-    Apu obtenerPorId(Integer id_apu);
+    Apu obtenerPorId(Long id_apu);
 
     void guardar(Apu nuevoApu);
 

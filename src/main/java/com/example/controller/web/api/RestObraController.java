@@ -22,7 +22,7 @@ public class RestObraController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Obra> getObraById(@PathVariable Integer id) {
+    public ResponseEntity<Obra> getObraById(@PathVariable Long id) {
         Obra obraREST = obraServicio.localizarObra(id);
         return obraREST != null ? ResponseEntity.ok(obraREST) : ResponseEntity.notFound().build();
     }
@@ -34,7 +34,7 @@ public class RestObraController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Obra> updateObra(@PathVariable Integer id, @RequestBody Obra obraActualREST) {
+    public ResponseEntity<Obra> updateObra(@PathVariable Long id, @RequestBody Obra obraActualREST) {
         Obra existing = obraServicio.localizarObra(id);
         if (existing == null) {
             return ResponseEntity.notFound().build();
@@ -45,7 +45,7 @@ public class RestObraController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteObra(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteObra(@PathVariable Long id) {
         Obra obraBorrar = obraServicio.localizarObra(id);
         if (obraBorrar == null) {
             return ResponseEntity.notFound().build();

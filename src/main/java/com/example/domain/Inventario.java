@@ -14,11 +14,10 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "obra_y_gestor_inventario")
+@Table(name = "inventario")
 
 @SecondaryTables({
         @SecondaryTable(name = "unidades_inventario", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Inventario")),
-        @SecondaryTable(name = "cantidades_inventario", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Inventario")),
         @SecondaryTable(name = "fecha_inventario", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Inventario"))
 })
 
@@ -33,32 +32,35 @@ public class Inventario implements Serializable {
     private Long idInventario;
 
     // From OBRA_Y_GESTOR_INVENTARIO
-    @ManyToOne
+    @ManyToOne//un usuario puede crear muchos
     @JoinColumn(name = "id_Usuario")
     private Usuario idUsuario;
 
-    @ManyToOne
+    @ManyToOne//una obra puede crear muchos
     @JoinColumn(name = "id_Obra")
     private Obra idObra;
 
- //   @NotEmpty
-  //  private String tipoRegistro;
-//lo reemplaza la clase "consumo"
+    @NotEmpty
+    @Column(name = "tipo_inv", unique = true)
+    private String tipoInv;
+
+    @NotEmpty
+    @Column(name = "anular", unique = true)
+    private boolean anular;
+
 
     // From FECHA_INVENTARIO
-    @Column(name = "Fecha_Ingreso", table = "FECHA_INVENTARIO", nullable = false)
+    @Column(name = "Fecha_Ingreso", table = "fecha_inventario", nullable = false)
     private LocalDate fechaIngreso;
 
-    // From CANTIDADES_INVENTARIO
-    @Column(name = "Cantidad_Mat", table = "CANTIDADES_INVENTARIO", nullable = false)
-    private Double cantidadMat;
-
     // From UNIDADES_INVENTARIO
-    @Column(name = "Unidad_Inv", table = "UNIDADES_INVENTARIO", nullable = false)
+    @Column(name = "Unidad_Inv", table = "unidades_inventario", nullable = false)
     private String unidadInv;
 
     // Many-to-many relationship for materiales (separate table)
-    @OneToMany(mappedBy = "id_Inventario", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MaterialesInventario> materiales = new ArrayList<>();
+    @OneToMany(mappedBy = "inventario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MaterialesInventario> materialesInventarios = new ArrayList<>();
+
+
 
 }

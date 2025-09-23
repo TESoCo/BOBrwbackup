@@ -56,11 +56,11 @@ public class ObraServicioImp implements ObraServicio {
     @Override
     @Transactional(readOnly = true)
 
-    public Obra localizarObra(Integer entryId) {
+    public Obra localizarObra(Long entryId) {
         return obraDao.findById(entryId).orElse(null);
     }
 
-    public List<Obra> findByObraName(String obraName) {
+    public List<Obra>  findByObraName(String obraName) {
         return obraDao.findByNombreObra(obraName);
     }
     public List<Obra> findByObraNameContaining(String obraName) {
@@ -71,7 +71,7 @@ public class ObraServicioImp implements ObraServicio {
     }
 
 
-    public List<Apu> listarMateriales() {
+    public List<Apu> listarApus() {
         return (List<Apu>) apuDao.findAll();
     }
 
@@ -97,11 +97,11 @@ public class ObraServicioImp implements ObraServicio {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<Integer, Double> obtenerApusPorObra(Integer idObra) {
+    public Map<Long, Double> obtenerApusPorObra(Long idObra) {
         // This method should return a map of APU IDs to quantities
         // Since your current structure doesn't store quantities,
         // you'll need to modify the ApusObra entity to include quantity
-        Map<Integer, Double> result = new HashMap<>();
+        Map<Long, Double> result = new HashMap<>();
 
         // For now, returning empty map - you'll need to implement quantity storage
         return result;
@@ -110,8 +110,8 @@ public class ObraServicioImp implements ObraServicio {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Apu> obtenerApusEntidadesPorObra(Integer idObra) {
-        List<ApusObra> apusObra = apusObraDao.findByObraIdObra(idObra);
+    public List<Apu> obtenerApusEntidadesPorObra(Long idObra) {
+        List<ApusObra> apusObra = apusObraDao.findByObraId(idObra);
         return apusObra.stream()
                 .map(ApusObra::getApu)
                 .toList();

@@ -52,6 +52,9 @@
             <button class="btn-add" id="addContractorBtn">
                 <i class='bx bx-plus'></i> Nuevo Contratista
             </button>
+            <button class="btn-export" id="sendReportBtn">
+                <i class='bx bx-envelope'></i> Enviar Reporte
+            </button>
         </div>
 
         <div class="contractor-filters">
@@ -334,6 +337,63 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal para enviar reporte por correo -->
+    <div class="modal" id="emailReportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Enviar Reporte de Contratistas</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="emailReportForm">
+                    <div class="form-group">
+                        <label>Destinatarios:</label>
+                        <div class="recipients-list">
+                            <div class="recipient-checkbox" th:each="contratista : ${contratistas}">
+                                <input type="checkbox" name="recipients"
+                                       th:value="${contratista.idPersona.correo}"
+                                       th:attr="data-name=${contratista.idPersona.nombre} + ' ' + ${contratista.idPersona.apellido}">
+                                <label th:text="${contratista.idPersona.nombre} + ' ' + ${contratista.idPersona.apellido} + ' (' + ${contratista.idPersona.correo} + ')'"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customEmail">Correo personalizado:</label>
+                        <input type="email" id="customEmail" name="customEmail"
+                               placeholder="Ingrese correo manualmente">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailSubject">Asunto:</label>
+                        <input type="text" id="emailSubject" name="subject"
+                               value="Reporte de Contratistas - Building Optimization Baseline" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailMessage">Mensaje:</label>
+                        <textarea id="emailMessage" name="message" rows="4" required>
+Estimado contratista,
+
+Adjunto encontrará el reporte actualizado de contratistas.
+
+Saludos cordiales,
+Equipo Building Optimization Baseline
+                            </textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel">Cancelar</button>
+                        <button type="submit" class="btn-send">Enviar Reporte</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
     </main>
 
     <footer>
@@ -341,5 +401,81 @@
             <p>&copy; 2025 Building Optimization Baseline. Todos los derechos reservados.</p>
         </div>
     </footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sendReportBtn = document.getElementById('sendReportBtn');
+        const emailReportModal = document.getElementById('emailReportModal');
+        const emailReportForm = document.getElementById('emailReportForm');
+        const closeModalBtn = emailReportModal.querySelector('.close-modal');
+        const cancelBtn = emailReportModal.querySelector('.btn-cancel');
+
+        // Abrir modal
+        sendReportBtn.addEventListener('click', function() {
+            emailReportModal.style.display = 'block';
+        });
+
+        // Cerrar modal
+        function closeModal() {
+            emailReportModal.style.display = 'none';
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        // Enviar formulario
+        emailReportForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const recipients = Array.from(document.querySelectorAll('input[name="recipients"]:checked'))
+                .map(input => input.value);
+            const customEmail = formData.get('customEmail');
+
+            if (recipients.length === 0 && !customEmail) {
+                alert('Seleccione al menos un destinatario o ingrese un correo manualmente');
+                return;
+            }
+
+            const requestData = {
+                recipients: recipients,
+                customEmail: customEmail,
+                subject: formData.get('subject'),
+                message: formData.get('message'),
+                reportType: 'contratistas'
+            };
+
+            try {
+                const response = await fetch('/api/email/send-report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`Reporte enviado exitosamente. Éxitos: ${result.successCount}, Fallidos: ${result.failedCount}`);
+                    closeModal();
+                } else {
+                    alert('Error al enviar el reporte: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al enviar el correo');
+            }
+        });
+
+        // Cerrar modal al hacer clic fuera
+        window.addEventListener('click', function(event) {
+            if (event.target === emailReportModal) {
+                closeModal();
+            }
+        });
+    });
+</script>
+
 </body>
 </html>

@@ -6,7 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface PersonaDao extends CrudRepository<Persona, Long> {
 
-    Persona findByIdPersona(int idPersona );
+    Persona findByIdPersona(Long idPersona );
 
 
 }

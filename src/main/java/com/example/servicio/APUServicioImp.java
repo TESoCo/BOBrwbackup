@@ -22,7 +22,7 @@ public class APUServicioImp implements APUServicio {
 
     @Override
     @Transactional(readOnly = true)
-    public Apu obtenerPorId(Integer id_apu) {
+    public Apu obtenerPorId(Long id_apu) {
         return APUDao.findById(id_apu).orElse(null);
     }
 

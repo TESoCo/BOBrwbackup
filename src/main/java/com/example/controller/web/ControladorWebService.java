@@ -23,7 +23,7 @@ public class ControladorWebService
     }
 
     @PostMapping("/buscarAvance")
-    public String buscarAvance(@RequestParam Integer idObra, Model model) {
+    public String buscarAvance(@RequestParam Long idObra, Model model) {
         try {
             URL url = new URL("http://localhost:8080/BOBWS?wsdl");
             QName qname = new QName("http://ws.example.com/", "BOBWSService");

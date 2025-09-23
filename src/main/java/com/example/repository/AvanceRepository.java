@@ -13,14 +13,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface AvanceRepository extends JpaRepository<Avance, Integer> {
+public interface AvanceRepository extends JpaRepository<Avance, Long> {
 
     // Custom query methods for Avance entity
     List<Avance> findByIdUsuario(Usuario idUsuario);
 
     List<Avance> findByIdObra(Obra idObra);
 
-    List<Avance> findByApu(Apu apu);
+    List<Avance> findByIdApu(Apu apu);
 
     List<Avance> findByFechaAvance(LocalDate fechaAvance);
 

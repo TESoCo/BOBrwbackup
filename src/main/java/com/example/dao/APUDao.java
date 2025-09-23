@@ -5,7 +5,7 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
 
-public interface APUDao extends CrudRepository<Apu, Integer> {
+public interface APUDao extends CrudRepository<Apu, Long> {
 
     List<Apu> findByNombreAPUContainingIgnoreCase(String nombreAPU);
 

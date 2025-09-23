@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Data
 @Entity
-@Table(name = "contexto_fotodato")
+@Table(name = "fotodato")
 @SecondaryTables({
         @SecondaryTable(name = "imagen_fotodato", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_FotoDato")),
         @SecondaryTable(name = "ubicacion_fotodato", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_FotoDato")),
@@ -18,6 +18,7 @@ public class FotoDato implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_FotoDato")
     private Long idFotoDato;
 

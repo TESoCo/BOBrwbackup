@@ -31,7 +31,7 @@ public class BOBWS {
     private UsuarioServicio usuarioServicio;
 
     @WebMethod
-    public String reportarAvance(Integer idUsuario, Obra idObra, String fecha, Apu apuReportado, Double cantidad)
+    public String reportarAvance(Long idUsuario, Obra idObra, String fecha, Apu apuReportado, Double cantidad)
     {
         try {
             // Create and save advance
@@ -39,7 +39,7 @@ public class BOBWS {
             avance.setIdUsuario(usuarioServicio.encontrarPorId(idUsuario));
             avance.setIdObra(idObra);
             avance.setFechaAvance(LocalDate.parse(fecha));
-            avance.setApu(apuReportado);
+            avance.setIdApu(apuReportado);
             avance.setCantEjec(cantidad);
 
             avanceServicio.salvar(avance);
@@ -50,7 +50,7 @@ public class BOBWS {
     }
 
     @WebMethod
-    public List<Avance> obtenerAvancesPorObra(Integer idObra) {
+    public List<Avance> obtenerAvancesPorObra(Long idObra) {
         return avanceServicio.buscarPorIdObra(idObra);
     }
 

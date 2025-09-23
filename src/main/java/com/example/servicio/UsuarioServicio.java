@@ -7,7 +7,7 @@ public interface UsuarioServicio {
     public List<Usuario> listarUsuarios();
     public void guardar(Usuario usuario);
     public void borrar(Usuario usuario);
-    public Usuario encontrarPorId(Integer id);
+    public Usuario encontrarPorId(Long id);
     Usuario encontrarPorNombreUsuario(String nombreUsuario);
     List<Usuario> encontrarPorRol(String rol);
 }

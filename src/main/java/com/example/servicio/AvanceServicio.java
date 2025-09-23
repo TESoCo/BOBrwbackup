@@ -2,7 +2,6 @@ package com.example.servicio;
 
 import com.example.domain.Apu;
 import com.example.domain.Avance;
-import com.example.domain.Matriz;
 import com.example.domain.Usuario;
 
 import java.time.LocalDate;
@@ -18,13 +17,13 @@ public interface AvanceServicio {
 
     public void borrar(Avance avance);
 
-    Avance localizarAvance(Integer entryId);
+    Avance localizarAvance(Long entryId);
 
     // New search methods
-    List<Avance> buscarPorIdAvance(Integer idAvance);
-    List<Avance> buscarPorIdUsuario(Integer idUsuario);
-    List<Avance> buscarPorIdObra(Integer idObra);
-    List<Avance> buscarPorIdMatriz(Integer idMatriz);
+    List<Avance> buscarPorIdAvance(Long idAvance);
+    List<Avance> buscarPorIdUsuario(Long idUsuario);
+    List<Avance> buscarPorIdObra(Long idObra);
+    List<Avance> buscarPorIdApu(Long idMatriz);
 
     List<Avance> buscarPorFecha(LocalDate fecha);
 

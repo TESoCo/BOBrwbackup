@@ -48,33 +48,33 @@ public class AvanceServicioImp implements AvanceServicio{
     @Override
     @Transactional(readOnly = true)
 
-    public Avance localizarAvance(Integer entryId) {
+    public Avance localizarAvance(Long entryId) {
         return avanceDao.findById(entryId).orElse(null);
     }
 
     // Implementation of new search methods
     @Override
     @Transactional(readOnly = true)
-    public List<Avance> buscarPorIdAvance(Integer idAvance) {
+    public List<Avance> buscarPorIdAvance(Long idAvance) {
         return avanceDao.findByIdAvance(idAvance);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Avance> buscarPorIdUsuario(Integer idUsuario) {
+    public List<Avance> buscarPorIdUsuario(Long idUsuario) {
         return avanceDao.findByIdUsuario_IdUsuario(idUsuario);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Avance> buscarPorIdObra(Integer idObra) {
+    public List<Avance> buscarPorIdObra(Long idObra) {
         return avanceDao.findByIdObra_IdObra(idObra);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Avance> buscarPorIdMatriz(Integer idMatriz) {
-        return avanceDao.findByApu_IdAPU(idMatriz);
+    public List<Avance> buscarPorIdApu(Long idApu) {
+        return avanceDao.findByIdApu_IdAPU(idApu);
     }
 
     @Override

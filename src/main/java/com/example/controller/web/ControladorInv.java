@@ -73,7 +73,7 @@ public class ControladorInv {
     public String guardarInv(@Valid Inventario inventario,
                              Errors errores,
                              Model model,
-                             @RequestParam("materialIds") List<Integer> materialIds,
+                             @RequestParam("materialIds") List<Long> materialIds,
                              @RequestParam("materialCantidades") List<Double> materialCantidades)
     {
         model.addAttribute("obras", obraServicio.listaObra());
@@ -91,10 +91,10 @@ public class ControladorInv {
                     Material material = materialServicio.obtenerPorId(materialIds.get(i));
                     if (material != null) {
                         MaterialesInventario materialInventario = new MaterialesInventario();
-                        materialInventario.setIdInventario(inventario);
+                        materialInventario.setInventario(inventario);
                         materialInventario.setMaterial(material);
-                        materialInventario.setCantidad(material);
-                        inventario.getMateriales().add(materialInventario);
+                        materialInventario.setCantidad(materialCantidades.get(i));
+                        inventario.getMaterialesInventarios().add(materialInventario);
                     }
                 }
             }
@@ -205,9 +205,13 @@ public class ControladorInv {
 
     //Exportar excel de inventario
     @GetMapping("/exportarExcelInv")
-    public void exportarExcelInv(HttpServletResponse response) throws IOException {
+    public void exportarExcelInv(@PathVariable("idInventario") Long id,HttpServletResponse response) throws IOException {
+
+        Inventario inventario = inventarioServicio.localizarInventarioPorId(id);
+        String nombreArchivo = obraServicio.localizarObra(inventario.getIdObra().getIdObra()).getNombreObra().replaceAll("[^a-zA-Z0-9]", "_") + "_" + id + ".xlsx";
+
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition", "attachment; filename=inventario.xlsx");
+        response.setHeader("Content-Disposition", "attachment; filename=" + nombreArchivo);
 
         List<Inventario> lista = inventarioServicio.listaInventarios();
 
@@ -231,8 +235,15 @@ public class ControladorInv {
 //            row.createCell(2).setCellValue(inv.getTipoRegistro());
             row.createCell(2).setCellValue(inv.getFechaIngreso().toString());
             row.createCell(3).setCellValue(inv.getUnidadInv());
-            row.createCell(4).setCellValue(inv.getCantidadMat());
-            row.createCell(5).setCellValue(inv.getMateriales().toString());
+
+            for (MaterialesInventario mat : inv.getMaterialesInventarios()){
+                row.createCell(4).setCellValue(mat.getMaterial().getNombreMaterial());
+                row.createCell(5).setCellValue(mat.getCantidad());
+                row.createCell(6).setCellValue(mat.getMaterial().getUnidadMaterial());
+                row = hoja.createRow(fila++);
+            }
+
+
 
         }
         libro.write(response.getOutputStream());

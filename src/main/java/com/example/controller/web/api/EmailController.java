@@ -1,61 +1,77 @@
 package com.example.controller.web.api;
+
+import com.example.controller.web.ControladorContratistas;
+import com.example.controller.web.ControladorProveedores;
+import com.example.dto.EmailRequest;
 import com.example.servicioWeb.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/email")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:8888", "https://api.apidog.com"})
 public class EmailController {
+
+    @Autowired
+    private ControladorProveedores controladorProveedores;
+
+    @Autowired
+    private ControladorContratistas controladorContratistas;
 
     @Autowired
     private EmailService emailService;
 
-    @PostMapping("/mass-email")
-    public ResponseEntity<?> sendMassEmail(@RequestBody Map<String, Object> request) {
+    @PostMapping("/send-report")
+    public ResponseEntity<?> sendReportEmail(@RequestBody EmailRequest emailRequest) {
         try {
-            @SuppressWarnings("unchecked")
-            List<String> recipients = (List<String>) request.get("recipients");
-            String subject = (String) request.get("subject");
-            String content = (String) request.get("content");
+            // Obtener destinatarios
+            List<String> recipients = new ArrayList<>();
 
-            if (recipients == null || recipients.isEmpty()) {
-                return ResponseEntity.badRequest().body("La lista de destinatarios está vacía");
+            if (emailRequest.getRecipients() != null && !emailRequest.getRecipients().isEmpty()) {
+                recipients.addAll(emailRequest.getRecipients());
             }
 
-            EmailService.EmailResult result = emailService.sendMassEmail(recipients, subject, content);
+            if (emailRequest.getCustomEmail() != null && !emailRequest.getCustomEmail().isEmpty()) {
+                recipients.add(emailRequest.getCustomEmail());
+            }
 
-            return ResponseEntity.ok(Map.of(
-                    "message", "Proceso de envío completado",
-                    "successCount", result.getSuccessCount(),
-                    "failedCount", result.getFailedCount(),
-                    "failedEmails", result.getFailedEmails()
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error interno del servidor: " + e.getMessage());
-        }
-    }
+            if (recipients.isEmpty()) {
+                return ResponseEntity.badRequest().body("No se especificaron destinatarios");
+            }
 
-    @PostMapping("/test")
-    public ResponseEntity<String> sendTestEmail() {
-        try {
-            boolean success = emailService.sendSimpleEmail(
-                    "test@example.com",
-                    "Email de prueba",
-                    "Este es un correo de prueba desde Spring Boot"
+            // Generar el reporte según el tipo
+            byte[] excelReport;
+            String fileName;
+
+            if ("proveedores".equalsIgnoreCase(emailRequest.getReportType())) {
+                excelReport = controladorProveedores.generarReporteProveedoresExcel();
+                fileName = "reporte_proveedores.xlsx";
+            } else if ("contratistas".equalsIgnoreCase(emailRequest.getReportType())) {
+                excelReport = controladorContratistas.generarReporteContratistasExcel();
+                fileName = "reporte_contratistas.xlsx";
+            } else {
+                return ResponseEntity.badRequest().body("Tipo de reporte no válido");
+            }
+
+            // Enviar correo (necesitarías modificar EmailService para soportar archivos adjuntos)
+            EmailService.EmailResult result = emailService.sendMassEmailWithAttachment(
+                    recipients,
+                    emailRequest.getSubject(),
+                    emailRequest.getMessage(),
+                    excelReport,
+                    fileName
             );
 
-            if (success) {
-                return ResponseEntity.ok("Correo de prueba enviado exitosamente");
-            } else {
-                return ResponseEntity.status(500).body("Error al enviar correo de prueba");
-            }
+            return ResponseEntity.ok(result);
+
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("Error al enviar el correo: " + e.getMessage());
         }
     }
 }

@@ -8,14 +8,14 @@ import org.springframework.data.repository.CrudRepository;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface AvanceDao extends CrudRepository<Avance, Integer> {
+public interface AvanceDao extends CrudRepository<Avance, Long> {
 
     // Find by exact ID matches
-    List<Avance> findByIdAvance(Integer idAvance);
-    List<Avance> findByIdUsuario_IdUsuario(Integer idUsuario);
-    List<Avance> findByIdObra_IdObra(Integer idObra);
+    List<Avance> findByIdAvance(Long idAvance);
+    List<Avance> findByIdUsuario_IdUsuario(Long idUsuario);
+    List<Avance> findByIdObra_IdObra(Long idObra);
     List<Avance> findByIdObra(Obra obra);
-    List<Avance> findByApu_IdAPU(Integer idMatriz);
+    List<Avance> findByIdApu_IdAPU(Long idApu);
 
     // Find by fecha (exact and partial match)
     List<Avance> findByFechaAvance(LocalDate fechaAvance);

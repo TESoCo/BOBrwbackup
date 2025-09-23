@@ -4,13 +4,16 @@ package com.example.domain;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
-@Table(name = "CARACTERISTICAS_MATERIAL")
+@Table(name = "material")
 @SecondaryTables({
-        @SecondaryTable(name = "PRECIOS_MATERIAL", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Material")),
-        @SecondaryTable(name = "PROVEEDORES_MATERIAL", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Material"))
+        @SecondaryTable(name = "precios_material", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Material")),
+        @SecondaryTable(name = "proveedores_material", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Material"))
 })
 public class Material implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -18,25 +21,45 @@ public class Material implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_Material")
-    private Integer idMaterial;
+    private Long idMaterial;
 
-    // From CARACTERISTICAS_MATERIAL
-    @Column(name = "Unidad_Material", nullable = false)
+    // From caracteristicas_material
+    @Column(name = "unidad_Material", nullable = false)
     private String unidadMaterial;
 
-    @Column(name = "Specificaciones")
-    private String especificaciones;
+    @Column(name = "nombre_Material")
+    private String nombreMaterial;
 
-    @Column(name = "Certificados")
-    private String certificados;
+    @Column(name = "descripcion_material")
+    private String descripcionMaterial;
 
-    // From PRECIOS_MATERIAL
-    @Column(name = "Precio_Material", table = "PRECIOS_MATERIAL", nullable = false)
-    private Double precioMaterial;
 
-    // From PROVEEDORES_MATERIAL (proveedor ID)
-    @Column(name = "id_Proveedor", table = "PROVEEDORES_MATERIAL", nullable = false)
-    private Proveedor idProveedor;
+    // From precios_material
+    @Column(name = "precio_Material", table = "precios_material", nullable = false)
+    private BigDecimal precioMaterial;
+
+
+    // From proveedores_material (proveedor ID)
+    @ManyToMany(fetch = FetchType.EAGER)// 👈 Tipo de relación y carga
+    @JoinTable(// 👈 Define la tabla intermedia
+            name = "proveedores_material", // 👈 Nombre de la tabla junction
+            joinColumns = @JoinColumn(name = "id_Material"),// 👈 Columna de esta entidad
+            inverseJoinColumns = @JoinColumn(name = "id_Proveedor") // 👈 Columna de la otra entidad
+    )
+    private List<Proveedor> proveedorList;
+
+
+    //RELACIONES INVERSAS PARA OTRAS ENTIDADES
+
+    // Material needs the reverse relationship, para agregar material a los apus
+    @OneToMany(mappedBy = "material", cascade = CascadeType.ALL)
+    private List<MaterialesApu> materialesApus = new ArrayList<>();
+
+    // Material needs the reverse relationship, para agregar material a los apus
+    @OneToMany(mappedBy = "material", cascade = CascadeType.ALL)
+    private List<MaterialesInventario> materialesInventarios = new ArrayList<>();
+
+
 
 
 }

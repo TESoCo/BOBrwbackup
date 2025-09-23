@@ -52,7 +52,7 @@ public class InventarioServicioImp implements InventarioServicio {
     @Override
     @Transactional(readOnly = true)
     public Inventario localizarInventarioPorId(Long id) {
-        return inventarioDao.findById(id).orElse(null);
+        return inventarioDao.findById(Long.valueOf(id)).orElse(null);
     }
 
     // Métodos de búsqueda implementados

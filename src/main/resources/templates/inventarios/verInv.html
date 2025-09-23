@@ -95,6 +95,14 @@
                 </button>
             </form>
         </div>
+        <div class="email-container">
+            <form th:action="@{/api/reportes/email/inventario/} + ${inv.id_Inventario}" method="post">
+                <input type="email" name="destinatario" placeholder="Correo destinatario" required>
+                <button type="submit">
+                    <i class='bx bx-envelope'></i> Enviar por correo
+                </button>
+            </form>
+        </div>
     </div>
 </main>
 

@@ -5,10 +5,12 @@ import com.example.dao.MaterialDao;
 import com.example.domain.Apu;
 import com.example.domain.Material;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Service
 public class MaterialServicioImp implements MaterialServicio {
 
     @Autowired
@@ -22,7 +24,7 @@ public class MaterialServicioImp implements MaterialServicio {
 
     @Override
     @Transactional(readOnly = true)
-    public Material obtenerPorId(Integer idMaterial) {
+    public Material obtenerPorId(Long idMaterial) {
         return materialDao.findById(idMaterial).orElse(null);
     }
 
@@ -34,7 +36,7 @@ public class MaterialServicioImp implements MaterialServicio {
 
     @Override
     @Transactional
-    public void eliminar(Integer idMaterial) {
+    public void eliminar(Long idMaterial) {
         materialDao.deleteById(idMaterial);
     }
 

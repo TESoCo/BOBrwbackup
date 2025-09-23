@@ -15,11 +15,15 @@ public class Persona implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_Persona")
-    private Integer idPersona;
+    private Long idPersona;
 
     @NotEmpty
     @Column(name = "nombre")
     private String nombre;
+
+    @NotEmpty
+    @Column(name = "apellido")
+    private String apellido;
 
     @NotEmpty
     @Column(name = "telefono")

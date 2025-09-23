@@ -22,7 +22,7 @@ public class RestPerfilController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Rol> getPerfilById(@PathVariable Integer id) {
+    public ResponseEntity<Rol> getPerfilById(@PathVariable Long id) {
         Rol rol = rolServicio.buscarPorId(id);
         return rol != null ? ResponseEntity.ok(rol) : ResponseEntity.notFound().build();
     }
@@ -34,7 +34,7 @@ public class RestPerfilController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Rol> updatePerfil(@PathVariable Integer id, @RequestBody Rol rol) {
+    public ResponseEntity<Rol> updatePerfil(@PathVariable Long id, @RequestBody Rol rol) {
         Rol existing = rolServicio.buscarPorId(id);
         if (existing == null) {
             return ResponseEntity.notFound().build();
@@ -45,7 +45,7 @@ public class RestPerfilController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePerfil(@PathVariable Integer id) {
+    public ResponseEntity<Void> deletePerfil(@PathVariable Long id) {
         Rol rol = rolServicio.buscarPorId(id);
         if (rol == null) {
             return ResponseEntity.notFound().build();

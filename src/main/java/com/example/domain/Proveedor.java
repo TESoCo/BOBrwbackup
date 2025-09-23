@@ -18,19 +18,30 @@ public class Proveedor implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_Proveedor")
-    private Integer idProveedor;
+    private Long idProveedor;
 
 
     // One Proveedor has One primary contact Persona
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "id_Persona", referencedColumnName = "id_Persona")
     private Persona idPersona;
 
 
-
     // Commercial Information for the SUPPLIER (the company itself)
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_Info_Comerc", referencedColumnName = "id_Info_Comerc")
     private InformacionComercial informacionComercial;
+
+    // From proveedores_material (proveedor ID)
+    @ManyToMany(fetch = FetchType.EAGER)// 👈 Tipo de relación y carga
+    @JoinTable(// 👈 Define la tabla intermedia
+            name = "proveedores_material", // 👈 Nombre de la tabla junction
+            joinColumns = @JoinColumn(name = "id_Proveedor"),// 👈 Columna de esta entidad
+            inverseJoinColumns = @JoinColumn(name = "id_Material") // 👈 Columna de la otra entidad
+    )
+    private List<Material> materialList;
+
+
+
 
 }

@@ -1,24 +1,35 @@
 package com.example.domain;
 
 import lombok.Data;
-
 import java.io.Serializable;
+import jakarta.persistence.*;
 
-// Composite ID class for ActividadesObra
 @Data
+@Embeddable
 public class ApusObraId implements Serializable {
-    private Integer obra;
-    private Integer apu;
+
+    @ManyToOne
+    @JoinColumn(name = "id_Obra")
+    private Obra obra;
+
+    @ManyToOne
+    @JoinColumn(name = "id_APU")
+    private Apu apu;
+
+    // Constructors
+    public ApusObraId() {}
+
+    public ApusObraId(Obra idObra, Apu idAPU) {
+        this.obra = idObra;
+        this.apu = idAPU;
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         ApusObraId that = (ApusObraId) o;
-
-        if (!obra.equals(that.obra)) return false;
-        return apu.equals(that.apu);
+        return obra.equals(that.obra) && apu.equals(that.apu);
     }
 
     @Override

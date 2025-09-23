@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface InventarioDao extends CrudRepository<Inventario, Long> {
 
-    List<Inventario> findByIdUsuario_idUsuario(Integer IdUsuario);
+    List<Inventario> findByIdUsuario_idUsuario(Long IdUsuario);
     List<Inventario> findByIdObra(Obra obra);
     List<Inventario> findByFechaIngreso(LocalDate fecha);
 

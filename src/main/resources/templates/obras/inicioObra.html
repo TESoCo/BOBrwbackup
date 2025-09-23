@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Proyectos</title>
+
+    <!-- Load Leaflet CSS and JS from CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <style>
+        #map { height: 600px; } /* Container for the map */
+    </style>
+
+</head>
+<body>
+<h1>Lista de Proyectos</h1>
+
+<h1>Mapa de Obras y Avances</h1>
+<div id="map"></div> <!-- The map will be inserted into this div -->
+
+<a th:href="@{/presupuestos/agregarPresupuesto}" class="btn">Crear nuevo presupuesto</a>
+<br>
+
+<div class="search-container">
+    <h2><i class='bx bx-search-alt'></i>Buscar</h2>
+    <form class="search-form" th:action="@{/presupuestos/filtroPr}" method="get">
+        <label for="tipoBusqueda"><i class='bx bx-filter'></i>Buscar por:</label>
+        <select name="tipoBusqueda" id="tipoBusqueda">
+            <option value="obraName">Nombre</option>
+            <option value="idObra">ID</option>
+        </select>
+
+        <input type="text" name="valorBusqueda" placeholder="Término de búsqueda">
+
+        <input type="submit" value="Buscar">
+    </form>
+</div>
+
+<br>
+
+<div th:if="${presupuestos != null and !presupuestos.empty}">
+    <table id="presupuestosTable">
+        <thead>
+        <tr>
+            <th>ID Obra</th>
+            <th>Nombre de la obra</th>
+            <th>Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="presupuesto : ${presupuestos}">
+            <td th:text="${presupuesto.id_obra}"></td>
+            <td th:text="${presupuesto.obraName}"></td>
+            <td>
+                <a th:href="@{/presupuestos/cambiar/} + ${presupuesto.id_obra}" class="btn">Editar</a>
+                <a th:href="@{/presupuestos/borrar/} + ${presupuesto.id_obra}" class="btn"
+                   onclick="return confirm('¿Está seguro que desea eliminar este presupuesto?')">Eliminar</a>
+                <a th:href="@{/presupuestos/detalle/}+${presupuesto.id_obra}" class="btn">Ver Detalle</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div th:if="${presupuestos == null or presupuestos.empty}">
+    <p>No hay presupuestos registrados</p>
+</div>
+
+<a th:href="@{/}" class="btn btn-secondary">Regresar</a>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    // Grab the data passed from your Spring Controller
+    const obras = /*[[${obras}]]*/ [];
+    const fotoDatos = /*[[${fotoDatos}]]*/ [];
+
+    // Initialize the map once the page is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create a map centered on a default location
+        const map = L.map('map').setView([4.5709, -74.2973], 10); // [lat, lng], zoom level
+
+        // Add the OpenStreetMap tiles (the base map layer)
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Loop through obras and add markers
+        obras.forEach(obra => {
+            if (obra.cooNObra && obra.cooEObra) {
+                // Create a marker
+                const marker = L.marker([obra.cooNObra, obra.cooEObra]).addTo(map);
+
+                // Bind a popup to the marker with information
+                marker.bindPopup(`
+                    <b>${obra.nombreObra}</b><br>
+                    ID: ${obra.idObra}<br>
+                    <a href="/obras/detalle/${obra.idObra}">Ver Detalles</a>
+                `);
+            }
+        });
+
+        // Loop through fotoDatos and add markers with a different icon
+        fotoDatos.forEach(foto => {
+            if (foto.cooNFoto && foto.cooEFoto) {
+                // You can use a custom icon for photos
+                const photoIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+
+                const marker = L.marker([foto.cooNFoto, foto.cooEFoto], {icon: photoIcon}).addTo(map);
+                let popupContent = `<b>Foto de Avance</b><br>Fecha: ${foto.fechaFoto}`;
+
+                // If you have a base64 preview, add it
+                if (foto.fotoBase64) {
+                    popupContent += `<br><img src="data:image/jpeg;base64,${foto.fotoBase64}" style="max-width: 150px;" />`;
+                }
+                marker.bindPopup(popupContent);
+            }
+        });
+    });
+    /*]]>*/
+</script>
+
+</body>
+</html>
+
+</body>
+</html>

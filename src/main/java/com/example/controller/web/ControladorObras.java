@@ -51,7 +51,7 @@ public class ControladorObras
             @RequestParam LocalDate fechaFin,
             @RequestParam Double cooNObra,
             @RequestParam Double cooEObra,
-            @RequestParam List<Integer> apuIds, // Changed from actividadIds to apuIds
+            @RequestParam List<Long> apuIds, // Changed from actividadIds to apuIds
             @RequestParam List<Double> cantidades) { // Changed from actividadIds to apuIds
 
         // Create the nuevaObra first to get its ID
@@ -106,7 +106,7 @@ public class ControladorObras
 
     //Función y forma de editado
     @GetMapping("/cambiar/{id_obra}")
-    public String cambiarObra(@PathVariable Integer id_obra, Model model) {
+    public String cambiarObra(@PathVariable Long id_obra, Model model) {
         Obra obraEditar = obraServicio.localizarObra(id_obra);
 
         // Create a list of activity IDs and quantities for editing
@@ -148,18 +148,18 @@ public class ControladorObras
     //funcionalidad para guardar cambios
     @PostMapping("/actualizar/{id_obra}")
     public String actualizarPresupuesto(
-        @PathVariable Integer id_obra,
+        @PathVariable Long id_obra,
         @RequestParam String obraName,
         @ModelAttribute Obra obraActualizar,
         BindingResult result,
-        @RequestParam List<Integer> actividadIds,
+        @RequestParam List<Long> actividadIds,
         @RequestParam List<Double> cantidades,
         Model model) {
         if (result.hasErrors() || actividadIds.isEmpty()) {
             return "redirect:/presupuestos/cambiar/" + id_obra;
         }
 
-        Map<Integer, Double> apuValues = new HashMap<>();
+        Map<Long, Double> apuValues = new HashMap<>();
         for (int i = 0; i < actividadIds.size(); i++) {
             apuValues.put(actividadIds.get(i), cantidades.get(i));
             obraServicio.agregarApuAObra(obraActualizar, APUServicio.obtenerPorId(actividadIds.get(i)));
@@ -175,7 +175,7 @@ public class ControladorObras
 
     //Ver obraDetalle en detalle (sólo lectura)
     @GetMapping("/detalle/{id_obra}")
-    public String detalleObra(@PathVariable Integer id_obra, Model model) {
+    public String detalleObra(@PathVariable Long id_obra, Model model) {
         Obra obraDetalle = obraServicio.localizarObra(id_obra);
         List<Apu> apusObra = obraServicio.obtenerApusEntidadesPorObra(id_obra);
 
@@ -215,7 +215,7 @@ public class ControladorObras
         if (tipoBusqueda != null && valorBusqueda != null && !valorBusqueda.isEmpty()) {
             switch (tipoBusqueda) {
                 case "idObra":
-                    obra = obraServicio.localizarObra(Integer.parseInt(valorBusqueda));
+                    obra = obraServicio.localizarObra(Long.getLong(valorBusqueda));
                     break;
                 case "obraName":
                     obras = obraServicio.findByObraNameContaining(valorBusqueda);

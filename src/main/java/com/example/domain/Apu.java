@@ -4,37 +4,43 @@ package com.example.domain;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import org.apache.poi.hpsf.Decimal;
+
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
-@Table(name = "gestor_apu")
+@Table(name = "apu")
 @SecondaryTables({
         @SecondaryTable(name = "caracteristicas_apu", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_APU")),
         @SecondaryTable(name = "valor_apu", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_APU")),
-        @SecondaryTable(name = "materiales_inventario", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_APU")),
-        @SecondaryTable(name = "datos_usuario", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Usuario"))
 })
 
 public class Apu implements Serializable {
     private static final long serialVersionUID = 1L;
 
+
+    //`apu`
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_APU")
-    private Integer idAPU;
+    private Long idAPU;
 
-    @ManyToOne
+    @ManyToOne //un usuario puede crear muchos APUs
     @JoinColumn(name = "id_Usuario")
     private Usuario idUsuario;
 
-    //7b. CARACTERÍSTICAS APU
+
+    //`caracteristicas_apu`
     @NotEmpty
     @Column(name = "nombre", table = "caracteristicas_apu")
     private String nombreAPU;
 
-
+    @NotEmpty
     @Column(name = "descripcion", table = "caracteristicas_apu")
     private String descAPU;
 
@@ -43,23 +49,34 @@ public class Apu implements Serializable {
     private String unidadesAPU;
 
 
+    //`valor_apu`
     @Column(name = "v_APU_Mat", table = "valor_apu")
-    private String vMaterialesAPU;
+    private BigDecimal vMaterialesAPU;
 
 
     @Column(name = "v_APU_Mano", table = "valor_apu")
-    private String vManoDeObraAPU;
+    private BigDecimal vManoDeObraAPU;
 
 
     @Column(name = "v_APU_Trans", table = "valor_apu")
-    private String vTransporteAPU;
+    private BigDecimal vTransporteAPU;
 
 
     @Column(name = "v_APU_Misc", table = "valor_apu")
-    private String vMiscAPU;
+    private BigDecimal vMiscAPU;
 
-    @ManyToOne
-    @JoinColumn(name = "id_Material")
-    private Material material;
+    //apus_obra
+    //Relacion muchos a muchos con obra
+    // Relación inversa
+    // Apu needs the reverse relationship, para agregar apus a las obras
+    @OneToMany(mappedBy = "apu", cascade = CascadeType.ALL)//Un APU puede asignarse a muchas obras
+    private List<ApusObra> apusObraList = new ArrayList<>();
+
+    //`materiales_apu`
+    //Relacion muchos a muchos con materiales
+    // Relación inversa
+    @OneToMany(mappedBy = "apu", cascade = CascadeType.ALL)//Un APU puede contener muchos materiales
+    private List<MaterialesApu> materialesApus = new ArrayList<>();
+
 
 }

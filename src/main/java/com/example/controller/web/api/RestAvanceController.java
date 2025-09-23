@@ -34,7 +34,7 @@ public class RestAvanceController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Avance> getAvanceById(@PathVariable Integer id) {
+    public ResponseEntity<Avance> getAvanceById(@PathVariable Long id) {
         try {
             Avance avance = avanceServicio.localizarAvance(id);
             if (avance != null) {
@@ -58,7 +58,7 @@ public class RestAvanceController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Avance> updateAvance(@PathVariable Integer id, @RequestBody Avance avance) {
+    public ResponseEntity<Avance> updateAvance(@PathVariable Long id, @RequestBody Avance avance) {
         try {
             Avance existingAvance = avanceServicio.localizarAvance(id);
             if (existingAvance == null) {
@@ -73,7 +73,7 @@ public class RestAvanceController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAvance(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteAvance(@PathVariable Long id) {
         try {
             Avance avance = avanceServicio.localizarAvance(id);
             if (avance == null) {
@@ -90,7 +90,7 @@ public class RestAvanceController {
 
     // Search endpoints
     @GetMapping("/search/id-usuario/{idUsuario}")
-    public ResponseEntity<List<Avance>> searchByIdUsuario(@PathVariable Integer idUsuario) {
+    public ResponseEntity<List<Avance>> searchByIdUsuario(@PathVariable Long idUsuario) {
         try {
             List<Avance> avances = avanceServicio.buscarPorIdUsuario(idUsuario);
             return ResponseEntity.ok(avances);
@@ -100,7 +100,7 @@ public class RestAvanceController {
     }
 
     @GetMapping("/search/id-obra/{idObra}")
-    public ResponseEntity<List<Avance>> searchByIdObra(@PathVariable Integer idObra) {
+    public ResponseEntity<List<Avance>> searchByIdObra(@PathVariable Long idObra) {
         try {
             List<Avance> avances = avanceServicio.buscarPorIdObra(idObra);
             return ResponseEntity.ok(avances);
@@ -110,9 +110,9 @@ public class RestAvanceController {
     }
 
     @GetMapping("/search/id-matriz/{idMatriz}")
-    public ResponseEntity<List<Avance>> searchByIdMatriz(@PathVariable Integer idMatriz) {
+    public ResponseEntity<List<Avance>> searchByIdMatriz(@PathVariable Long idApu) {
         try {
-            List<Avance> avances = avanceServicio.buscarPorIdMatriz(idMatriz);
+            List<Avance> avances = avanceServicio.buscarPorIdApu(idApu);
             return ResponseEntity.ok(avances);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -133,7 +133,7 @@ public class RestAvanceController {
 
     @GetMapping("/search/usuario-fecha")
     public ResponseEntity<List<Avance>> searchByUsuarioAndFecha(
-            @RequestParam Integer idUsuario,
+            @RequestParam Long idUsuario,
             @RequestParam String fecha) {
         try {
             List<Avance> avances = avanceServicio.buscarPorUsuarioYFecha(usuarioServicio.encontrarPorId(idUsuario), fecha);

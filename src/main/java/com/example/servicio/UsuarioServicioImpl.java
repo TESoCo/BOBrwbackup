@@ -34,7 +34,7 @@ public class UsuarioServicioImpl implements UsuarioServicio {
 
     @Override
     @Transactional(readOnly = true)
-    public Usuario encontrarPorId(Integer id) {
+    public Usuario encontrarPorId(Long id) {
         return usuarioDao.findById(id).orElse(null);
     }
 

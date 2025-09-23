@@ -5,7 +5,7 @@ import com.example.domain.Rol;
 import java.util.List;
 
 public interface RolServicio {
-    Rol buscarPorId(Integer id);
+    Rol buscarPorId(Long id);
     void guardar(Rol rol);
     List<Rol> listarRoles();
 }

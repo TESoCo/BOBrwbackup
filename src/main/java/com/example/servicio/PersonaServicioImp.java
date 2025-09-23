@@ -23,15 +23,11 @@ public class PersonaServicioImp implements PersonaServicio {
 
     @Override
     @Transactional
-    public void salvar(Persona persona) {
-        personaDao.save(persona);
-    }
+    public void salvar(Persona persona) {}
 
     @Override
     @Transactional
-    public void borrar(Persona persona) {
-        personaDao.delete(persona);
-    }
+    public void borrar(Persona persona) {}
 
     @Override
     @Transactional(readOnly = true)

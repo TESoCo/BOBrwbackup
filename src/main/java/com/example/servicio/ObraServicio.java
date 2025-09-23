@@ -16,16 +16,16 @@ public interface ObraServicio {
 
     public void borrar(Obra obraBorrar);
 
-    Obra localizarObra(Integer entryId);
+    Obra localizarObra(Long entryId);
 
     List<Obra> findByObraName(String obraName);
     List<Obra> findByObraNameContaining(String obraName);
     List<Obra> findByObraNameIgnoreCase(String obraName);
 
-    public List<Apu> listarMateriales();
+    public List<Apu> listarApus();
 
     void agregarApuAObra(Obra obra, Apu apu);
     void agregarApuAObraConCantidad(Obra obra, Apu apu, Double cantObra);
-    Map<Integer, Double> obtenerApusPorObra(Integer idObra);
-    List<Apu> obtenerApusEntidadesPorObra(Integer idObra);
+    Map<Long, Double> obtenerApusPorObra(Long idObra);
+    List<Apu> obtenerApusEntidadesPorObra(Long idObra);
 }
