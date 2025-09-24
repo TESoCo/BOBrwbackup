@@ -664,6 +664,25 @@
                         </button>
                     </div>
                 </form>
+
+                <!-- Preview Table (Optional) -->
+                <table class="preview-table" id="previewTable" style="display: none;">
+                    <thead>
+                    <tr>
+                        <th>Nombre APU</th>
+                        <th>Descripción</th>
+                        <th>Unidades</th>
+                        <th>Valor Materiales</th>
+                        <th>Valor Mano de Obra</th>
+                        <th>Valor Transporte</th>
+                        <th>Valor Misceláneo</th>
+                    </tr>
+                    </thead>
+                    <tbody id="previewTableBody">
+                    <!-- Preview rows will be inserted here -->
+                    </tbody>
+                </table>
+
             </div>
         </div>
 
@@ -703,6 +722,11 @@
                 // Show active content
                 tabContents.forEach(content => content.classList.remove('active'));
                 document.getElementById(`${tabId}-tab`).classList.add('active');
+
+                // Reset import section when switching tabs
+                if (tabId === 'import') {
+                    resetImport();
+                }
             });
         });
 
@@ -753,22 +777,18 @@
             });
         }
 
-        // CSV Import functionality
+        // CSV Import functionality - SIMPLIFIED VERSION
         const csvFileInput = document.getElementById('csvFile');
         const dropZone = document.getElementById('dropZone');
         const fileName = document.getElementById('fileName');
-        const previewTable = document.getElementById('previewTable');
-        const previewTableBody = document.getElementById('previewTableBody');
         const importActions = document.getElementById('importActions');
         const cancelImportBtn = document.getElementById('cancelImport');
-        const confirmImportBtn = document.getElementById('confirmImport');
-
-        let csvData = [];
+        const csvImportForm = document.getElementById('csvImportForm');
 
         // Handle file selection
         csvFileInput.addEventListener('change', function(e) {
             if (this.files.length > 0) {
-                handleFile(this.files[0]);
+                handleFileSelection(this.files[0]);
             }
         });
 
@@ -802,130 +822,21 @@
             const dt = e.dataTransfer;
             const files = dt.files;
             if (files.length > 0) {
-                handleFile(files[0]);
+                csvFileInput.files = files;
+                handleFileSelection(files[0]);
             }
         });
 
-        // Handle the CSV file
-        function handleFile(file) {
+        // Handle file selection - SIMPLIFIED
+        function handleFileSelection(file) {
             if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
                 alert('Por favor seleccione un archivo CSV válido.');
+                resetImport();
                 return;
             }
 
             fileName.textContent = file.name;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const csvText = e.target.result;
-                parseCSV(csvText);
-            };
-            reader.readAsText(file);
-        }
-
-        // Parse CSV data
-        function parseCSV(csvText) {
-            const lines = csvText.split('\n');
-            if (lines.length < 2) {
-                alert('El archivo CSV está vacío o no tiene el formato correcto.');
-                return;
-            }
-
-            // Parse header row
-            const headers = lines[0].split(',').map(header => header.trim());
-
-            // Check if required headers are present
-            const requiredHeaders = ['nombreAPU', 'descAPU', 'unidades', 'vMiscAPU'];
-            const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
-
-            if (missingHeaders.length > 0) {
-                alert(`El archivo CSV no tiene las columnas requeridas: ${missingHeaders.join(', ')}`);
-                return;
-            }
-
-            // Parse data rows
-            csvData = [];
-            for (let i = 1; i < lines.length; i++) {
-                if (lines[i].trim() === '') continue;
-
-                const values = parseCSVLine(lines[i]);
-                if (values.length !== headers.length) continue;
-
-                const row = {};
-                headers.forEach((header, index) => {
-                    row[header] = values[index].trim();
-                });
-
-                // Skip if required fields are empty
-                if (!row.nombreAPU || !row.descAPU || !row.unidades || !row.vMiscAPU) continue;
-
-                csvData.push(row);
-            }
-
-            if (csvData.length === 0) {
-                alert('No se encontraron datos válidos en el archivo CSV.');
-                return;
-            }
-
-            // Display preview
-            displayPreview();
-        }
-
-        // Simple CSV line parser that handles quoted fields
-        function parseCSVLine(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current);
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-
-            result.push(current);
-            return result;
-        }
-
-        // Display CSV data preview
-        function displayPreview() {
-            previewTableBody.innerHTML = '';
-
-            // Show only first 5 rows for preview
-            const previewRows = csvData.slice(0, 5);
-
-            previewRows.forEach(row => {
-                const tr = document.createElement('tr');
-
-                tr.innerHTML = `
-                    <td>${row.nombreAPU || ''}</td>
-                    <td>${row.descAPU || ''}</td>
-                    <td>${row.unidades || ''}</td>
-                    <td>${row.vMaterialesAPU || '0.00'}</td>
-                    <td>${row.vManoDeObraAPU || '0.00'}</td>
-                    <td>${row.vTransporteAPU || '0.00'}</td>
-                    <td>${row.vMiscAPU || ''}</td>
-                `;
-
-                previewTableBody.appendChild(tr);
-            });
-
-            // Show additional info if there are more rows
-            if (csvData.length > 5) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="7" style="text-align: center; font-style: italic;">... y ${csvData.length - 5} filas más</td>`;
-                previewTableBody.appendChild(tr);
-            }
-
-            previewTable.style.display = 'table';
-            importActions.style.display = 'flex';
+            importActions.style.display = 'flex'; // SHOW THE BUTTONS
         }
 
         // Cancel import
@@ -933,46 +844,33 @@
             resetImport();
         });
 
-        // Confirm import
-        confirmImportBtn.addEventListener('click', function() {
-            if (csvData.length === 0) {
-                alert('No hay datos para importar.');
-                return;
-            }
-
-            // Send data to server
-            importAPUs();
-        });
-
         // Reset import section
         function resetImport() {
             csvFileInput.value = '';
             fileName.textContent = '';
-            previewTable.style.display = 'none';
             importActions.style.display = 'none';
-            csvData = [];
         }
 
-        // Send CSV data to server
-        function importAPUs() {
+        // Form submission handling
+        csvImportForm.addEventListener('submit', function(e) {
+            if (!csvFileInput.files.length) {
+                e.preventDefault();
+                alert('Por favor seleccione un archivo CSV.');
+                return;
+            }
+
             // Show loading state
-            confirmImportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importando...';
-            confirmImportBtn.disabled = true;
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importando...';
+            submitBtn.disabled = true;
 
-
-
-            // In a real implementation, you would send this data to your server
-            // For this example, we'll simulate an API call
+            // Re-enable button if form submission fails
             setTimeout(() => {
-                alert(`Se importaron ${csvData.length} APUs correctamente.`);
-                resetImport();
-                confirmImportBtn.innerHTML = '<i class="fas fa-upload"></i> Importar APUs';
-                confirmImportBtn.disabled = false;
-
-                // Switch back to single APU tab
-                document.querySelector('.tab[data-tab="single"]').click();
-            }, 1500);
-        }
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 5000);
+        });
     });
 </script>
 </body>
