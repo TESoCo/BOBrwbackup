@@ -7,5 +7,5 @@ import java.util.List;
 public interface PermisoServicio {
     List<Permiso> listarPermisos();
     void guardar(Permiso permiso);
-    Permiso buscarPorNombre(String nombre);
+    List<Permiso> buscarPorNombre(String nombre);
 }

@@ -44,12 +44,15 @@ public class ProtoBOB {
                         persona.setApellido("Sistema");
                         persona.setTelefono("000-000-0000");
                         persona.setCorreo("admin@bob.com");
-                        personaServicio.salvar(persona);
+
+                        System.out.println("Guardando persona...");
+                        Persona personaGuardada = personaServicio.salvar(persona);
+                        System.out.println("Persona guardada con ID: " + personaGuardada.getIdPersona());
 
 
 
 
-                        // 2. Crear rol ADMIN si no existe
+                                // 2. Crear rol ADMIN si no existe
                         Rol rolAdmin = rolServicio.listarRoles().stream()
                                 .filter(rol -> "ADMIN".equalsIgnoreCase(rol.getNombreRol()))
                                 .findFirst()
@@ -69,7 +72,7 @@ public class ProtoBOB {
                         usuario.setNombreUsuario("admin");
                         usuario.setPass_usuario(passwordEncoder.encode("admin123")); // Contraseña por defecto
                         usuario.setCargo("Administrador del Sistema");
-                            usuario.setPersona(persona);
+                        usuario.setPersona(persona);
                         usuario.setRol(rolAdmin);
 
                         usuarioServicio.guardar(usuario);
@@ -98,6 +101,17 @@ public class ProtoBOB {
             return new BCryptPasswordEncoder();
         }
 
+        @Bean
+        public DaoAuthenticationProvider authenticationProvider(
+                UsuarioDetailsServices usuarioDetailsServices, PasswordEncoder passwordEncoder
+        )
+        {
+            DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+            authProvider.setUserDetailsService(usuarioDetailsServices);
+            authProvider.setPasswordEncoder(passwordEncoder);
+            return authProvider;        };
+
+
 
         @Bean
         public AuthenticationManager authenticationManager(
@@ -105,10 +119,6 @@ public class ProtoBOB {
                 UsuarioDetailsServices usuarioDetailsServices,
                 PasswordEncoder passwordEncoder)
                 throws Exception {
-            DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-            authProvider.setUserDetailsService(usuarioDetailsServices);
-            authProvider.setPasswordEncoder(passwordEncoder);
-
             return authConfig.getAuthenticationManager();
         }
 
@@ -168,6 +178,7 @@ public class ProtoBOB {
                             .logoutSuccessUrl("/login?logout")
                             .permitAll()
                     )
+
                     .httpBasic(httpSecurityHttpBasicConfigurer -> {})
                     .csrf(csrf -> csrf
                             .ignoringRequestMatchers("/api/**") // Disable CSRF for API endpoints

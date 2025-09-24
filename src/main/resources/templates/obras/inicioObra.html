@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Proyectos</title>
+    <title>Gestión de Obras - Building Optimization Baseline</title>
 
     <!-- Load Leaflet CSS and JS from CDN -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -13,103 +13,361 @@
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
 
-    <style>
-        #map { height: 600px; } /* Container for the map */
-    </style>
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #94a3b8;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        header p {
+            color: var(--secondary);
+            font-size: 1.1rem;
+        }
+
+        .navigation-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #0da271;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-edit {
+            background: var(--warning);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        #map {
+            height: 500px;
+            margin: 20px 0;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .search-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin: 2rem 0;
+        }
+
+        .search-container h2 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-form label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .search-select, .search-input {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .data-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            color: var(--secondary);
+        }
+
+        .empty-message i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--gray);
+        }
+
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-input {
+                min-width: auto;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
 </head>
 <body>
-<h1>Lista de Proyectos</h1>
+<div class="container">
+    <header>
+        <h1><i class='bx bx-buildings'></i> Gestión de Obras</h1>
+        <p>Administra y visualiza todas tus obras en un solo lugar</p>
+    </header>
 
-<h1>Mapa de Obras y Avances</h1>
-<div id="map"></div> <!-- The map will be inserted into this div -->
+    <section class="navigation-section">
+        <a th:href="@{/obras/agregarObra}" class="btn btn-success">
+            <i class='bx bx-plus'></i> Registrar Nueva Obra
+        </a>
+        <a th:href="@{/dashboard}" class="btn btn-secondary">
+            <i class='bx bx-arrow-back'></i> Volver al Dashboard
+        </a>
+    </section>
 
-<a th:href="@{/presupuestos/agregarPresupuesto}" class="btn">Crear nuevo presupuesto</a>
-<br>
+    <section>
+        <h2><i class='bx bx-map'></i> Mapa de Obras</h2>
+        <div id="map"></div>
+    </section>
 
-<div class="search-container">
-    <h2><i class='bx bx-search-alt'></i>Buscar</h2>
-    <form class="search-form" th:action="@{/presupuestos/filtroPr}" method="get">
-        <label for="tipoBusqueda"><i class='bx bx-filter'></i>Buscar por:</label>
-        <select name="tipoBusqueda" id="tipoBusqueda">
-            <option value="obraName">Nombre</option>
-            <option value="idObra">ID</option>
-        </select>
+    <section class="search-container">
+        <h2><i class='bx bx-search-alt'></i> Buscar Obras</h2>
+        <form class="search-form" th:action="@{/obras/filtroPr}" method="get">
+            <label for="tipoBusqueda"><i class='bx bx-filter'></i> Buscar por:</label>
+            <select name="tipoBusqueda" id="tipoBusqueda" class="search-select">
+                <option value="nombreObra">Nombre de la Obra</option>
+                <option value="idObra">ID de la Obra</option>
+            </select>
 
-        <input type="text" name="valorBusqueda" placeholder="Término de búsqueda">
+            <input type="text" name="valorBusqueda" placeholder="Ingrese término de búsqueda..." class="search-input" required>
 
-        <input type="submit" value="Buscar">
-    </form>
+            <button type="submit" class="btn btn-primary">
+                <i class='bx bx-search'></i> Buscar
+            </button>
+        </form>
+    </section>
+
+    <section>
+        <div th:if="${obras != null and !obras.empty}">
+            <div class="table-container">
+                <table class="data-table" id="obrasTable">
+                    <thead>
+                    <tr>
+                        <th>ID Obra</th>
+                        <th>Nombre de la Obra</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="obra : ${obras}">
+                        <td th:text="${obra.id_obra}"></td>
+                        <td th:text="${obra.obraName}"></td>
+                        <td class="actions">
+                            <a th:href="@{/obras/cambiar/} + ${obra.id_obra}" class="btn btn-edit">
+                                <i class='bx bx-edit'></i> Editar
+                            </a>
+                            <a th:href="@{/obras/borrar/} + ${obra.id_obra}" class="btn btn-delete"
+                               onclick="return confirm('¿Está seguro que desea eliminar esta obra?')">
+                                <i class='bx bx-trash'></i> Eliminar
+                            </a>
+                            <a th:href="@{/obras/detalle/}+${obra.id_obra}" class="btn btn-primary">
+                                <i class='bx bx-show'></i> Ver Detalle
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div th:if="${obras == null or obras.empty}" class="empty-message">
+            <i class='bx bx-building-house'></i>
+            <h3>No hay obras registradas</h3>
+            <p>Comienza registrando tu primera obra para verla aquí.</p>
+            <a th:href="@{/obras/agregarObra}" class="btn btn-success" style="margin-top: 1rem;">
+                <i class='bx bx-plus'></i> Crear Primera Obra
+            </a>
+        </div>
+    </section>
 </div>
-
-<br>
-
-<div th:if="${presupuestos != null and !presupuestos.empty}">
-    <table id="presupuestosTable">
-        <thead>
-        <tr>
-            <th>ID Obra</th>
-            <th>Nombre de la obra</th>
-            <th>Acciones</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="presupuesto : ${presupuestos}">
-            <td th:text="${presupuesto.id_obra}"></td>
-            <td th:text="${presupuesto.obraName}"></td>
-            <td>
-                <a th:href="@{/presupuestos/cambiar/} + ${presupuesto.id_obra}" class="btn">Editar</a>
-                <a th:href="@{/presupuestos/borrar/} + ${presupuesto.id_obra}" class="btn"
-                   onclick="return confirm('¿Está seguro que desea eliminar este presupuesto?')">Eliminar</a>
-                <a th:href="@{/presupuestos/detalle/}+${presupuesto.id_obra}" class="btn">Ver Detalle</a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-<div th:if="${presupuestos == null or presupuestos.empty}">
-    <p>No hay presupuestos registrados</p>
-</div>
-
-<a th:href="@{/}" class="btn btn-secondary">Regresar</a>
 
 <script th:inline="javascript">
     /*<![CDATA[*/
-
-    // Grab the data passed from your Spring Controller
-    const obras = /*[[${obras}]]*/ [];
-    const fotoDatos = /*[[${fotoDatos}]]*/ [];
-
-    // Initialize the map once the page is loaded
     document.addEventListener('DOMContentLoaded', function() {
-        // Create a map centered on a default location
-        const map = L.map('map').setView([4.5709, -74.2973], 10); // [lat, lng], zoom level
+        const obras = /*[[${obras}]]*/ [];
+        const fotoDatos = /*[[${fotoDatos}]]*/ [];
 
-        // Add the OpenStreetMap tiles (the base map layer)
+        // Initialize the map
+        const map = L.map('map').setView([4.5709, -74.2973], 6);
+
+        // Add the OpenStreetMap tiles
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // Loop through obras and add markers
+        const markers = [];
+
+        // Add markers for obras
         obras.forEach(obra => {
             if (obra.cooNObra && obra.cooEObra) {
-                // Create a marker
                 const marker = L.marker([obra.cooNObra, obra.cooEObra]).addTo(map);
+                markers.push(marker);
 
-                // Bind a popup to the marker with information
-                marker.bindPopup(`
-                    <b>${obra.nombreObra}</b><br>
-                    ID: ${obra.idObra}<br>
-                    <a href="/obras/detalle/${obra.idObra}">Ver Detalles</a>
-                `);
+                let popupContent = `<b>${obra.obraName || 'Sin nombre'}</b><br>`;
+                popupContent += `ID: ${obra.id_obra}<br>`;
+                popupContent += `<a href="/obras/detalle/${obra.id_obra}" style="color: #2563eb; text-decoration: none;">Ver Detalles</a>`;
+
+                marker.bindPopup(popupContent);
             }
         });
 
-        // Loop through fotoDatos and add markers with a different icon
+        // Add markers for photos with different icon
         fotoDatos.forEach(foto => {
             if (foto.cooNFoto && foto.cooEFoto) {
-                // You can use a custom icon for photos
                 const photoIcon = L.icon({
                     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
                     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
@@ -122,19 +380,37 @@
                 const marker = L.marker([foto.cooNFoto, foto.cooEFoto], {icon: photoIcon}).addTo(map);
                 let popupContent = `<b>Foto de Avance</b><br>Fecha: ${foto.fechaFoto}`;
 
-                // If you have a base64 preview, add it
                 if (foto.fotoBase64) {
-                    popupContent += `<br><img src="data:image/jpeg;base64,${foto.fotoBase64}" style="max-width: 150px;" />`;
+                    popupContent += `<br><img src="data:image/jpeg;base64,${foto.fotoBase64}" style="max-width: 150px; border-radius: 4px;" />`;
                 }
                 marker.bindPopup(popupContent);
+                markers.push(marker);
             }
         });
+
+        // Adjust map view to show all markers if there are any
+        if (markers.length > 0) {
+            const group = L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    });
+
+    // Search functionality enhancement
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchForm = document.querySelector('.search-form');
+        const searchInput = document.querySelector('input[name="valorBusqueda"]');
+
+        if (searchForm) {
+            searchForm.addEventListener('submit', function(e) {
+                if (!searchInput.value.trim()) {
+                    e.preventDefault();
+                    alert('Por favor ingrese un término de búsqueda');
+                    searchInput.focus();
+                }
+            });
+        }
     });
     /*]]>*/
 </script>
-
-</body>
-</html>
-
 </body>
 </html>

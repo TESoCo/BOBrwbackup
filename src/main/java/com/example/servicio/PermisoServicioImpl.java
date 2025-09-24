@@ -25,7 +25,7 @@ public class PermisoServicioImpl implements PermisoServicio {
     }
 
     @Override
-    public Permiso buscarPorNombre(String nombre) {
-        return null;
+    public List<Permiso> buscarPorNombre(String nombre) {
+        return permisoDao.findByNombrePermiso(nombre);
     }
 }

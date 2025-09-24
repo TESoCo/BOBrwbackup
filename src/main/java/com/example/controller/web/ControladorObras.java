@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/presupuestos")
+@RequestMapping("/obras")
 
 public class ControladorObras
 {
@@ -25,19 +25,19 @@ public class ControladorObras
     @Autowired
     private ObraServicio obraServicio;
     //Acá están los métodos para presupuestos
-    @GetMapping("/inicioPresupuestos")
+    @GetMapping("/inicioObras")
     public String inicioPresu(Model model){
         List<Obra> obras = obraServicio.listaObra();
         model.addAttribute("obras",obras);
-        return "presupuestos/inicioPresupuestos";
+        return "obras/inicioObra";
     }
 
     //Agregar nuevo presupuesto
-    @GetMapping("/agregarPresupuesto")
+    @GetMapping("/agregarObra")
     public String formAnexarPresupuesto(Model model){
         model.addAttribute("obra", new Obra());
         model.addAttribute("APU", APUServicio.listarElementos());
-        return "presupuestos/agregarPresupuesto";
+        return "obras/agregarObra";
     }
 
     //Función de guardado
@@ -100,7 +100,7 @@ public class ControladorObras
 
 
 
-        return "redirect:/presupuestos/inicioPresupuestos";
+        return "redirect:/obras/inicioObra";
     }
 
 
@@ -135,14 +135,14 @@ public class ControladorObras
         }
 */
 
-        return "presupuestos/verPresupuestos";
+        return "obras/verObras";
     }
 
     //borrar
     @GetMapping("/borrar/{id_obra}")
     public String borrarObra(Obra obraBorrar) {
         obraServicio.borrar(obraBorrar);
-        return "redirect:/presupuestos/inicioPresupuestos";
+        return "redirect:/obras/inicioObra";
     }
 
     //funcionalidad para guardar cambios
@@ -156,7 +156,7 @@ public class ControladorObras
         @RequestParam List<Double> cantidades,
         Model model) {
         if (result.hasErrors() || actividadIds.isEmpty()) {
-            return "redirect:/presupuestos/cambiar/" + id_obra;
+            return "redirect:/obras/cambiar/" + id_obra;
         }
 
         Map<Long, Double> apuValues = new HashMap<>();
@@ -170,7 +170,7 @@ public class ControladorObras
 
 
         obraServicio.actualizar(obraActualizar);
-        return "redirect:/presupuestos/inicioPresupuestos";
+        return "redirect:/obras/inicioObra";
     }
 
     //Ver obraDetalle en detalle (sólo lectura)
@@ -192,7 +192,7 @@ public class ControladorObras
         model.addAttribute("obra", obraDetalle);
 //        model.addAttribute("listApus", listApus);
         model.addAttribute("Editando", false); // ← This forces VIEW mode
-        return "presupuestos/verPresupuestos";
+        return "obras/verObras";
     }
 
 
@@ -235,7 +235,7 @@ public class ControladorObras
             model.addAttribute("error", error);
         }
 
-        return "presupuestos/inicioPresupuestos";
+        return "obras/inicioObra";
     }
 
 }

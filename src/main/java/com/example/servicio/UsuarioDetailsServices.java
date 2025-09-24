@@ -4,12 +4,15 @@ import com.example.dao.UsuarioDao;
 import com.example.domain.Permiso;
 import com.example.domain.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -18,17 +21,20 @@ import java.util.List;
 @Service
 public class UsuarioDetailsServices implements UserDetailsService {
 
+
     @Autowired
-    private UsuarioDao usuarioDao;
+    private UsuarioServicio usuarioServicio;
 
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
-        Usuario usuario = usuarioDao.findBynombreUsuario(username);
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
 
-        if (usuario == null){
-            throw new UsernameNotFoundException("Usuario NO encontrado");
+        if (usuario == null) {
+            System.out.println("User not found: " + username);
+            throw new UsernameNotFoundException("Usuario NO encontrado: " + username);
         }
+
 
         // Handle case where rol might be null
         String role = (usuario.getRol() != null && usuario.getRol().getNombreRol()!= null)
@@ -61,5 +67,7 @@ public class UsuarioDetailsServices implements UserDetailsService {
 
 
     }
+
+
 
 }

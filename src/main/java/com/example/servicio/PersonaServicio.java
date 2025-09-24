@@ -8,7 +8,7 @@ public interface PersonaServicio {
 
     public List<Persona> listaPersonas();
 
-    public void salvar(Persona persona);
+    public Persona salvar(Persona persona);
 
     public void borrar(Persona persona);
 
