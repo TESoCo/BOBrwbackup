@@ -400,6 +400,10 @@
         <li><a th:href="@{/inventario}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
       </div>
 
+      <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU', 'VER_APU')">
+        <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
+      </div>
+
       <!-- Menu items for users with progress permissions -->
       <div sec:authorize="hasAnyAuthority('VER_AVANCES', 'REGISTRAR_AVANCES')">
         <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>

@@ -304,7 +304,7 @@
                     <tbody>
                     <tr th:each="obra : ${obras}">
                         <td th:text="${obra.id_obra}"></td>
-                        <td th:text="${obra.obraName}"></td>
+                        <td th:text="${obra.nombreObra}"></td>
                         <td class="actions">
                             <a th:href="@{/obras/cambiar/} + ${obra.id_obra}" class="btn btn-edit">
                                 <i class='bx bx-edit'></i> Editar

@@ -24,6 +24,9 @@ public class ControladorObras
     //Obras
     @Autowired
     private ObraServicio obraServicio;
+
+
+
     //Acá están los métodos para presupuestos
     @GetMapping("/inicioObras")
     public String inicioPresu(Model model){
@@ -36,14 +39,14 @@ public class ControladorObras
     @GetMapping("/agregarObra")
     public String formAnexarPresupuesto(Model model){
         model.addAttribute("obra", new Obra());
-        model.addAttribute("APU", APUServicio.listarElementos());
+        model.addAttribute("APUs", APUServicio.listarElementos());
+
         return "obras/agregarObra";
     }
 
     //Función de guardado
     @PostMapping("/salvar")
     public String salvarObra(
-
 
             @RequestParam String nombreObra,
             @RequestParam String etapa,
@@ -97,10 +100,7 @@ public class ControladorObras
         }
 */
 
-
-
-
-        return "redirect:/obras/inicioObra";
+        return "redirect:/obras/inicioObras";
     }
 
 
@@ -139,9 +139,18 @@ public class ControladorObras
     }
 
     //borrar
-    @GetMapping("/borrar/{id_obra}")
+    /*@GetMapping("/borrar/{id_obra}")
     public String borrarObra(Obra obraBorrar) {
         obraServicio.borrar(obraBorrar);
+        return "redirect:/obras/inicioObra";
+    }*/
+
+    //anular
+
+    @GetMapping("/anular/{id_obra}")
+    public String anularObra(Obra obraAnular)
+    {
+        obraAnular.setAnular(true);
         return "redirect:/obras/inicioObra";
     }
 
@@ -170,7 +179,7 @@ public class ControladorObras
 
 
         obraServicio.actualizar(obraActualizar);
-        return "redirect:/obras/inicioObra";
+        return "redirect:/obras/inicioObras";
     }
 
     //Ver obraDetalle en detalle (sólo lectura)
@@ -205,7 +214,7 @@ public class ControladorObras
     public String filtroPre(
             @RequestParam(value = "tipoBusqueda", required = false) String tipoBusqueda,
             @RequestParam(value = "valorBusqueda", required = false) String valorBusqueda,
-            Integer id_obra,
+
             Model model) {
 
         List<Obra> obras = new ArrayList<>(); // Initialize with empty list
@@ -215,9 +224,13 @@ public class ControladorObras
         if (tipoBusqueda != null && valorBusqueda != null && !valorBusqueda.isEmpty()) {
             switch (tipoBusqueda) {
                 case "idObra":
-                    obra = obraServicio.localizarObra(Long.getLong(valorBusqueda));
+                    Long id = Long.parseLong(valorBusqueda);
+                    obra = obraServicio.localizarObra(id);
+                    if (obra != null) {
+                        obras.add(obra);
+                    }
                     break;
-                case "obraName":
+                case "nombreObra":
                     obras = obraServicio.findByObraNameContaining(valorBusqueda);
                     break;
 
@@ -228,8 +241,8 @@ public class ControladorObras
             obras = obraServicio.listaObra();
         }
 
-        model.addAttribute("presupuestos", obras);
-        model.addAttribute("presupuesto", obra);
+        model.addAttribute("obras", obras);
+        model.addAttribute("obra", obra);
 
         if (error != null) {
             model.addAttribute("error", error);

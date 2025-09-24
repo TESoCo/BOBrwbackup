@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Crear Nuevo Presupuesto</title> <!-- Static title since we only create -->
+    <title>Crear Nueva Obra</title> <!-- Static title since we only create -->
 
     <style>
         /* Style for material rows (same as before) */
@@ -39,19 +39,19 @@
     </style>
 </head>
 <body>
-<h1>Crear Nuevo Presupuesto</h1>
+<h1>Crear Nueva Obra</h1>
 
 <!-- Back button -->
-<a th:href="@{/presupuestos/inicioPresupuestos}" class="btn">Regresar</a>
+<a th:href="@{/obras/inicioObras}" class="btn">Regresar</a>
 <br><br>
 
 <!-- Create Form (now the only form) -->
-<form th:action="@{/presupuestos/salvar}" method="post" th:object="${presupuesto}">
+<form th:action="@{/obras/salvar}" method="post" th:object="${obra}">
 
     <!-- Work Name Input -->
     <div>
         <label><b>Nombre de la obra:</b></label>
-        <input type="text" th:field="*{obraName}" required>
+        <input type="text" th:field="*{NombreObra}" required>
     </div>
 
     <h3>Actividades:</h3>
@@ -60,11 +60,11 @@
     <div>
         <select id="activityDropdown" name="actividadIds">
             <option value="">Seleccione...</option>
-            <option th:each="mat : ${matriz}"
-                    th:value="${mat.id_m}"
-                    th:data-nombre="${mat.nombre}"
-                    th:data-unidades="${mat.unidades}"
-                    th:text="${mat.nombre} + ' (' + ${mat.unidades} + ')'">
+            <option th:each="apu : ${APUs}"
+                    th:value="${apu.idAPU}"
+                    th:data-nombre="${apu.nombreAPU}"
+                    th:data-unidades="${apu.unidadesAPU}"
+                    th:text="${apu.nombreAPU} + ' (' + ${apu.unidadesAPU} + ')'">
             </option>
         </select>
 
