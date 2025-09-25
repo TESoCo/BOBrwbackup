@@ -45,6 +45,13 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     }
 
     @Override
+    @Transactional
+    public List <Usuario> buscarPorNombreList(String nombreUsuario)
+    {
+        return usuarioDao.findByNombreUsuario(nombreUsuario);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Usuario> encontrarPorRol(String rol) {
         return usuarioDao.findByRol_NombreRol(rol);
