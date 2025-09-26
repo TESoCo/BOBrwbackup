@@ -31,4 +31,11 @@ public class Contratista implements Serializable {
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id_Info_Comerc", referencedColumnName = "id_Info_Comerc")
     private InformacionComercial informacionComercial;
+    //informacion_comercial
+    //private Long idInfoComerc;
+    //private String nitRut;
+    //private String formaPago;
+    //private String banco;
+    //private String numCuenta;
+    //private String direccion;
 }

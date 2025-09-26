@@ -1,6 +1,7 @@
 package com.example.controller.web;
 
 import com.example.domain.Contratista;
+import com.example.domain.Obra;
 import com.example.servicio.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.Row;
@@ -9,6 +10,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -35,6 +37,14 @@ public class ControladorContratistas {
     @Autowired
     private ProveedorServicio proveedorServicio;
 
+    @GetMapping("/contratista")
+    public String inicioContrat(Model model){
+        List<Contratista> contratistas = contratistaServicio.listarContratistas();
+        model.addAttribute("contratistas",contratistas);
+        return "contratistas/contratista";
+    }
+
+
     // Reporte de contratistas
     @GetMapping("/contratistas/excel")
     public void exportarContratistasExcel(HttpServletResponse response) throws IOException {
@@ -49,11 +59,11 @@ public class ControladorContratistas {
 
         // Crear encabezados
         Row header = hoja.createRow(0);
-        header.createCell(0).setCellValue("ID");
-        header.createCell(1).setCellValue("Nombre");
-        header.createCell(2).setCellValue("Especialidad");
-        header.createCell(3).setCellValue("Contacto");
-        header.createCell(4).setCellValue("Estado");
+        header.createCell(0).setCellValue("Contratista");
+        header.createCell(1).setCellValue("Contacto");
+        header.createCell(2).setCellValue("Telefono");
+        header.createCell(3).setCellValue("Correo");
+        header.createCell(4).setCellValue("Dirección");
 
         // Llenar datos
         int fila = 1;
