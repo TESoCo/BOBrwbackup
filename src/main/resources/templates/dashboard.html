@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="es" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -444,44 +444,32 @@
   <!-- Main content -->
   <main class="main-content">
     <!-- Header -->
+
     <div class="header">
       <h2>Panel de Control</h2>
       <div class="user-menu">
         <div class="user-avatar">
-          <span sec:authentication="name" th:text="${#strings.substring(name, 0, 1)}"></span>
         </div>
+        <div>Bienvenido <span th:text="${nombreUsuario}"></span></div>
         <div>
-          <div>Bienvenido <span sec:authentication="name"></span></div>
-          <div>
-            <!-- Debug: Mostrar todas las autoridades -->
-            <div class="debug-info" style="display: none;">
-              <strong>Autoridades del usuario:</strong>
-              <span sec:authentication="principal.authorities"></span>
-            </div>
-
-            <!-- Roles corregidos -->
-            <span class="role-badge admin-badge"
-                  sec:authorize="hasRole('ADMIN')">
-              <i class="fas fa-shield-alt"></i> Administrador
-            </span>
-            <span class="role-badge supervisor-badge"
-                  sec:authorize="hasRole('SUPERVISOR')">
-              <i class="fas fa-user-check"></i> Supervisor
-            </span>
-            <span class="role-badge operativo-badge"
-                  sec:authorize="hasRole('OPERATIVO')">
-              <i class="fas fa-user"></i> Operativo
-            </span>
-
-            <!-- Fallback si no hay roles visibles -->
-            <span class="role-badge"
-                  style="background: rgba(100, 116, 139, 0.1); color: var(--secondary);"
-                  th:if="${isAdmin == false and isSupervisor == false and isOperativo == false}">
-              <i class="fas fa-user"></i> Usuario
-            </span>
-          </div>
+            <!-- Mostrar rol usando datos del controlador -->
+          <span th:if="${isAdmin}" class="role-badge admin-badge">
+            <i class="fas fa-shield-alt"></i> Administrador
+          </span>
+          <span th:if="${isSupervisor}" class="role-badge supervisor-badge">
+            <i class="fas fa-user-check"></i> Supervisor
+          </span>
+          <span th:if="${isOperativo}" class="role-badge operativo-badge">
+            <i class="fas fa-user"></i> Operativo
+          </span>
+            <!-- Si no tiene ningún rol conocido -->
+          <span th:if="${!isAdmin and !isSupervisor and !isOperativo}"
+                  class="role-badge" style="background: rgba(100, 116, 139, 0.1); color: var(--secondary);">
+            <i class="fas fa-user"></i> Usuario
+          </span>
         </div>
       </div>
+
     </div>
 
     <!-- Dashboard cards -->

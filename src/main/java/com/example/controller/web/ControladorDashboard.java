@@ -53,6 +53,34 @@ public class ControladorDashboard {
             // Obtener obras para el mapa
             List<Obra> obrasConCoordenadas = obtenerObrasConCoordenadas(obras);
 
+            //info de usuario para interfaz
+
+
+            if (authentication != null && authentication.isAuthenticated()) {
+                String username = authentication.getName();
+                Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+                // Debug información del usuario
+                System.out.println("Usuario autenticado: " + username);
+                System.out.println("Autoridades: " + authorities);
+
+                // Agregar información específica del usuario al modelo
+                model.addAttribute("nombreUsuario", username);
+                model.addAttribute("autoridades", authorities);
+
+                // Verificar roles específicos
+                boolean isAdmin = authorities.stream()
+                        .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+                boolean isSupervisor = authorities.stream()
+                        .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
+                boolean isOperativo = authorities.stream()
+                        .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
+
+                model.addAttribute("isAdmin", isAdmin);
+                model.addAttribute("isSupervisor", isSupervisor);
+                model.addAttribute("isOperativo", isOperativo);
+            }
+
 
             // Agregar datos al modelo
             model.addAttribute("cantidadObras", cantidadObras);
@@ -63,6 +91,8 @@ public class ControladorDashboard {
             model.addAttribute("hayObrasConCoordenadas", obrasConCoordenadas != null && !obrasConCoordenadas.isEmpty());
             model.addAttribute("totalAvances", avancesRecientes != null ? avancesRecientes.size() : 0);
             model.addAttribute("totalInventarios", inventariosRecientes != null ? inventariosRecientes.size() : 0);
+
+
 
             // Debug: Verificar roles del usuario actual
             if (authentication != null && authentication.isAuthenticated()) {
@@ -93,6 +123,7 @@ public class ControladorDashboard {
             model.addAttribute("totalInventarios", 0);
             model.addAttribute("estadisticasAvance", new ArrayList<>());
             model.addAttribute("hayObrasConCoordenadas", false);
+
         }
 
 

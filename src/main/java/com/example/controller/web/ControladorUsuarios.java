@@ -8,6 +8,8 @@ import com.example.servicio.RolServicio;
 import com.example.servicio.UsuarioServicio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -37,6 +39,9 @@ public class ControladorUsuarios {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+
+
+
     // Directorio donde se guardarán las fotos de perfil
     private final String UPLOAD_DIR = "uploads/fotos-perfil/";
 
@@ -51,11 +56,13 @@ public class ControladorUsuarios {
             // Obtener lista REAL de usuarios
             List<Usuario> usuarios = usuarioServicio.listarUsuarios();
             List<Rol> roles = rolServicio.listarRoles();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
             // Agregar datos REALES al modelo
             model.addAttribute("usuarios", usuarios);
             model.addAttribute("roles", roles);
             model.addAttribute("totalUsuarios", usuarios != null ? usuarios.size() : 0);
+            model.addAttribute("usuarioActual", auth);
 
             // Estadísticas REALES por rol
             if (usuarios != null) {
