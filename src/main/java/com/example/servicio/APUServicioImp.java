@@ -60,15 +60,35 @@ public class APUServicioImp implements APUServicio {
         try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
             List<String[]> records = reader.readAll();
 
+            System.out.println("Total de filas en CSV: " + records.size()); // DEBUG
+
             // Skip header row (index 0) and process data rows
             for (int i = 1; i < records.size(); i++) {
                 String[] record = records.get(i); // Use .get() for List
-                if (record.length >= 7) {
+                if (record.length >= 4) {
                     Apu apu = crearAPUDesdeCSV(record, usuario);
                     if (apu != null) {
+
+                        if (apu.getDescAPU()!=null && apu.getDescAPU().length()>250)
+                        {
+                            String descripcionTruncada = apu.getDescAPU().substring(0, 250);
+                            apu.setDescAPU(descripcionTruncada);
+                        }
+                        if (apu.getNombreAPU()!=null && apu.getNombreAPU().length()>100)
+                        {
+                            String nombreTruncado = apu.getNombreAPU().substring(0, 100);
+                            apu.setNombreAPU(nombreTruncado);
+                        }
+
+
                         apusImportados.add(apu);
+                        System.out.println("APU agregado: " + apu.getNombreAPU()); // DEBUG
                     }
+                }else {
+                    System.err.println("Fila " + i + " ignorada - muy pocas columnas: " + record.length);
                 }
+
+
             }
         } catch (CsvException e) {
             throw new IOException("Error parsing CSV file", e);
@@ -77,22 +97,22 @@ public class APUServicioImp implements APUServicio {
         return apusImportados;
     }
 
-    private Apu crearAPUDesdeCSV(String[] record, Usuario usuario) {
+    public Apu crearAPUDesdeCSV(String[] record, Usuario usuario) {
         try {
             Apu apu = new Apu();
             apu.setIdUsuario(usuario);
 
             // Map CSV columns to APU fields
             // CSV format: id_Apu,nombreAPU,descAPU,unidades,vMaterialesAPU,vManoDeObraAPU,vTransporteAPU,vMiscAPU
-            apu.setNombreAPU(cleanValue(record[1]));     // nombreAPU (column 1)
-            apu.setDescAPU(cleanValue(record[2]));       // descAPU (column 2)
-            apu.setUnidadesAPU(cleanValue(record[3]));   // unidades (column 3)
+            apu.setNombreAPU(record.length > 1 ? cleanValue(record[1]) : "");     // nombreAPU (column 1)
+            apu.setDescAPU(record.length > 2 ? cleanValue(record[2]) : "");       // descAPU (column 2)
+            apu.setUnidadesAPU(record.length > 3 ? cleanValue(record[3]) : "");   // unidades (column 3)
 
             // Handle optional numeric values (columns 4-7)
-            apu.setVMaterialesAPU(parseBigDecimal(record[4]));    // vMaterialesAPU
-            apu.setVManoDeObraAPU(parseBigDecimal(record[5]));    // vManoDeObraAPU
-            apu.setVTransporteAPU(parseBigDecimal(record[6]));    // vTransporteAPU
-            apu.setVMiscAPU(parseBigDecimal(record[7]));          // vMiscAPU
+            apu.setVMaterialesAPU(record.length > 4 ? parseBigDecimal(record[4]) : BigDecimal.ZERO);    // vMaterialesAPU
+            apu.setVManoDeObraAPU(record.length > 5 ? parseBigDecimal(record[5]) : BigDecimal.ZERO);    // vManoDeObraAPU
+            apu.setVTransporteAPU(record.length > 6 ? parseBigDecimal(record[6]) : BigDecimal.ZERO);    // vTransporteAPU
+            apu.setVMiscAPU(record.length > 7 ? parseBigDecimal(record[7]) : BigDecimal.ZERO);          // vMiscAPU
 
             return apu;
         } catch (Exception e) {
@@ -119,5 +139,13 @@ public class APUServicioImp implements APUServicio {
             return BigDecimal.ZERO;
         }
     }
+
+    @Override
+    @Transactional
+    public void guardarTodos(List<Apu> apus) {
+        APUDao.saveAll(apus);
+    }
+
+
 }
 

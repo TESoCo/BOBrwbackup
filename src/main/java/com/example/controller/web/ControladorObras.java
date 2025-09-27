@@ -28,7 +28,7 @@ public class ControladorObras
 
 
     //Acá están los métodos para presupuestos
-    @GetMapping("/inicioObras")
+    @GetMapping("/inicioObra")
     public String inicioPresu(Model model){
         List<Obra> obras = obraServicio.listaObra();
         model.addAttribute("obras",obras);
@@ -100,7 +100,7 @@ public class ControladorObras
         }
 */
 
-        return "redirect:/obras/inicioObras";
+        return "redirect:obras/inicioObra";
     }
 
 
@@ -151,7 +151,7 @@ public class ControladorObras
     public String anularObra(Obra obraAnular)
     {
         obraAnular.setAnular(true);
-        return "redirect:/obras/inicioObra";
+        return "redirect:obras/inicioObra";
     }
 
     //funcionalidad para guardar cambios
@@ -179,7 +179,7 @@ public class ControladorObras
 
 
         obraServicio.actualizar(obraActualizar);
-        return "redirect:/obras/inicioObras";
+        return "redirect:obras/inicioObra";
     }
 
     //Ver obraDetalle en detalle (sólo lectura)

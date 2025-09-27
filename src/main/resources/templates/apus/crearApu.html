@@ -462,7 +462,7 @@
 
             <!-- Menu items for users with budget permissions -->
             <div sec:authorize="hasAnyAuthority('VER_OBRAS', 'GESTIONAR_OBRAS','LEER_OBRAS')">
-                <li><a th:href="@{/obras/inicioObras}"><i class="fas fa-building"></i> <span>Obras</span></a></li>
+                <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-building"></i> <span>Obras</span></a></li>
             </div>
 
             <!-- Supervisor and Admin menu items -->

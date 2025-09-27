@@ -72,7 +72,7 @@ public class ControladorAPU {
     @GetMapping("/eliminar/{id}")
     public String eliminarAPU(@PathVariable Long id) {
         apuServicio.eliminar(apuServicio.obtenerPorId(id));
-        return "redirect:/apus/inicioAPU";
+        return "redirect:/apu/inicioAPU";
     }
 
     // NEW: CSV Import endpoint
@@ -107,9 +107,10 @@ public class ControladorAPU {
             List<Apu> apusImportados = apuServicio.importarAPUsDesdeCSV(archivo, usuario);
 
             // Save all imported APUs
-            for (Apu apu : apusImportados) {
+            for (Apu apu:apusImportados)
+            {
                 apuServicio.guardar(apu);
-            }
+            };
 
             redirectAttributes.addFlashAttribute("success",
                     "Se importaron " + apusImportados.size() + " APUs correctamente");

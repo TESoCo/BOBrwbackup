@@ -44,7 +44,7 @@ public class Inventario implements Serializable {
     @Column(name = "tipo_inv", unique = true)
     private String tipoInv;
 
-    @NotEmpty
+
     @Column(name = "anular", unique = true)
     private boolean anular;
 

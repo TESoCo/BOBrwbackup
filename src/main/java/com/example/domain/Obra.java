@@ -32,8 +32,8 @@ public class Obra implements Serializable {
     @JoinColumn(name = "id_Usuario")
     private Usuario idUsuario;
 
-    @NotEmpty
-    @Column(name = "anular", unique = true)
+
+    @Column(name = "anular")
     private boolean anular;
 
 
@@ -55,7 +55,7 @@ public class Obra implements Serializable {
 
     // From nombre_obra table
     @NotEmpty
-    @Column(name = "etapa", table = "nombre_obra", unique = true)
+    @Column(name = "etapa", table = "etapa_obra")
     private String etapa;
 
     @NotEmpty

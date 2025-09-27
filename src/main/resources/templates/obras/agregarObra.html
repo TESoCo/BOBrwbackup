@@ -2,17 +2,15 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Crear Nueva Obra</title> <!-- Static title since we only create -->
+    <title>Crear Nueva Obra</title>
 
     <style>
-        /* Style for material rows (same as before) */
         .material-row {
             margin: 10px 0;
             padding: 5px;
             border: 1px solid #ddd;
         }
 
-        /* Form styling */
         input, select, button {
             margin: 5px 0;
             display: block;
@@ -26,15 +24,31 @@
 
         .btn {
             padding: 8px 16px;
-            background-color: #4CAF50; /* Green */
+            background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
         }
 
-        /* Blue "add" button */
         .btn-add {
             background-color: #2196F3;
+        }
+
+        .selected-activity {
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+
+        .form-group {
+            margin: 10px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -42,23 +56,51 @@
 <h1>Crear Nueva Obra</h1>
 
 <!-- Back button -->
-<a th:href="@{/obras/inicioObras}" class="btn">Regresar</a>
+<a th:href="@{/obras/inicioObra}" class="btn">Regresar</a>
 <br><br>
 
-<!-- Create Form (now the only form) -->
-<form th:action="@{/obras/salvar}" method="post" th:object="${obra}">
-
-    <!-- Work Name Input -->
-    <div>
+<!-- Create Form -->
+<form th:action="@{/obras/salvar}" method="post">
+    <!-- Campos básicos de la obra -->
+    <div class="form-group">
         <label><b>Nombre de la obra:</b></label>
-        <input type="text" th:field="*{NombreObra}" required>
+        <input type="text" name="nombreObra" required>
     </div>
 
-    <h3>Actividades:</h3>
+    <div class="form-group">
+        <label><b>Etapa:</b></label>
+        <select id="Rol" name="rolSeleccionado" required>
+            <option value="">Seleccionar Rol...</option>
+            <option value="PRESU">Presupuesto</option>
+            <option value="EJECU">Ejecución</option>
+            <option value="LIQUI">Liquidación</option>
+    </div>
+
+    <div class="form-group">
+        <label><b>Fecha de inicio:</b></label>
+        <input type="date" name="fechaIni" required>
+    </div>
+
+    <div class="form-group">
+        <label><b>Fecha de fin:</b></label>
+        <input type="date" name="fechaFin" required>
+    </div>
+
+    <div class="form-group">
+        <label><b>Coordenada N:</b></label>
+        <input type="number" step="0.000001" name="cooNObra" required>
+    </div>
+
+    <div class="form-group">
+        <label><b>Coordenada E:</b></label>
+        <input type="number" step="0.000001" name="cooEObra" required>
+    </div>
+
+    <h3>Actividades (APU):</h3>
 
     <!-- Single dropdown for selection -->
     <div>
-        <select id="activityDropdown" name="actividadIds">
+        <select id="activityDropdown">
             <option value="">Seleccione...</option>
             <option th:each="apu : ${APUs}"
                     th:value="${apu.idAPU}"
@@ -68,8 +110,7 @@
             </option>
         </select>
 
-        <input type="number" id="activityQuantity" step="0.01" min="0.01"
-               placeholder="Cantidad" class="quantity-input" name="cantidades">
+        <input type="number" id="activityQuantity" step="0.01" min="0.01" placeholder="Cantidad">
 
         <button type="button" onclick="addActivity()" class="btn btn-add">
             Añadir actividad
@@ -78,7 +119,7 @@
 
     <br>
 
-    <!-- Container for selected  -->
+    <!-- Container for selected activities -->
     <div id="selectedActivities">
         <!-- Selected activities will appear here -->
     </div>
@@ -89,7 +130,7 @@
     <div id="hiddenInputs"></div>
 
     <!-- Submit Button -->
-    <button type="submit" class="btn">Guardar presupuesto</button>
+    <button type="submit" class="btn">Guardar</button>
 </form>
 
 <script>
@@ -103,7 +144,7 @@
         const selectedOption = dropdown.options[dropdown.selectedIndex];
         const activityId = parseInt(selectedOption.value);
         const activityName = selectedOption.getAttribute('data-nombre');
-
+        const activityUnits = selectedOption.getAttribute('data-unidades');
         const quantity = parseFloat(quantityInput.value);
 
         // Validate inputs
@@ -127,6 +168,7 @@
         activities.push({
             id: activityId,
             name: activityName,
+            units: activityUnits,
             quantity: quantity
         });
 
@@ -154,16 +196,15 @@
             activityDiv.className = 'selected-activity';
             activityDiv.innerHTML = `
                 <span>${activity.name} (${activity.units}) - Cantidad: ${activity.quantity}</span>
-                <span class="btn-remove" onclick="removeActivity('${activity.id}')">✕ Eliminar</span>
+                <span class="btn-remove" onclick="removeActivity(${activity.id})">✕ Eliminar</span>
             `;
             selectedActivitiesDiv.appendChild(activityDiv);
 
-            // Hidden inputs for form submission
-            addHiddenInput(hiddenInputsDiv, 'actividadIds', activity.id);
+            // Hidden inputs for form submission - usando los nombres que espera el controlador
+            addHiddenInput(hiddenInputsDiv, 'apuIds', activity.id);
             addHiddenInput(hiddenInputsDiv, 'cantidades', activity.quantity);
         });
     }
-
 
     function addHiddenInput(container, name, value) {
         const input = document.createElement('input');
@@ -173,13 +214,15 @@
         container.appendChild(input);
     }
 
-function resetFormInputs() {
-    document.getElementById('activityDropdown').selectedIndex = 0;
-    document.getElementById('activityQuantity').value = '';
-}
+    function resetFormInputs() {
+        document.getElementById('activityDropdown').selectedIndex = 0;
+        document.getElementById('activityQuantity').value = '';
+    }
 
-
-}
+    // Initialize the form when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        updateActivityUI();
+    });
 </script>
 </body>
 </html>

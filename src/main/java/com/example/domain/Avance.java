@@ -44,7 +44,7 @@ public class Avance implements Serializable{
     @JoinColumn(name = "id_APU")
     private Apu idApu;
 
-    @NotEmpty
+
     @Column(name = "anular", unique = true)
     private boolean anular;
 
