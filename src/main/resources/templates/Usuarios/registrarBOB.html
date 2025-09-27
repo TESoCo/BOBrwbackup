@@ -112,7 +112,7 @@
 </header>
 
 <div class="registrar">
-  <form id="registro" method="POST" th:action="@{/usuarios/registrar}">
+  <form id="registro" method="POST" th:action="@{/usuarios/registrar}" enctype="multipart/form-data">
     <h1>Registrar Nuevo Usuario</h1>
 
     <!-- Mensajes de éxito/error -->
@@ -147,7 +147,8 @@
 
       <!-- Campo para foto de perfil -->
       <label for="fotoPerfil">Foto de Perfil (Opcional):</label>
-      <input type="file" id="fotoPerfil" name="fotoPerfil" accept="image/*" class="file-input">
+
+      <input type="file" id="fotoPerfil" name="fotoPerfil" accept="image/*" class="form-control">
       <small class="file-info">Formatos aceptados: JPG, PNG, GIF. Tamaño máximo: 5MB</small>
 
       <!-- Vista previa de la imagen -->
@@ -176,10 +177,10 @@
                 th:text="${rol.nombreRol}">
           Rol
         </option>
-        <!-- Opciones por defecto por si no hay roles en la BD -->
+        <!-- Opciones por defecto por si no hay roles en la BD
         <option value="ADMIN">Administrador</option>
         <option value="SUPERVISOR">Supervisor</option>
-        <option value="OPERATIVO">Operativo</option>
+        <option value="OPERATIVO">Operativo</option> -->
       </select>
     </fieldset>
 
