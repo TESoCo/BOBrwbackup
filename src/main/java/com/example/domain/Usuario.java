@@ -30,11 +30,15 @@ public class Usuario implements Serializable {
     private String pass_usuario;
 
     @NotEmpty
-    @Column(name = "cargo", unique = true)
+    @Column(name = "cargo")
     private String cargo;
 
-    @Column(name = "foto_Perfil", unique = true)
-    private String fotoPerfil;
+    @Lob // Anotación importante para BLOB
+    @Column(name = "foto_Perfil", columnDefinition = "LONGBLOB")
+    private byte[] fotoPerfil;
+
+    @Column(name = "foto_tipo")
+    private String fotoTipo;
 
     // RELACIÓN CON rol: ManyToOne (un usuario tiene un rol)
     //Relacion muchos a uno con rol, un rol puede ser asignado a varios usuarios

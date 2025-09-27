@@ -11,4 +11,6 @@ public interface UsuarioServicio {
     Usuario encontrarPorNombreUsuario(String nombreUsuario);
     List <Usuario> buscarPorNombreList(String nombreUsuario);
     List<Usuario> encontrarPorRol(String rol);
+    public void eliminarUsuarioConValidaciones(Long idUsuario);
+    public boolean tieneFoto(Long idUsuario);
 }

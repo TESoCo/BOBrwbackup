@@ -1,0 +1,4 @@
+<img th:if="${usuario.fotoPerfil != null}"
+     th:src="@{/usuarios/foto/__${usuario.idUsuario}__}"
+     alt="Foto de perfil" style="width: 100px; height: 100px; border-radius: 50%;"
+     xmlns:th="http://www.w3.org/1999/xhtml">

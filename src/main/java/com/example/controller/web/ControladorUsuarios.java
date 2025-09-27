@@ -7,6 +7,10 @@ import com.example.servicio.PersonaServicio;
 import com.example.servicio.RolServicio;
 import com.example.servicio.UsuarioServicio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,8 +46,6 @@ public class ControladorUsuarios {
 
 
 
-    // Directorio donde se guardarán las fotos de perfil
-    private final String UPLOAD_DIR = "uploads/fotos-perfil/";
 
 
     /**
@@ -135,6 +137,11 @@ public class ControladorUsuarios {
             @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
             RedirectAttributes redirectAttributes) {
 
+        System.out.println("Foto recibida: " + (fotoPerfil != null ? fotoPerfil.getOriginalFilename() : "null"));
+        System.out.println("Tamaño: " + (fotoPerfil != null ? fotoPerfil.getSize() : "0"));
+        System.out.println("Tipo: " + (fotoPerfil != null ? fotoPerfil.getContentType() : "null"));
+
+
         try {
             // Validar campos obligatorios
             if (nombre == null || nombre.isEmpty() ||
@@ -197,8 +204,15 @@ public class ControladorUsuarios {
                 return "redirect:/usuarios/registrar";
             }
 
+            // 3. CREAR EL NUEVO USUARIO
+            Usuario usuario = new Usuario();
+            usuario.setNombreUsuario(nombreUsuario);
+            usuario.setPass_usuario(passwordEncoder.encode(password));
+            usuario.setCargo(cargo);
+            usuario.setPersona(persona);
+            usuario.setRol(rol);
+
             // 3. PROCESAR LA FOTO DE PERFIL (si se subió)
-            String nombreArchivoFoto = null;
             if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
                 // Validar tipo de archivo
                 String contentType = fotoPerfil.getContentType();
@@ -213,49 +227,20 @@ public class ControladorUsuarios {
                     return "redirect:/usuarios/registrar";
                 }
 
-                // Generar nombre único para el archivo
-                String extension = "";
-                if (contentType.equals("image/jpeg")) {
-                    extension = ".jpg";
-                } else if (contentType.equals("image/png")) {
-                    extension = ".png";
-                } else if (contentType.equals("image/gif")) {
-                    extension = ".gif";
-                } else {
-                    extension = ".jpg"; // Por defecto
-                }
+                // LEER LA FOTO COMO BYTES (BLOB)
+                byte[] fotoBytes = fotoPerfil.getBytes();
+                // GUARDAR COMO BLOB
+                usuario.setFotoPerfil(fotoBytes);
+                usuario.setFotoTipo(contentType); // Guardar el tipo MIME
 
-                nombreArchivoFoto = UUID.randomUUID().toString() + extension;
+                // Guardar usuario en la base de datos
+                usuarioServicio.guardar(usuario);
 
-                // Crear directorio si no existe
-                Path uploadPath = Paths.get(UPLOAD_DIR);
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-
-                // Guardar archivo
-                Path filePath = uploadPath.resolve(nombreArchivoFoto);
-                Files.copy(fotoPerfil.getInputStream(), filePath);
+            } else {
+                // Usuario sin foto
+                System.out.println("No se subió foto de perfil");
+                usuarioServicio.guardar(usuario);
             }
-
-
-
-
-            // 4. CREAR EL NUEVO USUARIO
-            Usuario usuario = new Usuario();
-            usuario.setNombreUsuario(nombreUsuario);
-            usuario.setPass_usuario(passwordEncoder.encode(password));
-            usuario.setCargo(cargo);
-            usuario.setPersona(persona); // Asociar la persona creada
-            usuario.setRol(rol); // Asociar el rol seleccionado
-
-            // Asignar la foto de perfil si se subió
-            if (nombreArchivoFoto != null) {
-                usuario.setFotoPerfil(nombreArchivoFoto);
-            }
-
-            // Guardar usuario en la base de datos
-            usuarioServicio.guardar(usuario);
 
             redirectAttributes.addFlashAttribute("success", "Usuario registrado exitosamente");
             return "redirect:/usuarios?registroExitoso=true";
@@ -277,27 +262,72 @@ public class ControladorUsuarios {
         try {
             Usuario usuario = usuarioServicio.encontrarPorId(id);
             if (usuario != null) {
-                // Eliminar también la foto de perfil si existe
-                if (usuario.getFotoPerfil() != null && !usuario.getFotoPerfil().isEmpty()) {
-                    Path filePath = Paths.get(UPLOAD_DIR + usuario.getFotoPerfil());
-                    if (Files.exists(filePath)) {
-                        Files.delete(filePath);
-                    }
+
+// Verificar si el usuario actual está intentando eliminarse a sí mismo
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                String currentUsername = auth.getName();
+
+                if (usuario.getNombreUsuario().equals(currentUsername)) {
+                    redirectAttributes.addFlashAttribute("error", "No puedes eliminar tu propio usuario");
+                    return "redirect:/usuarios";
                 }
-                // Opcional: También eliminar la persona asociada
+
+                //  También eliminar la persona asociada
                 Persona persona = usuario.getPersona();
                 personaServicio.borrar(persona);
-
+                System.out.println("Usuario eliminado: " + id);
                 usuarioServicio.borrar(usuario);
+                if (persona != null) {
+                    personaServicio.borrar(persona);
+                    System.out.println("Persona eliminada: " + persona.getIdPersona());
+                }
                 redirectAttributes.addFlashAttribute("success", "Usuario eliminado exitosamente");
             } else {
                 redirectAttributes.addFlashAttribute("error", "Usuario no encontrado");
             }
         } catch (Exception e) {
             System.err.println("Error al eliminar usuario: " + e.getMessage());
-            redirectAttributes.addFlashAttribute("error", "Error al eliminar usuario: " + e.getMessage());
-        }
+            e.printStackTrace();
 
-        return "redirect:/usuarios";
+            // Mensaje de error más específico
+            if (e.getMessage().contains("constraint") || e.getMessage().contains("foreign key")) {
+                redirectAttributes.addFlashAttribute("error", "No se puede eliminar el usuario porque tiene registros asociados en el sistema");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Error al eliminar usuario: " + e.getMessage());
+            }
+        }
+    return "redirect:/usuarios";
+
+
     }
+
+        //nodo que sirve las fotos
+    @GetMapping("/foto/{idUsuario}")
+    @ResponseBody
+    public ResponseEntity<byte[]> obtenerFotoUsuario(@PathVariable Long idUsuario) {
+        try {
+            Usuario usuario = usuarioServicio.encontrarPorId(idUsuario);
+            if (usuario != null && usuario.getFotoPerfil() != null && usuario.getFotoTipo() != null) {
+                HttpHeaders headers = new HttpHeaders();
+
+                // Configurar el tipo de contenido basado en lo guardado
+                if (usuario.getFotoTipo().equals("image/jpeg")) {
+                    headers.setContentType(MediaType.IMAGE_JPEG);
+                } else if (usuario.getFotoTipo().equals("image/png")) {
+                    headers.setContentType(MediaType.IMAGE_PNG);
+                } else if (usuario.getFotoTipo().equals("image/gif")) {
+                    headers.setContentType(MediaType.IMAGE_GIF);
+                } else {
+                    headers.setContentType(MediaType.IMAGE_JPEG); // Por defecto
+                }
+
+                return new ResponseEntity<>(usuario.getFotoPerfil(), headers, HttpStatus.OK);
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            System.err.println("Error al obtener foto: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
