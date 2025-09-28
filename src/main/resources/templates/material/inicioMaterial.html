@@ -417,6 +417,8 @@
                 <li><a th:href="@{/inventario}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
             </div>
 
+
+
             <!-- Menu items for users with progress permissions -->
             <div sec:authorize="hasAnyAuthority('VER_AVANCES', 'REGISTRAR_AVANCES')">
                 <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
@@ -459,7 +461,7 @@
         <!-- Header -->
         <div class="header">
             <div>
-                <h2><i class="fas fa-calculator"></i> Gestión de Materialess</h2>
+                <h2><i class="fas fa-calculator"></i> Gestión de Materiales</h2>
                 <p>Administra los materiales registrados del sistema</p>
             </div>
             <div class="user-menu">
@@ -509,7 +511,7 @@
             </form>
         </div>
 
-        <!-- APUs Table -->
+        <!-- main Table -->
         <div th:if="${materiales != null and !materiales.empty}">
             <div class="table-container">
                 <table class="data-table">
@@ -519,7 +521,6 @@
                         <th>Nombre</th>
                         <th>Descripción</th>
                         <th>Unidades</th>
-                        <th>Valor</th>
                         <th>Acciones</th>
                     </tr>
                     </thead>
@@ -536,11 +537,7 @@
                         <td>
                             <span class="status-badge badge-active" th:text="${material.unidadMaterial}"></span>
                         </td>
-                        <td>
-                            <strong th:text="'$' + ${#numbers.formatDecimal(material.precioMaterial), 1, 'COMMA', 2, 'POINT')}">
-                                $0.00
-                            </strong>
-                        </td>
+
                         <td class="actions">
                             <a th:href="@{/material/editar/} + ${material.idMaterial}"
                                class="btn btn-warning btn-sm"
