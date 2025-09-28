@@ -98,6 +98,32 @@ public class ControladorMaterial {
         return "redirect:/material/inicioMaterial";
     }
 
+    // Método GET para mostrar el formulario de edición
+    @GetMapping("/editar/{id}")
+    public String mostrarFormularioEdicion(@PathVariable Long id, Model model) {
+        Material material = materialServicio.obtenerPorId(id);
+        model.addAttribute("material", material);
+        return "material/editarMaterial";
+    }
+
+    // Métod0 POST para procesar el formulario de edición
+    @PostMapping("/editar/{id}")
+    public String editarMaterial(@PathVariable Long id,
+                                 @ModelAttribute Material material,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            // Asegurar que el ID se mantenga
+            material.setIdMaterial(id);
+            materialServicio.guardar(material);
+            redirectAttributes.addFlashAttribute("successMessage", "Material actualizado correctamente");
+            return "redirect:/material/detalle/" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error al actualizar el material: " + e.getMessage());
+            return "redirect:/material/editar/" + id;
+        }
+    }
+
+
     @GetMapping("/detalle/{id}")
     public String verDetalleMaterial(@PathVariable Long id, Model model) {
         Material material = materialServicio.obtenerPorId(id);
