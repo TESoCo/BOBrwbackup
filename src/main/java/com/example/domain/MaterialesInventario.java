@@ -1,6 +1,7 @@
 // MaterialesInventario.java
 package com.example.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.io.Serializable;
@@ -15,11 +16,13 @@ public class MaterialesInventario implements Serializable {
     @Id
     @ManyToOne
     @JoinColumn(name = "id_Inventario")
+    @JsonIgnore // Prevent circular reference
     private Inventario inventario;
 
     @Id
     @ManyToOne
     @JoinColumn(name = "id_Material")
+    @JsonIgnore // Prevent circular reference
     private Material material;
 
 

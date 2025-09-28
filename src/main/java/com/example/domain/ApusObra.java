@@ -1,5 +1,6 @@
 package com.example.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,11 +17,13 @@ public class ApusObra implements Serializable {
     @Id
     @ManyToOne
     @JoinColumn(name = "id_Obra")
+    @JsonIgnore // Prevent circular reference
     private Obra obra;
 
     @Id
     @ManyToOne
     @JoinColumn(name = "id_APU")
+    @JsonIgnore // Prevent circular reference
     private Apu apu;
 
     @Column(name = "cantidad", nullable = false)

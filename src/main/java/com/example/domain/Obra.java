@@ -55,11 +55,11 @@ public class Obra implements Serializable {
 
     // From nombre_obra table
     @NotEmpty
-    @Column(name = "etapa", table = "etapa_obra")
+    @Column(name = "etapa", table = "nombre_obra")
     private String etapa;
 
     @NotEmpty
-    @Column(name = "Nombre_Obra", table = "nombre_obra")
+    @Column(name = "Nombre_Obra", table = "nombre_obra", unique = true)
     private String nombreObra;
 
     // From apus_obra table

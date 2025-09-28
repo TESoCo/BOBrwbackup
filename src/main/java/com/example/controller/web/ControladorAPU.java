@@ -3,6 +3,7 @@ package com.example.controller.web;
 import com.example.domain.Apu;
 import com.example.domain.Usuario;
 import com.example.servicio.APUServicio;
+import com.example.servicio.MaterialServicio;
 import com.example.servicio.UsuarioServicio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -29,9 +30,13 @@ public class ControladorAPU {
     @Autowired
     private UsuarioServicio usuarioServicio;
 
+    @Autowired
+    private MaterialServicio materialServicio;
+
     @GetMapping("/inicioAPU")
     public String inicioAPU(Model model) {
         model.addAttribute("apus", apuServicio.listarElementos());
+        model.addAttribute("materiales", materialServicio.listarTodos());
         return "apus/inicioAPU"; // You'll need to create this template
     }
 

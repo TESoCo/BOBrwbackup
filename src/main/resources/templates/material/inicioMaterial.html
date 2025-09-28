@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de APUs - Building Optimization Baseline</title>
+    <title>Gestión de Materiales - Building Optimization Baseline</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
@@ -459,8 +459,8 @@
         <!-- Header -->
         <div class="header">
             <div>
-                <h2><i class="fas fa-calculator"></i> Gestión de APUs</h2>
-                <p>Administra los Análisis de Precios Unitarios del sistema</p>
+                <h2><i class="fas fa-calculator"></i> Gestión de Materialess</h2>
+                <p>Administra los materiales registrados del sistema</p>
             </div>
             <div class="user-menu">
                 <div class="user-avatar">
@@ -485,8 +485,8 @@
 
         <!-- Action Buttons -->
         <div class="header-actions" style="margin-bottom: 2rem;">
-            <a th:href="@{/apu/crearAPU}" class="btn btn-success" sec:authorize="hasAuthority('CREAR_APU')">
-                <i class="fas fa-plus"></i> Nuevo APU
+            <a th:href="@{/material/crearMaterial}" class="btn btn-success" sec:authorize="hasAuthority('CREAR_MATERIAL')">
+                <i class="fas fa-plus"></i> Nuevo Material
             </a>
             <a th:href="@{/dashboard}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver al Dashboard
@@ -496,21 +496,21 @@
         <!-- Search Section -->
         <div class="search-container">
             <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-search"></i> Buscar APUs
+                <i class="fas fa-search"></i> Buscar Materiales
             </h3>
-            <form class="search-form" th:action="@{/apu/buscar}" method="get">
+            <form class="search-form" th:action="@{/material/buscar}" method="get">
                 <input type="text" name="busqueda" placeholder="Buscar por nombre o descripción..." class="search-input">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-search"></i> Buscar
                 </button>
-                <a th:href="@{/apu/inicioAPU}" class="btn btn-secondary">
+                <a th:href="@{/material/inicioMaterial}" class="btn btn-secondary">
                     <i class="fas fa-refresh"></i> Limpiar
                 </a>
             </form>
         </div>
 
         <!-- APUs Table -->
-        <div th:if="${apus != null and !apus.empty}">
+        <div th:if="${materiales != null and !materiales.empty}">
             <div class="table-container">
                 <table class="data-table">
                     <thead>
@@ -519,42 +519,42 @@
                         <th>Nombre</th>
                         <th>Descripción</th>
                         <th>Unidades</th>
-                        <th>Valor Total</th>
+                        <th>Valor</th>
                         <th>Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="apu : ${apus}">
-                        <td th:text="${apu.idAPU}"></td>
+                    <tr th:each="material : ${materiales}">
+                        <td th:text="${material.idMaterial}"></td>
                         <td>
-                            <strong th:text="${apu.nombreAPU}"></strong>
+                            <strong th:text="${material.nombreMaterial}"></strong>
                         </td>
                         <td>
-                                <span th:text="${#strings.abbreviate(apu.descAPU, 50)}"
-                                      th:title="${apu.descAPU}"></span>
+                                <span th:text="${#strings.abbreviate(material.descripcionMaterial, 50)}"
+                                      th:title="${material.descripcionMaterial}"></span>
                         </td>
                         <td>
-                            <span class="status-badge badge-active" th:text="${apu.unidadesAPU}"></span>
+                            <span class="status-badge badge-active" th:text="${material.unidadMaterial}"></span>
                         </td>
                         <td>
-                            <strong th:text="'$' + ${#numbers.formatDecimal(apu.vMaterialesAPU?.add(apu.vManoDeObraAPU ?: 0)?.add(apu.vTransporteAPU ?: 0)?.add(apu.vMiscAPU ?: 0), 1, 'COMMA', 2, 'POINT')}">
+                            <strong th:text="'$' + ${#numbers.formatDecimal(material.precioMaterial), 1, 'COMMA', 2, 'POINT')}">
                                 $0.00
                             </strong>
                         </td>
                         <td class="actions">
-                            <a th:href="@{/apu/editar/} + ${apu.idAPU}"
+                            <a th:href="@{/material/editar/} + ${material.idMaterial}"
                                class="btn btn-warning btn-sm"
-                               sec:authorize="hasAuthority('EDITAR_APU')">
+                               sec:authorize="hasAuthority('EDITAR_MATERIAL')">
                                 <i class="fas fa-edit"></i> Editar
                             </a>
-                            <a th:href="@{/apu/detalle/} + ${apu.idAPU}"
+                            <a th:href="@{/material/detalle/} + ${material.idMaterial}"
                                class="btn btn-primary btn-sm">
                                 <i class="fas fa-eye"></i> Ver
                             </a>
-                            <a th:href="@{/apu/eliminar/} + ${apu.idAPU}"
+                            <a th:href="@{/material/eliminar/} + ${material.idMaterial}"
                                class="btn btn-danger btn-sm"
-                               sec:authorize="hasAuthority('ELIMINAR_APU')"
-                               onclick="return confirm('¿Está seguro de que desea eliminar este APU?')">
+                               sec:authorize="hasAuthority('ELIMINAR_MATERIAL')"
+                               onclick="return confirm('¿Está seguro de que desea eliminar este Material?')">
                                 <i class="fas fa-trash"></i> Eliminar
                             </a>
                         </td>
@@ -566,20 +566,20 @@
             <!-- Pagination (if needed) -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
                 <div style="color: var(--secondary);">
-                    Mostrando <strong th:text="${apus.size()}">0</strong> APUs
+                    Mostrando <strong th:text="${materiales.size()}">0</strong> Materiales
                 </div>
                 <!-- Add pagination controls here if needed -->
             </div>
         </div>
 
         <!-- Empty State -->
-        <div th:if="${apus == null or apus.empty}" class="empty-message">
+        <div th:if="${materiales == null or materiales.empty}" class="empty-message">
             <i class="fas fa-calculator"></i>
-            <h3>No hay APUs registrados</h3>
-            <p>Comienza creando tu primer APU para verlo aquí.</p>
-            <a th:href="@{/apu/crearAPU}" class="btn btn-success" sec:authorize="hasAuthority('CREAR_APU')"
+            <h3>No hay materiales registrados</h3>
+            <p>Comienza creando tu primer material para verlo aquí.</p>
+            <a th:href="@{/material/crearMaterial}" class="btn btn-success" sec:authorize="hasAuthority('CREAR_MATERIAL')"
                style="margin-top: 1rem;">
-                <i class="fas fa-plus"></i> Crear Primer APU
+                <i class="fas fa-plus"></i> Crear Primer material
             </a>
         </div>
 
@@ -600,7 +600,7 @@
                 <div style="font-size: 1.5rem; font-weight: bold;" th:text="${materiales != null ? materiales.size() : 0}">0</div>
                 <div style="color: var(--secondary);">Materiales Asociados</div>
             </div>
-<!-- TODO arreglar esto con valores reales-->
+
 
         </div>
     </main>

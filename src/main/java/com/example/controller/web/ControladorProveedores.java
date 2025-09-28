@@ -81,7 +81,7 @@ public class ControladorProveedores {
 
     // Reporte de proveedores PARA CORREOS
     @GetMapping("/proveedores/excelCorreo")
-    // Método para generar el reporte y devolverlo como byte array
+    // Métod0 para generar el reporte y devolverlo como byte array
     public byte[] generarReporteProveedoresExcel() throws IOException {
         List<Proveedor> proveedores = proveedorServicio.listarProveedores();
 

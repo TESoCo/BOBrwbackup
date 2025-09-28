@@ -63,29 +63,29 @@
 
 <body>
 <!-- Dynamic heading based on edit/view mode -->
-<h1 th:text="${Editando ? 'Editar Presupuesto (ID: ' + presupuesto.id_obra + ')' :
-                  'Detalle de Presupuesto'}"></h1>
+<h1 th:text="${Editando ? 'Editar Proyecto (ID: ' + obra.idObra + ')' :
+                  'Detalle de Proyecto'}"></h1>
 
 <!-- Back button -->
-<a th:href="@{/presupuestos/inicioPresupuestos}" class="btn">Regresar</a>
+<a th:href="@{/obras/inicioObra}" class="btn">Regresar</a>
 <br><br>
 
 <!-- Edit form (shown only in edit mode) -->
 <form th:if="${Editando}"
-      th:action="@{${presupuesto.id_obra != null ? '/presupuestos/actualizar/' + presupuesto.id_obra : '/presupuestos/salvar'}}"
+      th:action="@{${obra.idObra != null ? '/obras/actualizar/' + obra.idObra : '/obras/salvar'}}"
       method="post"
-      th:object="${presupuesto}">
+      th:object="${obra}">
 
-  <input type="hidden" th:field="*{id_obra}">
+  <input type="hidden" th:field="*{idObra}">
 
   <!-- Work name input (editable in edit mode) -->
   <div th:if="${Editando}">
     <label><b>Nombre de la obra:</b></label>
-    <input type="text" th:field="*{obraName}" name="obraName" required>
+    <input type="text" th:field="*{NombreObra}" name="NombreObra" required>
   </div>
 
   <!-- Display work name (view mode) -->
-  <h2 th:unless="${Editando}" th:text="${presupuesto.obraName}"></h2>
+  <h2 th:unless="${Editando}" th:text="${obra.NombreObra}"></h2>
 
   <h3>Actividades:</h3>
 
@@ -96,20 +96,19 @@
       <!-- Check if there are existing activities -->
       <div th:if="${not #lists.isEmpty(actividadIds)}">
       <!-- Loop through existing activities -->
-      <div th:each="actividadId, stat : ${actividadIds}" class="material-row">
-        <select name="actividadIds" required>
+      <div th:each="apu, stat : ${apusObra}" class="material-row">
+        <select name="apus" required>
           <option value="">Seleccione...</option>
-          <option th:each="mat : ${matriz}"
-                  th:value="${mat.id_m}"
-                  th:selected="${mat.id_m == actividadId}"
-                  th:data-nombre="${mat.nombre}"
-                  th:data-unidades="${mat.unidades}"
-                  th:text="${mat.nombre} + ' ('+${mat.unidades}+')'">
+          <option th:each="apu : ${APUs}"
+                  th:value="${apu.idAPU}"
+                  th:data-nombre="${apu.nombreAPU}"
+                  th:data-unidades="${apu.unidadesAPU}"
+                  th:text="${apu.nombreAPU} + ' - (' + ${apu.unidadesAPU} + ')'">
           </option>
-        </select>
         <input type="number" name="cantidades" step="0.01" min="0.01"
                th:value="${cantidades[stat.index]}" placeholder="Cantidad" required>
         <span class="btn-remove" onclick="removeActivity(this)">✕ Eliminar</span>
+        </select>
       </div>
       </div>
 
@@ -137,7 +136,7 @@
 
   <!-- View mode display -->
   <div th:unless="${Editando}">
-    <div th:if="${listActividades != null and !listActividades.empty}">
+    <div th:if="${apusObra != null and !apusObra.empty}">
       <table>
         <thead>
         <tr>
@@ -148,15 +147,15 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="actividad : ${listActividades}">
-          <td th:text="${actividad.id_m}"></td>
-          <td th:text="${actividad.nombre}"></td>
-          <td th:text="${actividad.unidades}"></td>
+        <tr th:each="apu : ${apusObra}">
+          <td th:text="${apu.idAPU}"></td>
+          <td th:text="${apu.nombreAPU}"></td>
+          <td th:text="${apu.unidadesAPU}"></td>
         </tr>
         </tbody>
       </table>
     </div>
-    <div th:if="${listActividades == null or listActividades.empty}">
+    <div th:if="${apusObra == null or apusObra.empty}">
       <p>No hay actividades registradas para este presupuesto</p>
     </div>
   </div>
@@ -165,10 +164,11 @@
 
 <!-- View mode display when not editing -->
 <div th:unless="${Editando}">
-  <h2 th:text="${presupuesto.obraName}"></h2>
+  <h2 th:text="${obra.nombreObra}"></h2>
+  <h2 th:text="${v}"></h2>
 
   <h3>actividades:</h3>
-  <div th:if="${listActividades != null and !listActividades.empty}">
+  <div th:if="${apusObra != null and !apusObra.empty}">
     <table>
       <thead>
       <tr>
@@ -179,16 +179,17 @@
       </tr>
       </thead>
       <tbody>
-      <tr th:each="actividad : ${listActividades}">
-        <td th:text="${actividad.key.id_m}"></td>
-        <td th:text="${actividad.key.nombre}"></td>
-        <td th:text="${actividad.key.unidades}"></td>
-        <td th:text="${actividad.value}"></td>
+      <tr th:each="apuo : ${obra.apusObraList}">
+        <td th:text="${apuo.apu.idAPU}"></td>
+        <td th:text="${apuo.apu.nombreAPU}"></td>
+        <td th:text="${apuo.apu.unidadesAPU}"></td>
+        <td th:text="${apuo.cantidad}"></td>
       </tr>
       </tbody>
     </table>
   </div>
-  <div th:if="${listActividades == null or listActividades.empty}">
+  <!-- TODO imlementar esto mismo en el modo editar acá y en el controlador, ver el tema del valor total  -->
+  <div th:if="${obra.apusObraList == null or obra.apusObraList.empty}">
     <p>No hay actividades registradas para este presupuesto</p>
   </div>
 </div>
@@ -207,7 +208,7 @@
 
         // Create the select dropdown
         const select = document.createElement('select');
-        select.name = 'actividadIds';
+        select.name = 'apus';
         select.required = true;
 
         // Add default option
@@ -217,7 +218,7 @@
         select.appendChild(defaultOption);
 
         // Add options from Thymeleaf (this will be filled by the browser)
-        const options = document.querySelectorAll('select[name="actividadIds"] option:not([value=""])');
+        const options = document.querySelectorAll('select[name="apus"] option:not([value=""])');
         options.forEach(option => {
             const newOption = option.cloneNode(true);
             select.appendChild(newOption);

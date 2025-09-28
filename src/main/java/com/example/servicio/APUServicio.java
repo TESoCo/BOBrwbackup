@@ -5,7 +5,6 @@ import com.example.domain.Usuario;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface APUServicio {
@@ -28,4 +27,8 @@ public interface APUServicio {
     public Apu crearAPUDesdeCSV(String[] record, Usuario usuario);
 
     public void guardarTodos(List<Apu> apus);
+
+    public Double vTotalAPU (Apu apu);
+
+
 }

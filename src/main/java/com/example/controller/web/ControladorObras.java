@@ -5,16 +5,18 @@ import com.example.domain.Obra;
 import com.example.servicio.APUServicio;
 import com.example.servicio.ObraServicio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/obras")
@@ -25,13 +27,54 @@ public class ControladorObras
     @Autowired
     private ObraServicio obraServicio;
 
+    @Autowired
+    private APUServicio apuServicio;
+
 
 
     //Acá están los métodos para presupuestos
     @GetMapping("/inicioObra")
-    public String inicioPresu(Model model){
+    public String inicioObra(Model model, Authentication authentication){
         List<Obra> obras = obraServicio.listaObra();
         model.addAttribute("obras",obras);
+
+
+        //INFORMACION DE USUARIO PARA HEADER Y PERMISOS
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+            // Debug información del usuario
+            System.out.println("Usuario autenticado: " + username);
+            System.out.println("Autoridades: " + authorities);
+
+            // Agregar información específica del usuario al modelo
+            model.addAttribute("nombreUsuario", username);
+            model.addAttribute("autoridades", authorities);
+
+            // Verificar roles específicos
+            boolean isAdmin = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+            boolean isSupervisor = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
+            boolean isOperativo = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
+
+            model.addAttribute("isAdmin", isAdmin);
+            model.addAttribute("isSupervisor", isSupervisor);
+            model.addAttribute("isOperativo", isOperativo);
+        }
+
+        //FILTRAR OBRAS CON COORDENADAS PARA EL MAPA
+        // Filtrar obras que tengan coordenadas (opcional)
+        List<Obra> obrasConCoordenadas = obras.stream()
+                .filter(obra -> obra.getCooNObra() != null && obra.getCooEObra() != null)
+                .collect(Collectors.toList());
+
+        model.addAttribute("obras", obrasConCoordenadas);
+        model.addAttribute("fotoDatos", new ArrayList<>()); // o tu lista real de fotos
+        // TODO: conexion con fotodato
+
         return "obras/inicioObra";
     }
 
@@ -55,10 +98,25 @@ public class ControladorObras
             @RequestParam Double cooNObra,
             @RequestParam Double cooEObra,
             @RequestParam List<Long> apuIds, // Changed from actividadIds to apuIds
-            @RequestParam List<Double> cantidades) { // Changed from actividadIds to apuIds
-
+            @RequestParam List<Double> cantidades, // Changed from actividadIds to apuIds
+            RedirectAttributes redirectAttributes) {
         // Create the nuevaObra first to get its ID
         Obra nuevaObra = new Obra();
+        //no repetir nombres de obras
+        List<Obra> obrasExt = obraServicio.findByObraName(nombreObra);
+        if (obrasExt!=null&&!obrasExt.isEmpty())
+        {
+            for(Obra obraExistente:obrasExt)
+            {
+                if(Objects.equals(obraExistente.getNombreObra(), nombreObra))
+                {
+                    redirectAttributes.addFlashAttribute("error", "El nombre de obra ya existe");
+                    return "redirect:obras/agregarObra";
+                }
+            }
+        }
+
+
         nuevaObra.setNombreObra(nombreObra);
         nuevaObra.setEtapa(etapa);
         nuevaObra.setFechaIni(fechaIni);
@@ -100,21 +158,21 @@ public class ControladorObras
         }
 */
 
-        return "redirect:obras/inicioObra";
+        return "redirect:inicioObra";
     }
 
 
     //Función y forma de editado
-    @GetMapping("/cambiar/{id_obra}")
+    @GetMapping("/cambiar/{idObra}")
     public String cambiarObra(@PathVariable Long id_obra, Model model) {
-        Obra obraEditar = obraServicio.localizarObra(id_obra);
+        Obra obra = obraServicio.localizarObra(id_obra);
 
         // Create a list of activity IDs and quantities for editing
         List<Apu> apusObra = obraServicio.obtenerApusEntidadesPorObra(id_obra);
         List<Apu> todosApus = APUServicio.listarElementos();
         List<Double> cantidades = new ArrayList<>();
 
-        model.addAttribute("obraEditar", obraEditar);
+        model.addAttribute("obra", obra);
         model.addAttribute("apusObra", apusObra);
         model.addAttribute("listApus", obraServicio.listaObra());
         model.addAttribute("Editando", true); // ← This forces EDIT mode
@@ -147,7 +205,7 @@ public class ControladorObras
 
     //anular
 
-    @GetMapping("/anular/{id_obra}")
+    @GetMapping("/anular/{idObra}")
     public String anularObra(Obra obraAnular)
     {
         obraAnular.setAnular(true);
@@ -155,7 +213,7 @@ public class ControladorObras
     }
 
     //funcionalidad para guardar cambios
-    @PostMapping("/actualizar/{id_obra}")
+    @PostMapping("/actualizar/{idObra}")
     public String actualizarPresupuesto(
         @PathVariable Long id_obra,
         @RequestParam String obraName,
@@ -183,23 +241,32 @@ public class ControladorObras
     }
 
     //Ver obraDetalle en detalle (sólo lectura)
-    @GetMapping("/detalle/{id_obra}")
-    public String detalleObra(@PathVariable Long id_obra, Model model) {
-        Obra obraDetalle = obraServicio.localizarObra(id_obra);
-        List<Apu> apusObra = obraServicio.obtenerApusEntidadesPorObra(id_obra);
+    @GetMapping("/detalle/{idObra}")
+    public String detalleObra(@PathVariable Long idObra, Model model) {
+        Obra obra = obraServicio.localizarObra(idObra);
+        List<Apu> apusObra = obraServicio.obtenerApusEntidadesPorObra(idObra);
 
-/*
+        List<Double> valApusObra = new ArrayList<>();
+        if(apusObra!=null&& !apusObra.isEmpty())
+        {
+            for(Apu apu : apusObra)
+            {
+                valApusObra.add(apuServicio.vTotalAPU(apu));
+            }
+        }
+
+        /*
         // Create a Map of Material to Quantity
         Map<Apu, Double> listApus = new HashMap<>();
-        for (Map.Entry<Integer, Double> entry : obraDetalle.obtenerApusPorObra(id_obra)) {
+        for (Map.Entry<Integer, Double> entry : obra.obtenerApusPorObra(id_obra)) {
             Apu verAPUobra = APUServicio.obtenerPorId(entry.getKey());
             listApus.put(verAPUobra, entry.getValue());
         }
-*/
+        */
 
-
-        model.addAttribute("obra", obraDetalle);
-//        model.addAttribute("listApus", listApus);
+        model.addAttribute("obra", obra);
+        model.addAttribute("valApus",valApusObra);
+        model.addAttribute("apusObra",apusObra);
         model.addAttribute("Editando", false); // ← This forces VIEW mode
         return "obras/verObras";
     }

@@ -21,7 +21,7 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    // Método existente para correo simple
+    // Métod0 existente para correo simple
     public boolean sendSimpleEmail(String to, String subject, String text) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -37,7 +37,7 @@ public class EmailService {
         }
     }
 
-    // Nuevo método para enviar correo con archivo adjunto
+    // Nuevo métod0 para enviar correo con archivo adjunto
     public boolean sendEmailWithAttachment(String to, String subject, String text,
                                            byte[] attachment, String attachmentName) {
         try {
@@ -60,7 +60,7 @@ public class EmailService {
         }
     }
 
-    // Método para envío masivo con adjuntos
+    // Métod0 para envío masivo con adjuntos
     public EmailResult sendMassEmailWithAttachment(List<String> recipients, String subject,
                                                    String content, byte[] attachment,
                                                    String attachmentName) {
@@ -80,7 +80,7 @@ public class EmailService {
         return result;
     }
 
-    // Método existente para envío masivo sin adjuntos
+    // Métod0 existente para envío masivo sin adjuntos
     public EmailResult sendMassEmail(List<String> recipients, String subject, String content) {
         EmailResult result = new EmailResult();
 

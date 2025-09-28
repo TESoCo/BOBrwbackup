@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.aspectj.runtime.internal.Conversions.doubleValue;
+
 @Service
 public class APUServicioImp implements APUServicio {
 
@@ -144,6 +146,12 @@ public class APUServicioImp implements APUServicio {
     @Transactional
     public void guardarTodos(List<Apu> apus) {
         APUDao.saveAll(apus);
+    }
+
+    @Override
+    @Transactional
+    public Double vTotalAPU (Apu apu){
+        return doubleValue(apu.getVMaterialesAPU())+doubleValue(apu.getVMiscAPU())+doubleValue(apu.getVTransporteAPU())+doubleValue(apu.getVManoDeObraAPU());
     }
 
 
