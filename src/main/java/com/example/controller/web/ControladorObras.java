@@ -111,7 +111,7 @@ public class ControladorObras
                 if(Objects.equals(obraExistente.getNombreObra(), nombreObra))
                 {
                     redirectAttributes.addFlashAttribute("error", "El nombre de obra ya existe");
-                    return "redirect:obras/agregarObra";
+                    return "redirect:/obras/inicioObra";
                 }
             }
         }

@@ -141,17 +141,17 @@ public class ControladorAvance
 
 
     //Función y forma de editado
-    /*@GetMapping("/cambiar/{id_avance}")
-    public String cambiarAvance(@PathVariable Integer id_avance, Model model) {
-        Avance avance = avanceServicio.localizarAvance(id_avance);
+    @GetMapping("/cambiar/{idAvance}")
+    public String cambiarAvance(@PathVariable Long idAvance, Model model) {
+        Avance avance = avanceServicio.localizarAvance(idAvance);
 
         model.addAttribute("avance", avance);
-        model.addAttribute("Actividad", avanceServicio.localizarAvance(id_avance));
+        model.addAttribute("Actividad", avanceServicio.localizarAvance(idAvance));
         model.addAttribute("Editando", true); // ← This forces EDIT mode
-        model.addAttribute("matriz", matrizServicio.listarElementos());
+        model.addAttribute("matriz", apuServicio.listarElementos());
 
         return "avances/verAvances";
-    }*/
+    }
 
 
     //borrar

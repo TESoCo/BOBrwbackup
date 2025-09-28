@@ -95,7 +95,7 @@ public class ControladorAPU {
         }
 
         apuServicio.guardar(apu);
-        return "redirect:/apus/inicioAPU";
+        return "redirect:/apu/inicioAPU";
     }
 
     @GetMapping("/detalle/{id}")

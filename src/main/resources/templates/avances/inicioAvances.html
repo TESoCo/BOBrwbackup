@@ -34,9 +34,9 @@
                 <select id="idObraByName" name="idObraTexto" th:value="${param.idObraTexto}">
                     <option value="">-- Todas las obras --</option>
                     <option th:each="presupuesto : ${presupuestos}"
-                            th:value="${presupuesto.id_obra}"
-                            th:text="${presupuesto.obraName}"
-                            th:selected="${param.idObraTexto == presupuesto.id_obra}">
+                            th:value="${presupuesto.idObra}"
+                            th:text="${presupuesto.nombreObra}"
+                            th:selected="${param.idObraTexto == presupuesto.idObra}">
                     </option>
                 </select>
             </div>
@@ -79,14 +79,14 @@
             <td th:text="${avance.idObra}"></td>
             <td>
                 <span th:each="presupuesto : ${presupuestos}"
-                      th:if="${presupuesto.id_obra == avance.idObra}"
-                      th:text="${presupuesto.obraName}">
+                      th:if="${presupuesto.idObra == avance.idObra}"
+                      th:text="${presupuesto.nombreObra}">
                 </span>
             </td>
             <td th:text="${avance.fecha}"></td>
             <td>
                 <!-- Creo que es mejor no editar avances para no complicarse por su formato -->
-                <!--<a th:href="@{/avances/cambiar/} + ${avance.id_avance}" class="btn">Editar</a>-->
+                <a th:href="@{/avances/cambiar/} + ${avance.idAvance}" class="btn">Editar</a>
                 <a th:href="@{/avances/borrar/} + ${avance.idAvance}" class="btn"
                    onclick="return confirm('¿Está seguro que desea eliminar este avance?')">Eliminar</a>
                 <a th:href="@{/avances/detalle/}+${avance.idAvance}" class="btn">Ver Detalle</a>
