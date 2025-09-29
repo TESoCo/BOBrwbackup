@@ -3,7 +3,7 @@ package com.example.servicio;
 import com.example.dao.InventarioDao;
 import com.example.dao.ObraDao;
 import com.example.dao.UsuarioDao;
-import com.example.domain.Inventario;
+import com.example.domain.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,4 +83,15 @@ public class InventarioServicioImp implements InventarioServicio {
             return Collections.emptyList();
         }
     }
+
+    @Override
+    @Transactional
+    public void agregarMaterialAInvConCantidad(Inventario inventario, Material material, Double cantidad) {
+        MaterialesInventario materialesInventario = new MaterialesInventario();
+        materialesInventario.setInventario(inventario);
+        materialesInventario.setMaterial(material);
+        materialesInventario.setCantidad(cantidad);
+
+    }
+
 }

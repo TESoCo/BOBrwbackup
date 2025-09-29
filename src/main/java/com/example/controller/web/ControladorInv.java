@@ -17,15 +17,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
 
 @Controller
+@RequestMapping("/inventario")
 public class ControladorInv {
 
     @Autowired
@@ -44,7 +42,7 @@ public class ControladorInv {
     public String inventario(Model model) {
         List<Inventario> inventarios = inventarioServicio.listaInventarios();
         model.addAttribute("inventarios", inventarios);
-        return "/inventario";
+        return "inventarios/inventario";
     }
 
     @GetMapping("/crearInv")
@@ -66,7 +64,8 @@ public class ControladorInv {
         model.addAttribute("inventario", inventario);
         model.addAttribute("obras", obras);
         model.addAttribute("materiales", materiales);
-        return "crearInv";
+        model.addAttribute("usuario", usuarioLogeado);
+        return "inventarios/crearInv";
     }
 
     @PostMapping("/guardarInv")
@@ -103,14 +102,14 @@ public class ControladorInv {
         // The inventario object already has the usuario set from the form
         inventarioServicio.guardarInv(inventario);
 
-        return "redirect:/inventario";
+        return "redirect:/inventario/inventario";
     }
 
     @GetMapping("/verInv")
     public String verInventario(Model model) {
         List<Inventario> inventarios = inventarioServicio.listaInventarios();
         model.addAttribute("inventarios", inventarios);
-        return "verInv";
+        return "inventarios/verInv";
     }
 
     @GetMapping("/cambiarInv")
@@ -149,7 +148,7 @@ public class ControladorInv {
             model.addAttribute("error", error);
         }
 
-        return "cambiarInv";
+        return "inventarios/cambiarInv";
     }
 
     @GetMapping("/cambiarInv/{id_Inventario}")
@@ -162,7 +161,7 @@ public class ControladorInv {
         List<Inventario> inventarios = inventarioServicio.listaInventarios();
         model.addAttribute("inventarios", inventarios);
 
-        return "cambiarInv";
+        return "inventarios/cambiarInv";
     }
 
     @GetMapping("/borrarInv")
@@ -192,15 +191,16 @@ public class ControladorInv {
         }
 
         model.addAttribute("inventarios", inventarios);
-        return "borrarInv";
+        return "inventarios/borrarInv";
     }
+
 
     @GetMapping("/borrarInv/{id_Inventario}")
     public String borrarInventario(
             @PathVariable("id_Inventario") Long id) {
         Inventario inventario = inventarioServicio.localizarInventarioPorId(id);
         inventarioServicio.borrarInv(inventario);
-        return "redirect:/borrarInv";
+        return "redirect:/inventarios/inventario";
     }
 
     //Exportar excel de inventario

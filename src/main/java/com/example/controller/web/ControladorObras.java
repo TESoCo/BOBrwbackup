@@ -123,6 +123,7 @@ public class ControladorObras
         nuevaObra.setFechaFin(fechaFin);
         nuevaObra.setCooNObra(cooNObra);
         nuevaObra.setCooEObra(cooEObra);
+        nuevaObra.setAnular(false);
         obraServicio.salvar(nuevaObra);
 
         // Validate input sizes match

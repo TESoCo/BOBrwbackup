@@ -1,6 +1,8 @@
 package com.example.servicio;
 
 import com.example.domain.Inventario;
+import com.example.domain.Material;
+
 import java.util.List;
 
 public interface InventarioServicio {
@@ -19,4 +21,7 @@ public interface InventarioServicio {
     List<Inventario> buscarPorNombreGestor(String nombreGestor);
     List<Inventario> buscarPorNombreObra(String nombreObra);
     List<Inventario> buscarPorFecha(String fecha);
+
+
+    public void agregarMaterialAInvConCantidad(Inventario inventario, Material material, Double cantidad);
 }

@@ -102,7 +102,7 @@ public class ControladorAPU {
     public String verDetalleAPU(@PathVariable Long id, Model model) {
         Apu apu = apuServicio.obtenerPorId(id);
         model.addAttribute("apu", apu);
-        return "apu/detalleAPU"; // You'll need to create this template
+        return "apu/detalleAPU"; // TODO You'll need to create this template
     }
 
     @GetMapping("/eliminar/{id}")

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -124,11 +125,11 @@ public class ControladorAvance
     @GetMapping("/agregarAvance")
     public String formAnexarAvance(Model model, org.springframework.security.core.Authentication authentication){
         List<Obra> obras = obraServicio.listaObra();
-        List<Apu> matriz = APUServicio.listarElementos();
+
 
         model.addAttribute("avance", new Avance());
         model.addAttribute("obras",obras);
-        model.addAttribute("matriz", matriz);
+
 
         //INFORMACION DE USUARIO PARA HEADER Y PERMISOS
         if (authentication != null && authentication.isAuthenticated()) {
@@ -179,14 +180,12 @@ public class ControladorAvance
         // Load the full user object from database
         Usuario usuarioLogeado = usuarioServicio.encontrarPorId(idUsuario) ;
 
-
         Avance avance = new Avance();
         avance.setIdUsuario(usuarioServicio.encontrarPorId(idUsuario) );
         avance.setIdObra(obraServicio.localizarObra(idObra));
         avance.setFechaAvance(LocalDate.parse(fecha));
         avance.setIdApu(APUServicio.obtenerPorId(idApu));
         avance.setCantEjec(cantidad);
-
 
         avanceServicio.salvar(avance);
         return "redirect:/avances/inicioAvances";
@@ -197,12 +196,10 @@ public class ControladorAvance
     @GetMapping("/cambiar/{idAvance}")
     public String cambiarAvance(@PathVariable Long idAvance, Model model) {
         Avance avance = avanceServicio.localizarAvance(idAvance);
-
         model.addAttribute("avance", avance);
         model.addAttribute("Actividad", avanceServicio.localizarAvance(idAvance));
         model.addAttribute("Editando", true); // ← This forces EDIT mode
         model.addAttribute("matriz", apuServicio.listarElementos());
-
         return "avances/verAvances";
     }
 
@@ -211,6 +208,12 @@ public class ControladorAvance
     @GetMapping("/borrar/{idAvance}")
     public String borrarAvance(Avance avance) {
         avanceServicio.borrar(avance);
+        return "redirect:/avances/inicioAvances";
+    }
+
+    @GetMapping("/anular/{idAvance}")
+    public String anularAvance(Avance avance) {
+        avance.setAnular(true);
         return "redirect:/avances/inicioAvances";
     }
 
@@ -239,6 +242,7 @@ public class ControladorAvance
         avance.setFechaAvance(LocalDate.parse(fecha));
         avance.setIdApu(APUServicio.obtenerPorId(idApu));
         avance.setCantEjec(cantidad);
+        avance.setAnular(false);
 
 
         avanceServicio.actualizar(avance);
@@ -357,7 +361,19 @@ public class ControladorAvance
         return outputStream.toByteArray();
     }
 
-
+    // Métod0 para obtener APUs por obra (para el dropdown dinámico)
+    @GetMapping("/obtenerAPUsPorObra/{idObra}")
+    @ResponseBody
+    public List<Apu> obtenerAPUsPorObra(@PathVariable Long idObra) {
+        Obra obra = obraServicio.localizarObra(idObra);
+        if (obra != null && obra.getApusObraList() != null) {
+            // Extraer los APUs de la lista de ApusObra
+            return obra.getApusObraList().stream()
+                    .map(ApusObra::getApu)
+                    .collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
 
 
 }

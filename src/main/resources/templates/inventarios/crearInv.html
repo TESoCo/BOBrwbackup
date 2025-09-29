@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Optimization Baseline - Inventario</title>
-    <link rel="stylesheet" href="CSS/INVENTARIO/crearInv.css">
+    <link rel="stylesheet" th:href="@{/css/INVENTARIO/crearInv.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+
+
 </head>
 
 <body>
@@ -53,20 +56,25 @@
             </div>
 
             <div class="form-content">
-                <form th:action="@{/guardarInv}" method="post" th:object="${inventario}">
+                <form th:action="@{/inventario/guardarInv}" method="post" th:object="${inventario}">
                     <!-- Hidden field for usuario (automatically set by controller) -->
                     <input type="hidden" th:field="*{idUsuario.idUsuario}" />
 
                     <div class="form-group">
                         <label>Usuario Actual:</label>
-                        <input type="text" th:value="${inventario.idUsuario.nombreUsuario} + ' ' + ${inventario.idUsuario.apellidoUsuario}"
+                        <input type="text" th:value="${usuario.nombreUsuario}"
                                readonly class="readonly-field">
                     </div>
 
                     <div class="form-group">
                         <label>Nombre Obra:</label>
-                        <input type="text" name="nombreobra" th:field="*{nombreobra}" placeholder="Nombre de la obra">
-                        <span class="error-message" th:if="${#fields.hasErrors('nombreobra')}" th:errors="*{nombreobra}">Campo obligatorio</span>
+                        <select th:field="*{idObra}" class="form-select" required>
+                            <option value="">Seleccione una obra...</option>
+                            <option th:each="obra : ${obras}"
+                                    th:value="${obra.idObra}"
+                                    th:text="${obra.nombreObra}"></option>
+                        </select>
+                        <span class="error-message" th:if="${#fields.hasErrors('idObra')}" th:errors="*{idObra}">Campo obligatorio</span>
                     </div>
 
                     <!-- Fecha Ingreso -->
@@ -84,8 +92,10 @@
 
                     <!-- Unidad Inventario -->
                     <div class="form-group">
-                        <label>Unidad de Medida:</label>
+                        <label>Observaciones:</label>
                         <input type="text" name="unidadMedida" th:field="*{unidadInv}">
+                        <!--TODO arreglar esto en entidad-->
+
                         <span class="error-message" th:if="${#fields.hasErrors('unidadInv')}" th:errors="*{unidadInv}">Campo obligatorio</span>
                     </div>
 
@@ -103,16 +113,12 @@
                                         <option value="">-- Seleccionar Material --</option>
                                         <option th:each="material : ${materiales}"
                                                 th:value="${material.idMaterial}"
-                                                th:text="${material.especificaciones}"></option>
+                                                th:text="${material.nombreMaterial}"></option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label>Cantidad para este material:</label>
-
-                                    <input type="number" name="cantidad" th:field="*{cantidadMat}" placeholder="Ingrese cantidad" min="0">
-                                    <span class="error-message" th:if="${#fields.hasErrors('cantidadMat')}" th:errors="*{cantidadMat}">Campo obligatorio</span>
-
-
+                                    <input type="number" name="materialCantidades" class="material-quantity" placeholder="Ingrese cantidad" min="0" step="0.01">
                                 </div>
                                 <button type="button" class="btn-remove-material" onclick="removeMaterial(this)">
                                     <i class='bx bx-trash'></i> Eliminar

@@ -45,7 +45,7 @@ public class Avance implements Serializable{
     private Apu idApu;
 
 
-    @Column(name = "anular", unique = true)
+    @Column(name = "anular")
     private boolean anular;
 
     // From FECHA_AVANCE
