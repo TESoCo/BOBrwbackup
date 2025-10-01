@@ -43,6 +43,8 @@ public class ControladorAvance
     private UsuarioServicio usuarioServicio;
     @Autowired
     private ContratistaServicio contratistaServicio;
+    @Autowired
+    private ProveedorServicio proveedorServicio;
 
 
     //Acá están los métodos
@@ -56,6 +58,8 @@ public class ControladorAvance
             @RequestParam(required = false) String fecha,
 
             Model model, org.springframework.security.core.Authentication authentication){
+
+
 
         //INFORMACION DE USUARIO PARA HEADER Y PERMISOS
         if (authentication != null && authentication.isAuthenticated()) {
@@ -122,9 +126,13 @@ public class ControladorAvance
         model.addAttribute("idUsuario", idUsuario);
         model.addAttribute("fecha", fecha);
         model.addAttribute("contratistas", contratistaServicio.listarContratistas());
+        //Proveedores para envío masivo de correos
+        model.addAttribute("proveedores", proveedorServicio.listar());
 
         return "avances/inicioAvances";
     }
+
+
 
     //Agregar nuevo
     @GetMapping("/agregarAvance")

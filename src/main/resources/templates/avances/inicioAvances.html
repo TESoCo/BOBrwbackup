@@ -525,9 +525,9 @@
                         <div class="recipients-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #d1d5db; border-radius: var(--border-radius); padding: 1rem;">
                             <div class="recipient-checkbox" th:each="proveedor : ${proveedores}" style="margin-bottom: 0.5rem;">
                                 <input type="checkbox" name="recipients"
-                                       th:value="${proveedor.idPersona.correo}"
+                                       th:value="${proveedor.informacionComercial.correoElectronico}"
                                        th:attr="data-name=${proveedor.idPersona.nombre} + ' ' + ${proveedor.idPersona.apellido}">
-                                <label th:text="${proveedor.idPersona.nombre} + ' ' + ${proveedor.idPersona.apellido} + ' (' + ${proveedor.idPersona.correo} + ')'" style="margin-left: 0.5rem;"></label>
+                                <label th:text="${proveedor.idPersona.nombre} + ' ' + ${proveedor.idPersona.apellido} + ' (' + ${proveedor.informacionComercial.correoElectronico} + ')'" style="margin-left: 0.5rem;"></label>
                             </div>
                         </div>
                     </div>
