@@ -86,7 +86,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="inv : ${inventarios}">
-                    <td th:text="${inv.id_inventario}"></td>
+                    <td th:text="${inv.idInventario}"></td>
                     <td th:text="${inv.nombreGestor}"></td>
                     <td th:text="${inv.nombreobra}"></td>
                     <td th:text="${inv.tipoRegistro}"></td>
@@ -96,7 +96,7 @@
                     <td th:text="${inv.material}"></td>
                     <td th:text="${inv.precioUnidad}"></td>
                     <td>
-                        <a class="action-link" th:href="|@{/cambiarInv/{id}(id=${inv.id_Inventario})}#formulario|">
+                        <a class="action-link" th:href="|@{/cambiarInv/{id}(id=${inv.idInventario})}#formulario|">
                             <i class='bx bx-edit'></i> Modificar
                         </a>
 

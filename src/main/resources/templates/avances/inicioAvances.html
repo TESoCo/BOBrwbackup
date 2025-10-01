@@ -451,9 +451,18 @@
                         <i class="fas fa-times"></i> Limpiar filtros
                     </a>
                 </div>
+                <div class="form-col" style="text-align: right;">
+                    <button type="button" class="btn btn-primary" id="sendReportBtn">
+                        <i class="fas fa-envelope"></i> Enviar Reporte por Correo
+                    </button>
+                </div>
             </div>
         </form>
 </div>
+
+
+
+
 
 <br>
 
@@ -493,8 +502,261 @@
             <p>No hay avances registrados</p>
         </div>
     </div>
+
+    <!-- Modal para enviar reporte por correo -->
+    <div class="modal" id="emailReportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+        <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; border-radius: var(--border-radius); width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;">
+                <h3 style="margin: 0;">Enviar Reporte de Avances Filtrados</h3>
+                <button class="close-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="emailReportForm">
+                    <!-- Información de los filtros aplicados -->
+                    <div class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 0.5rem;">Filtros aplicados:</h4>
+                        <p id="filtrosInfo" style="margin: 0; font-size: 0.9rem; color: var(--secondary);">
+                            Se enviará el reporte con los avances filtrados actualmente
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Destinatarios:</label>
+                        <div class="recipients-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #d1d5db; border-radius: var(--border-radius); padding: 1rem;">
+                            <div class="recipient-checkbox" th:each="contratista : ${contratistas}" style="margin-bottom: 0.5rem;">
+                                <input type="checkbox" name="recipients"
+                                       th:value="${contratista.idPersona.correo}"
+                                       th:attr="data-name=${contratista.idPersona.nombre} + ' ' + ${contratista.idPersona.apellido}">
+                                <label th:text="${contratista.idPersona.nombre} + ' ' + ${contratista.idPersona.apellido} + ' (' + ${contratista.idPersona.correo} + ')'" style="margin-left: 0.5rem;"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customEmail">Correos adicionales (separados por coma):</label>
+                        <input type="text" id="customEmail" name="customEmail" class="form-control"
+                               placeholder="ejemplo1@correo.com, ejemplo2@correo.com">
+                        <small style="color: var(--secondary);">Puede ingresar múltiples correos separados por comas</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailSubject">Asunto:</label>
+                        <input type="text" id="emailSubject" name="subject" class="form-control"
+                               value="Reporte de Avances - Building Optimization Baseline" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailMessage">Mensaje:</label>
+                        <textarea id="emailMessage" name="message" rows="4" class="form-control" required>
+Cordial saludo,
+
+Adjunto encontrará el reporte actualizado de avances con los filtros aplicados.
+
+Gracias por su atención,
+Equipo Building Optimization Baseline
+                    </textarea>
+                    </div>
+
+                    <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary btn-cancel">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-send">
+                            <i class="fas fa-paper-plane"></i> Enviar Reporte
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </main>
 <a th:href="@{/redirigir}" class="btn btn-secondary">Regresar</a>
 
+<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id="csrfToken">
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sendReportBtn = document.getElementById('sendReportBtn');
+        const emailReportModal = document.getElementById('emailReportModal');
+        const emailReportForm = document.getElementById('emailReportForm');
+        const closeModalBtn = emailReportModal.querySelector('.close-modal');
+        const cancelBtn = emailReportModal.querySelector('.btn-cancel');
+        const filtrosInfo = document.getElementById('filtrosInfo');
+
+        // Función para obtener los parámetros de filtro actuales
+        function obtenerFiltrosActuales() {
+            const params = new URLSearchParams(window.location.search);
+            const filtros = {};
+
+            // Obtener todos los parámetros de filtro
+            params.forEach((value, key) => {
+                if (value && value.trim() !== '') {
+                    filtros[key] = value;
+                }
+            });
+
+            return filtros;
+        }
+
+        // Función para actualizar la información de filtros en el modal
+        function actualizarInfoFiltros() {
+            const filtros = obtenerFiltrosActuales();
+            let infoTexto = 'Todos los avances';
+
+            if (Object.keys(filtros).length > 0) {
+                infoTexto = 'Filtros aplicados: ';
+                const filtrosTexto = [];
+
+                if (filtros.idObraSelect) filtrosTexto.push(`ID Obra: ${filtros.idObraSelect}`);
+                if (filtros.idObraTexto) filtrosTexto.push(`Obra: ${filtros.idObraTexto}`);
+                if (filtros.idUsuario) filtrosTexto.push(`Usuario: ${filtros.idUsuario}`);
+                if (filtros.idAPU) filtrosTexto.push(`Actividad: ${filtros.idAPU}`);
+                if (filtros.fecha) filtrosTexto.push(`Fecha: ${filtros.fecha}`);
+
+                infoTexto += filtrosTexto.join(', ');
+            }
+
+            filtrosInfo.textContent = infoTexto;
+        }
+
+        // Abrir modal
+        sendReportBtn.addEventListener('click', function() {
+            actualizarInfoFiltros();
+            emailReportModal.style.display = 'block';
+        });
+
+        // Cerrar modal
+        function closeModal() {
+            emailReportModal.style.display = 'none';
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        // Enviar formulario - VERSIÓN CORREGIDA
+        emailReportForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Mostrar indicador de carga
+            const sendBtn = emailReportForm.querySelector('.btn-send');
+            const originalText = sendBtn.innerHTML;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            sendBtn.disabled = true;
+
+            try {
+                const formData = new FormData(this);
+                const recipients = Array.from(document.querySelectorAll('input[name="recipients"]:checked'))
+                    .map(input => input.value);
+
+                // Procesar correos personalizados (separados por comas)
+                const customEmail = formData.get('customEmail');
+                let customEmails = [];
+                if (customEmail && customEmail.trim() !== '') {
+                    customEmails = customEmail.split(',')
+                        .map(email => email.trim())
+                        .filter(email => email !== '');
+                }
+
+                // Combinar todos los destinatarios
+                const allRecipients = [...recipients, ...customEmails];
+
+                if (allRecipients.length === 0) {
+                    alert('Seleccione al menos un destinatario o ingrese correos manualmente');
+                    return;
+                }
+
+                // Obtener filtros actuales
+                const filtrosActuales = obtenerFiltrosActuales();
+
+                const requestData = {
+                    recipients: allRecipients,
+                    customEmail: '',
+                    subject: formData.get('subject'),
+                    message: formData.get('message'),
+                    reportType: 'avances',
+                    idObraSelect: filtrosActuales.idObraSelect ? parseInt(filtrosActuales.idObraSelect) : null,
+                    idObraTexto: filtrosActuales.idObraTexto ? parseInt(filtrosActuales.idObraTexto) : null,
+                    idUsuario: filtrosActuales.idUsuario || null,
+                    idAPU: filtrosActuales.idAPU ? parseInt(filtrosActuales.idAPU) : null,
+                    fecha: filtrosActuales.fecha || null
+                };
+
+                console.log('Enviando datos al servidor:', requestData);
+
+                const response = await fetch('/api/email/send-report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                console.log('Respuesta del servidor - Status:', response.status);
+                console.log('Respuesta del servidor - OK:', response.ok);
+
+                // Obtener la respuesta como texto primero
+                const responseText = await response.text();
+                console.log('Respuesta completa del servidor:', responseText);
+
+                let result;
+                try {
+                    // Intentar parsear como JSON
+                    result = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('No se pudo parsear como JSON:', jsonError);
+
+                    // Si no es JSON, verificar si es una página de error
+                    if (responseText.includes('Whitelabel Error Page')) {
+                        throw new Error('Error interno del servidor. Revisa los logs del servidor.');
+                    } else if (responseText.includes('login') || responseText.includes('Login')) {
+                        throw new Error('Problema de autenticación. Recarga la página e intenta nuevamente.');
+                    } else {
+                        throw new Error('Respuesta inesperada del servidor. Código: ' + response.status);
+                    }
+                }
+
+                if (response.ok) {
+                    alert(`✅ Reporte enviado exitosamente a ${result.successCount || 'varios'} destinatario(s)`);
+                    closeModal();
+                } else {
+                    alert('❌ Error al enviar el reporte: ' + (result.message || 'Error desconocido del servidor'));
+                }
+
+            } catch (error) {
+                console.error('Error completo:', error);
+                alert('❌ Error al enviar el correo: ' + error.message);
+            } finally {
+                // Restaurar botón
+                sendBtn.innerHTML = originalText;
+                sendBtn.disabled = false;
+            }
+        });
+
+        // Cerrar modal al hacer clic fuera
+        window.addEventListener('click', function(event) {
+            if (event.target === emailReportModal) {
+                closeModal();
+            }
+        });
+
+        // Validar correos personalizados en tiempo real
+        document.getElementById('customEmail').addEventListener('blur', function() {
+            const emails = this.value.split(',')
+                .map(email => email.trim())
+                .filter(email => email !== '');
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const invalidEmails = emails.filter(email => !emailRegex.test(email));
+
+            if (invalidEmails.length > 0) {
+                alert('Los siguientes correos no son válidos: ' + invalidEmails.join(', '));
+                this.focus();
+            }
+        });
+    });
+</script>
+
 </body>
+
+
+
 </html>

@@ -127,6 +127,11 @@ public class ProtoBOB {
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
             http
                     .authorizeHttpRequests(auth -> auth
+                            // Public endpoints
+                            .requestMatchers("/css/**", "/js/**", "/login", "/presupuestos/**").permitAll()
+                            .requestMatchers("/BOBWS*", "/BOBWS/*").permitAll()
+                            .requestMatchers("/api/**").permitAll() // Allow API access with no auth
+
                             // Role-based access control
                             .requestMatchers("/admin/**").hasRole("ADMIN")
                             .requestMatchers("/supervisor/**").hasRole("SUPERVISOR")
@@ -162,10 +167,7 @@ public class ProtoBOB {
                             .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "SUPERVISOR")
                             .requestMatchers("/reportes/**").hasAnyRole("ADMIN", "SUPERVISOR")
 
-                            // Public endpoints
-                            .requestMatchers("/css/**", "/js/**", "/login", "/presupuestos/**").permitAll()
-                            .requestMatchers("/BOBWS*", "/BOBWS/*").permitAll()
-                            .requestMatchers("/api/**").permitAll() // Allow API access with no auth
+
                             .anyRequest().authenticated()
                     )
                     .formLogin(form -> form

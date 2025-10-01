@@ -1,6 +1,5 @@
 package com.example.controller.web;
 
-import com.example.dao.UsuarioDao;
 import com.example.domain.*;
 import com.example.servicio.*;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,10 +16,12 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +40,9 @@ public class ControladorAvance
     @Autowired
     private APUServicio apuServicio;
     @Autowired
-    private UsuarioServicio usuarioServicio; // Use the interface, not implementation
+    private UsuarioServicio usuarioServicio;
+    @Autowired
+    private ContratistaServicio contratistaServicio;
 
 
     //Acá están los métodos
@@ -51,6 +54,7 @@ public class ControladorAvance
             @RequestParam(required = false) String idUsuario,
             @RequestParam(required = false) Long idAPU,
             @RequestParam(required = false) String fecha,
+
             Model model, org.springframework.security.core.Authentication authentication){
 
         //INFORMACION DE USUARIO PARA HEADER Y PERMISOS
@@ -117,6 +121,7 @@ public class ControladorAvance
         model.addAttribute("idObraTexto", idObraTexto);
         model.addAttribute("idUsuario", idUsuario);
         model.addAttribute("fecha", fecha);
+        model.addAttribute("contratistas", contratistaServicio.listarContratistas());
 
         return "avances/inicioAvances";
     }
@@ -375,6 +380,135 @@ public class ControladorAvance
         return Collections.emptyList();
     }
 
+    @GetMapping("/excelCorreo")
+    public byte[] generarReporteAvancesExcel(@RequestParam(required = false) Long idObraTexto,
+                                             @RequestParam(required = false) Long idObraSelect,
+                                             @RequestParam(required = false) String idUsuario,
+                                             @RequestParam(required = false) Long idAPU,
+                                             @RequestParam(required = false) String fecha) throws IOException {
+        Obra obra = new Obra();
+        List<Avance> avancesObra = new ArrayList<>();
+        if(idObraSelect!=null)
+        {
+            obra = obraServicio.localizarObra(idObraSelect);
+            avancesObra = avanceServicio.buscarPorIdObra(idObraSelect);
+        }
+        if(idObraTexto!=null)
+        {
+            obra = obraServicio.localizarObra(idObraTexto);
+            avancesObra = avanceServicio.buscarPorIdObra(idObraTexto);
+        }
+
+        Workbook libro = new XSSFWorkbook();
+        Sheet hoja = libro.createSheet("Avances");
+
+        // Crear encabezados
+        Row header = hoja.createRow(0);
+        header.createCell(0).setCellValue("Avances obra - " + obra.getNombreObra());
+
+        header = hoja.createRow(1);
+        header.createCell(0).setCellValue("ID");
+        header.createCell(1).setCellValue("Contratista");
+        header.createCell(2).setCellValue("Gestor");
+        header.createCell(3).setCellValue("Actividad");
+        header.createCell(4).setCellValue("Cantidad");
+        header.createCell(5).setCellValue("Fecha");
+
+        // Llenar datos
+        int fila = 2;
+        for (Avance avance:avancesObra) {
+            Row row = hoja.createRow(fila++);
+            row.createCell(0).setCellValue(avance.getIdAvance());
+            row.createCell(1).setCellValue(avance.getIdContratista().getNombreContratista());
+            row.createCell(2).setCellValue(avance.getIdUsuario().getNombreUsuario());
+            row.createCell(3).setCellValue(avance.getIdApu().getNombreAPU());
+            row.createCell(4).setCellValue(avance.getCantEjec());
+            row.createCell(5).setCellValue(avance.getFechaAvance());
+        }
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        libro.write(outputStream);
+        libro.close();
+
+        return outputStream.toByteArray();
+    }
+
+    // Reporte para correo masivo
+    public byte[] generarReporteAvancesConFiltros(Long idObraSelect, Long idObraTexto, String idUsuario, Long idAPU, String fecha) throws IOException {
+        try {
+            // Obtener avances con los mismos filtros que en inicioAvances
+            List<Avance> avances = avanceServicio.listaAvance();
+
+            // Aplicar filtros de la misma manera que en inicioAvances
+            if (idObraSelect != null) {
+                avances = avanceServicio.buscarPorIdObra(idObraSelect);
+            }
+            if (idObraTexto != null) {
+                avances = avanceServicio.buscarPorIdObra(idObraTexto);
+            }
+            if (idUsuario != null && !idUsuario.isEmpty()) {
+                avances = avances.stream()
+                        .filter(a -> a.getIdUsuario() != null && a.getIdUsuario().getIdUsuario().toString().equals(idUsuario))
+                        .collect(Collectors.toList());
+            }
+            if (fecha != null && !fecha.isEmpty()) {
+                try {
+                    LocalDate filterDate = LocalDate.parse(fecha);
+                    avances = avances.stream()
+                            .filter(a -> a.getFechaAvance() != null && a.getFechaAvance().equals(filterDate))
+                            .collect(Collectors.toList());
+                } catch (DateTimeParseException e) {
+                    throw new RuntimeException("Formato de fecha inválido: " + fecha);
+                }
+            }
+
+            // Crear el reporte Excel
+            Workbook libro = new XSSFWorkbook();
+            Sheet hoja = libro.createSheet("Avances Filtrados");
+
+            // Crear encabezados
+            Row header = hoja.createRow(0);
+            header.createCell(0).setCellValue("ID Avance");
+            header.createCell(1).setCellValue("ID Obra");
+            header.createCell(2).setCellValue("Nombre Obra");
+            header.createCell(3).setCellValue("Fecha");
+            header.createCell(4).setCellValue("Actividad");
+            header.createCell(5).setCellValue("Cantidad Ejecutada");
+            header.createCell(6).setCellValue("Usuario");
+            header.createCell(7).setCellValue("Contratista");
+
+            // Llenar datos
+            int fila = 1;
+            for (Avance avance : avances) {
+                if (avance != null && !avance.isAnular()) {
+                    Row row = hoja.createRow(fila++);
+                    row.createCell(0).setCellValue(avance.getIdAvance());
+                    row.createCell(1).setCellValue(avance.getIdObra().getIdObra());
+                    row.createCell(2).setCellValue(avance.getIdObra() != null && avance.getIdObra().getNombreObra() != null ? avance.getIdObra().getNombreObra() : "");
+                    row.createCell(3).setCellValue(avance.getFechaAvance() != null ? avance.getFechaAvance().toString() : "");
+                    row.createCell(4).setCellValue(avance.getIdApu() != null && avance.getIdApu().getNombreAPU() != null ? avance.getIdApu().getNombreAPU() : "");
+                    row.createCell(5).setCellValue(avance.getCantEjec() != null ? avance.getCantEjec() : 0);
+                    row.createCell(6).setCellValue(avance.getIdUsuario() != null && avance.getIdUsuario().getNombreUsuario() != null ? avance.getIdUsuario().getNombreUsuario() : "");
+                    row.createCell(7).setCellValue(avance.getIdContratista() != null && avance.getIdContratista().getIdPersona() != null ?
+                            avance.getIdContratista().getIdPersona().getNombre() + " " + avance.getIdContratista().getIdPersona().getApellido() : "");
+                }
+            }
+
+            // Autoajustar columnas
+            for (int i = 0; i < 8; i++) {
+                hoja.autoSizeColumn(i);
+            }
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            libro.write(outputStream);
+            libro.close();
+
+            return outputStream.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar reporte de avances con filtros: " + e.getMessage(), e);
+        }
+    }
 
 }
 
