@@ -1,16 +1,14 @@
 package com.example.servicio;
 
-import com.example.domain.Contratista;
-import com.example.domain.Persona;
 import com.example.domain.Proveedor;
-
 import java.util.List;
+import java.util.Optional;
 
 public interface ProveedorServicio {
-    public List<Proveedor> listarProveedores();
-    public void guardar(Proveedor proveedor);
-    public void borrar(Proveedor proveedor);
-    public Proveedor encontrarPorId(Long id);
-    Proveedor encontrarPorIdPersona(Persona idPersona);
+    List<Proveedor> listar();
+    Optional<Proveedor> buscarPorId(Long id);
+    Proveedor guardar(Proveedor proveedor);   // crea/actualiza
+    void eliminar(Long id);
+
 
 }

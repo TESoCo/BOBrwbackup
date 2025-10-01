@@ -33,7 +33,7 @@ public class ContratistaServicioImp implements ContratistaServicio {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Contratista> listarContratistas(){
+    public List<Contratista> listarContratistas() {
         return (List<Contratista>) contratistaDao.findAll();
     }
 
@@ -68,12 +68,12 @@ public class ContratistaServicioImp implements ContratistaServicio {
         Obra obra = obraDao.findByNombreObra(nombreObra).get(0);
         List<Contratista> contratistas = new ArrayList<>();
         List<Avance> avances = avanceDao.findByIdObra(obra);
-        if(avances!=null && !avances.isEmpty())
-        {
-            for (Avance avance:avances){
+        if (avances != null && !avances.isEmpty()) {
+            for (Avance avance : avances) {
                 contratistas.add(avance.getIdContratista());
             }
-        };
+        }
+        ;
         return contratistas;
     }
 }

@@ -1,5 +1,4 @@
-// Contratista.java
-package com.example.domain;
+        package com.example.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;

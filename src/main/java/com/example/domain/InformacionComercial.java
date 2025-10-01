@@ -3,6 +3,7 @@ package com.example.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import java.io.Serializable;
 
@@ -33,7 +34,20 @@ public class InformacionComercial implements Serializable {
     @Column(name = "num_Cuenta")
     private String numCuenta;
 
+    @Pattern(
+            regexp = "^(Calle|Carrera|Avenida|Diagonal|Transversal)\\s+\\d+[A-Za-z]?\\s+#\\s*\\d+-\\d+.*$",
+            message = "Formato de dirección inválido. Use: Calle/Carrera/Avenida + Número + # + Número-Número"
+    )
     @NotEmpty
     @Column(name = "direccion")
     private String direccion;
+
+    @NotEmpty
+    @Column(name = "correo_Electronico")
+    private String correoElectronico;
+
+    @NotEmpty
+    @Column(name = "producto")
+    private String producto;
+
 }

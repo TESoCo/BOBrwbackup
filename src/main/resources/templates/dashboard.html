@@ -421,7 +421,11 @@
       <!-- Supervisor and Admin menu items -->
       <div sec:authorize="hasAnyRole('SUPERVISOR', 'ADMIN')">
         <li><a th:href="@{/contratista}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
-        <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
+      </div>
+
+      <!-- Menu items for users with budget permissions -->
+      <div sec:authorize="hasAnyAuthority('VER_PROVEEDORES', 'GESTIONAR_PROVEEDORES','LEER PROVEEDORES')">
+        <li><a th:href="@{/proveedores}"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
       </div>
 
       <!-- Menu items for users with report permissions -->

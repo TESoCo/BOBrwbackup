@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nuevo Proveedor</title>
+  <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"/>
+  <link rel="stylesheet" th:href="@{/CSS/styles.css}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Menú superior -->
+<header>
+  <nav class="menu">
+    <div class="logo-container">
+      <img th:src="@{/IMG/imagen-bob.png}" alt="Logo BOB" class="logo">
+      <div class="logo-text-container">
+        <h1 class="logo-text">Building Optimization Baseline</h1>
+        <p class="logo-subtext">Gestión inteligente de proyectos de construcción</p>
+      </div>
+    </div>
+
+    <ul class="nav-links">
+      <li><a th:href="@{/error404.html}">Perfil</a></li>
+      <li><a th:href="@{/index.html}" class="active">Cerrar Sesión</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- Menú lateral y contenido -->
+<main>
+  <div class="menu-dasboard">
+    <div class="menu">
+      <a class="enlace" th:href="${session.dashboardOrigen}"><i class="bx bx-home"></i><span>Inicio</span></a>
+      <a class="enlace" th:href="@{/inventario}"><i class="bx bx-box"></i><span>Inventario</span></a>
+      <a class="enlace" th:href="@{/avances}"><i class="bx bx-buildings"></i><span>Avances</span></a>
+      <a class="enlace" th:href="@{/contratista}"><i class="bx bx-receipt"></i><span>Contratista</span></a>
+      <a class="enlace" th:href="@{/presupuesto}"><i class="bx bx-money-withdraw"></i><span>Presupuesto</span></a>
+      <a class="enlace" th:href="@{/proveedores/inicioProveedor}"><i class="bx bx-hard-hat"></i><span>Proveedores</span></a>
+      <a class="enlace" th:href="@{/usuarios}"><i class="bx bxs-user-detail"></i><span>Usuarios</span></a>
+      <a class="enlace" href="#reportes"><i class="bx bx-line-chart"></i><span>Reportes</span></a>
+      <a class="enlace" href="#configuracion"><i class="bx bx-cog"></i><span>Configuración</span></a>
+    </div>
+  </div>
+
+  <div class="dashboard-content">
+
+    <!-- Header del formulario -->
+    <div class="supplier-header">
+      <h1><i class='bx bx-user-plus'></i> Registrar Proveedor</h1>
+      <div class="breadcrumb">
+        <a th:href="@{/proveedores/inicioProveedor}">
+          <i class='bx bx-hard-hat'></i> Proveedores
+        </a>
+        <span>/</span>
+        <span>Nuevo</span>
+      </div>
+    </div>
+
+    <!-- Mostrar mensajes de error -->
+    <div th:if="${error}" class="alert alert-danger" style="margin: 20px; padding: 15px; background: #f8d7da; color: #721c24; border-radius: 4px;">
+      <i class='bx bx-error'></i> <span th:text="${error}"></span>
+    </div>
+
+    <!-- Formulario estilizado -->
+    <div class="form-container">
+      <form th:action="@{/proveedores/salvar}"
+            method="post"
+            th:object="${proveedor}"
+            class="supplier-form">
+
+        <!-- Campo oculto para ID al editar -->
+        <input type="hidden" th:if="${Editando}" th:field="*{idProveedor}"/>
+
+        <h3 th:text="${Editando} ? 'Editar proveedor' : 'Nuevo proveedor'"></h3>
+
+        <!-- Sección: Selección de Individuo -->
+        <div class="form-section">
+          <div class="section-header">
+            <i class='bx bx-user'></i>
+            <h3>Información Personal</h3>
+          </div>
+
+          <div class="form-group">
+            <label for="idPersona">
+              <i class='bx bx-user-circle'></i>
+              Seleccionar Persona *
+            </label>
+            <select id="idPersona"
+                    th:field="*{idPersona.idPersona}"
+                    required
+                    class="form-select">
+              <option value="">-- Seleccione una persona --</option>
+              <option th:each="per : ${persona}"
+                      th:value="${per.idPersona}"
+                      th:text="|${per.nombre} ${per.apellido} (${per.correo})|">
+              </option>
+            </select>
+            <span class="error" th:errors="*{idPersona}" style="color: red; font-size: 0.9em;"></span>
+            <span class="error" th:errors="*{idPersona.idPersona}" style="color: red; font-size: 0.9em;"></span>
+          </div>
+        </div>
+
+        <!-- Sección: Información Comercial -->
+        <div class="form-section">
+          <div class="section-header">
+            <i class='bx bx-building'></i>
+            <h3>Información Comercial</h3>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nitRut">
+                <i class='bx bx-id-card'></i>
+                NIT/RUT *
+              </label>
+              <input type="text"
+                     id="nitRut"
+                     th:field="*{informacionComercial.nitRut}"
+                     required
+                     th:readonly="${Editando}"
+                     class="form-input"
+                     placeholder="Ej: 890.123.456-7" />
+              <span class="error" th:errors="*{informacionComercial.nitRut}" style="color: red; font-size: 0.9em;"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="correoElectronico">
+                <i class='bx bx-envelope'></i>
+                Correo Electrónico *
+              </label>
+              <input type="email"
+                     id="correoElectronico"
+                     th:field="*{informacionComercial.correoElectronico}"
+                     required
+                     class="form-input"
+                     placeholder="ejemplo@correo.com" />
+              <span class="error" th:errors="*{informacionComercial.correoElectronico}" style="color: red; font-size: 0.9em;"></span>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="producto">
+                <i class='bx bx-package'></i>
+                Producto/Servicio *
+              </label>
+              <input type="text"
+                     id="producto"
+                     th:field="*{informacionComercial.producto}"
+                     required
+                     class="form-input"
+                     placeholder="Descripción del producto o servicio" />
+              <span class="error" th:errors="*{informacionComercial.producto}" style="color: red; font-size: 0.9em;"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="formaPago">
+                <i class='bx bx-credit-card'></i>
+                Forma de Pago
+              </label>
+              <select id="formaPago"
+                      th:field="*{informacionComercial.formaPago}"
+                      class="form-select">
+                <option value="">-- Seleccione --</option>
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                <option value="CHEQUE">Cheque</option>
+                <option value="CREDITO">Crédito</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="banco">
+                <i class='bx bx-bank'></i>
+                Banco
+              </label>
+              <input type="text"
+                     id="banco"
+                     th:field="*{informacionComercial.banco}"
+                     class="form-input"
+                     placeholder="Ej: Bancolombia" />
+            </div>
+
+            <div class="form-group">
+              <label for="numCuenta">
+                <i class='bx bx-credit-card-alt'></i>
+                Número de Cuenta
+              </label>
+              <input type="text"
+                     id="numCuenta"
+                     th:field="*{informacionComercial.numCuenta}"
+                     class="form-input"
+                     placeholder="Ej: 123456789" />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="direccion">
+                <i class='bx bx-map'></i>
+                Dirección
+              </label>
+              <input type="text"
+                     id="direccion"
+                     th:field="*{informacionComercial.direccion}"
+                     class="form-input"
+                     placeholder="Dirección completa" />
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="form-actions">
+            <a th:href="@{/proveedores/inicioProveedor}" class="btn-cancel">
+              <i class='bx bx-x'></i>
+              Cancelar
+            </a>
+            <button type="submit" class="btn-save">
+              <i class='bx bx-save'></i>
+              <span th:text="${Editando} ? 'Actualizar Proveedor' : 'Guardar Proveedor'"></span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</main>
+<footer>
+  <div class="footer-bottom">
+    <p>&copy; 2025 Building Optimization Baseline. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<!-- Estilos específicos del formulario -->
+<style>
+  .form-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 1rem;
+  }
+
+  .supplier-form {
+    max-width: 100%;
+  }
+
+  .form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #007bff;
+  }
+
+  .section-header i {
+    font-size: 1.5rem;
+    color: #007bff;
+  }
+
+  .section-header h3 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+  }
+
+  .form-group label i {
+    color: #007bff;
+    font-size: 1.1rem;
+  }
+
+  .form-input, .form-select {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  }
+
+  .form-input::placeholder {
+    color: #6c757d;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .btn-cancel, .btn-save {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-cancel {
+    background: #6c757d;
+    color: white;
+  }
+
+  .btn-cancel:hover {
+    background: #545b62;
+    transform: translateY(-1px);
+  }
+
+  .btn-save {
+    background: #28a745;
+    color: white;
+  }
+
+  .btn-save:hover {
+    background: #218838;
+    transform: translateY(-1px);
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  .breadcrumb a {
+    color: #007bff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .form-container {
+      padding: 1rem;
+    }
+
+    .form-actions {
+      flex-direction: column-reverse;
+    }
+
+    .btn-cancel, .btn-save {
+      text-align: center;
+      justify-content: center;
+    }
+  }
+</style>
+
+<!-- JavaScript para funcionalidad adicional -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Validación en tiempo real
+    const form = document.querySelector('.supplier-form');
+    const inputs = form.querySelectorAll('.form-input, .form-select');
+
+    inputs.forEach(input => {
+      input.addEventListener('blur', function() {
+        validateField(this);
+      });
+    });
+
+    function validateField(field) {
+      const value = field.value.trim();
+
+      if (field.hasAttribute('required') && !value) {
+        field.style.borderColor = '#dc3545';
+        return false;
+      } else {
+        field.style.borderColor = '#28a745';
+        return true;
+      }
+    }
+
+    // Validación del formulario
+    form.addEventListener('submit', function(e) {
+      let isValid = true;
+
+      inputs.forEach(input => {
+        if (!validateField(input)) {
+          isValid = false;
+        }
+      });
+
+      if (!isValid) {
+        e.preventDefault();
+        alert('Por favor complete todos los campos requeridos');
+      }
+    });
+
+    // Formatear NIT mientras se escribe
+    const nitInput = document.getElementById('nitRut');
+    if (nitInput) {
+      nitInput.addEventListener('input', function() {
+        let value = this.value.replace(/\D/g, ''); // Solo números
+        if (value.length >= 9) {
+          value = value.substring(0, 9) + '-' + value.substring(9, 10);
+        }
+        this.value = value;
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
