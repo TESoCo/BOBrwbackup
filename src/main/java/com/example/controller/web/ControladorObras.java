@@ -165,11 +165,11 @@ public class ControladorObras
 
     //Función y forma de editado
     @GetMapping("/cambiar/{idObra}")
-    public String cambiarObra(@PathVariable Long id_obra, Model model) {
-        Obra obra = obraServicio.localizarObra(id_obra);
+    public String cambiarObra(@PathVariable Long idObra, Model model) {
+        Obra obra = obraServicio.localizarObra(idObra);
 
         // Create a list of activity IDs and quantities for editing
-        List<Apu> apusObra = obraServicio.obtenerApusEntidadesPorObra(id_obra);
+        List<Apu> apusObra = obraServicio.obtenerApusEntidadesPorObra(idObra);
         List<Apu> todosApus = APUServicio.listarElementos();
         List<Double> cantidades = new ArrayList<>();
 
@@ -207,10 +207,17 @@ public class ControladorObras
     //anular
 
     @GetMapping("/anular/{idObra}")
-    public String anularObra(Obra obraAnular)
+    public String anularObra(Long idObra)
     {
-        obraAnular.setAnular(true);
-        return "redirect:obras/inicioObra";
+        if (idObra !=null && idObra>0) {
+            Obra obraAnular = obraServicio.localizarObra(idObra);
+            obraAnular.setAnular(true);
+            obraServicio.actualizar(obraAnular);
+        }else {
+            System.out.println("ERROR: idObra no válido");
+            return "redirect:/obras/inicioObra";
+        }
+        return "redirect:/obras/anular/" + idObra;
     }
 
     //funcionalidad para guardar cambios

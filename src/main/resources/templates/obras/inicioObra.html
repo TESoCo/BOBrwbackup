@@ -616,13 +616,13 @@
                         <tr th:each="obra : ${obras}">
                             <td th:text="${obra.idObra}"></td>
                             <td th:text="${obra.nombreObra}"></td>
-                            <td class="actions">
+                            <td class="actions" >
                                 <a th:href="@{/obras/cambiar/} + ${obra.idObra}" class="btn btn-edit">
                                     <i class='bx bx-edit'></i> Editar
                                 </a>
-                                <a th:href="@{/obras/anular/} + ${obra.idObra}" class="btn btn-delete"
+                                <a th:href="@{/obras/anular/{id}(id=${obra.idObra})}" class="btn btn-delete"
                                    onclick="return confirm('¿Está seguro que desea anular y archivar esta obra?')">
-                                    <i class='bx bx-trash'></i> Eliminar
+                                    <i class='bx bx-trash'></i> Anular registro (se ocultará de la visualización).
                                 </a>
                                 <a th:href="@{/obras/detalle/}+${obra.idObra}" class="btn btn-primary">
                                     <i class='bx bx-show'></i> Ver Detalle
