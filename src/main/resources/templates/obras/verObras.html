@@ -89,42 +89,44 @@
 
   <h3>Actividades:</h3>
 
-  <!--  different display based on mode -->
+  <!-- different display based on mode -->
   <div th:if="${Editando}">
-    <!-- Edit mode  interface -->
+    <!-- Edit mode interface -->
     <div id="actividadesContainer">
       <!-- Check if there are existing activities -->
-      <div th:if="${not #lists.isEmpty(actividadIds)}">
-      <!-- Loop through existing activities -->
-      <div th:each="apu, stat : ${apusObra}" class="material-row">
+      <div th:if="${obra != null and not #lists.isEmpty(obra.apusObraList)}">
+        <!-- Loop through existing activities -->
+        <div th:each="apuObraC, stat : ${apusObraCant}" class="material-row">
+          <select name="apus" required>
+            <option value="">Seleccione...</option>
+            <option th:each="apu : ${todosApus}"
+                    th:value="${apu.idAPU}"
+                    th:data-nombre="${apu.nombreAPU}"
+                    th:data-unidades="${apu.unidadesAPU}"
+                    th:text="${apu.nombreAPU} + ' - (' + ${apu.unidadesAPU} + ')'">
+              <!--th:selected="${apu.idAPU == apuObra.apu.idAPU}"-->
+            </option>
+          </select>
+          <input type="number" name="cantidades" step="0.01" min="0.01" th:value="${apuObraC.cantidad}" placeholder="Cantidad" required>
+          <span class="btn-remove" onclick="removeActivity(this)">✕ Eliminar</span>
+        </div>
+      </div>
+
+      <!-- Show empty row if no activities exist -->
+      <div th:if="${#lists.isEmpty(obra.apusObraList)}" class="material-row">
         <select name="apus" required>
           <option value="">Seleccione...</option>
-          <option th:each="apu : ${APUs}"
+          <option th:each="apu : ${todosApus}"
                   th:value="${apu.idAPU}"
                   th:data-nombre="${apu.nombreAPU}"
                   th:data-unidades="${apu.unidadesAPU}"
-                  th:text="${apu.nombreAPU} + ' - (' + ${apu.unidadesAPU} + ')'">
+                  th:text="${apu.nombreAPU} + ' (' + ${apu.unidadesAPU} + ')'">
           </option>
-        <input type="number" name="cantidades" step="0.01" min="0.01"
-               th:value="${cantidades[stat.index]}" placeholder="Cantidad" required>
+        </select>
+        <input type="number" name="cantidades" step="0.01" min="0.01" placeholder="Cantidad" required>
         <span class="btn-remove" onclick="removeActivity(this)">✕ Eliminar</span>
-        </select>
       </div>
-      </div>
-
-      <!-- Empty row template for new materials -->
-      <!-- <div th:if="${actividadesConCantidad == null or actividadesConCantidad.empty}" class="material-row">
-        <select name="actividadIds" required>
-          <option value="">Seleccione actividad...</option>
-          <option th:each="act : ${actividades}"
-                  th:value="${act.id_m}"
-                  th:text="${#strings.abbreviate(act.nombre, 100) + ' (' + act.unidades + ')'}">
-          </option>
-        </select>
-        <input type="number" name="quantities" step="0.01" min="0.01" placeholder="Cantidad" required>
-        <span class="btn-remove" onclick="removeRow(this)">✕ Eliminar</span>
-      </div>
-    </div>-->
+    </div>
 
     <button type="button" onclick="addActivity()" class="btn" style="background-color: #2196F3;">
       + Añadir otra actividad
@@ -133,6 +135,7 @@
 
     <button type="submit" class="btn">Guardar presupuesto</button>
   </div>
+</form>
 
   <!-- View mode display -->
   <div th:unless="${Editando}">

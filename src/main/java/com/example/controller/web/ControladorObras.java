@@ -1,6 +1,7 @@
 package com.example.controller.web;
 
 import com.example.domain.Apu;
+import com.example.domain.ApusObra;
 import com.example.domain.Obra;
 import com.example.servicio.APUServicio;
 import com.example.servicio.ObraServicio;
@@ -172,6 +173,7 @@ public class ControladorObras
         List<Apu> apusObra = obraServicio.obtenerApusEntidadesPorObra(idObra);
         List<Apu> todosApus = APUServicio.listarElementos();
         List<Double> cantidades = new ArrayList<>();
+        List<ApusObra> apusObraCant = obra.getApusObraList();
 
         model.addAttribute("obra", obra);
         model.addAttribute("apusObra", apusObra);
@@ -179,6 +181,7 @@ public class ControladorObras
         model.addAttribute("Editando", true); // ← This forces EDIT mode
         model.addAttribute("todosApus", todosApus);
         model.addAttribute("matriz", APUServicio.listarElementos());
+        model.addAttribute("apusObraCant", apusObraCant);
         //Map<Integer, Double> actividades = obraEditar.getActiviValues();
         //model.addAttribute("actividadIds", actividadIds);
         model.addAttribute("cantidades", cantidades);
@@ -186,7 +189,7 @@ public class ControladorObras
 /*
         // Create a Map of Material to Quantity
         Map<Apu, Double> listApus = new HashMap<>();
-        for (Map.Entry<Integer, Double> entry : obraServicio.obtenerApusPorObra(id_obra)) {
+        for (Map.Entry<Integer, Double> entry : obraServicio.obtenerApusPorObra(idObra)) {
             Apu apuAgregar = APUServicio.obtenerPorId(entry.getKey());
             listApus.put(apuAgregar, entry.getValue());
             apusObra.add(apuAgregar);
@@ -198,7 +201,7 @@ public class ControladorObras
     }
 
     //borrar
-    /*@GetMapping("/borrar/{id_obra}")
+    /*@GetMapping("/borrar/{idObra}")
     public String borrarObra(Obra obraBorrar) {
         obraServicio.borrar(obraBorrar);
         return "redirect:/obras/inicioObra";
@@ -223,15 +226,15 @@ public class ControladorObras
     //funcionalidad para guardar cambios
     @PostMapping("/actualizar/{idObra}")
     public String actualizarPresupuesto(
-        @PathVariable Long id_obra,
-        @RequestParam String obraName,
+        @PathVariable Long idObra,
+
         @ModelAttribute Obra obraActualizar,
         BindingResult result,
         @RequestParam List<Long> actividadIds,
         @RequestParam List<Double> cantidades,
         Model model) {
         if (result.hasErrors() || actividadIds.isEmpty()) {
-            return "redirect:/obras/cambiar/" + id_obra;
+            return "redirect:/obras/cambiar/" + idObra;
         }
 
         Map<Long, Double> apuValues = new HashMap<>();
@@ -241,7 +244,7 @@ public class ControladorObras
         }
 
 
-        obraActualizar.setNombreObra(obraName);
+
 
 
         obraServicio.actualizar(obraActualizar);
