@@ -102,7 +102,7 @@ public class ControladorAPU {
     public String verDetalleAPU(@PathVariable Long id, Model model) {
         Apu apu = apuServicio.obtenerPorId(id);
         model.addAttribute("apu", apu);
-        return "apu/detalleAPU"; // TODO You'll need to create this template
+        return "apus/detalleAPU"; // TODO You'll need to create this template
     }
 
     @GetMapping("/eliminar/{id}")
@@ -161,5 +161,35 @@ public class ControladorAPU {
 
         return "redirect:/apu/inicioAPU";
     }
+
+    @GetMapping("/editar/{id}")
+    public String mostrarFormularioEditar(@PathVariable Long id, Model model) {
+        Apu apu = apuServicio.obtenerPorId(id);
+        model.addAttribute("apu", apu);
+        return "apus/editarAPU";
+    }
+
+    @PostMapping("/actualizar/{id}")
+    public String actualizarAPU(@PathVariable Long id, @ModelAttribute Apu apu, BindingResult result) {
+        if (result.hasErrors()) {
+            return "apus/editarAPU";
+        }
+
+        // Obtener el APU existente para preservar el ID
+        Apu apuExistente = apuServicio.obtenerPorId(id);
+
+        // Actualizar los campos
+        apuExistente.setNombreAPU(apu.getNombreAPU());
+        apuExistente.setDescAPU(apu.getDescAPU());
+        apuExistente.setUnidadesAPU(apu.getUnidadesAPU());
+        apuExistente.setVMaterialesAPU(apu.getVMaterialesAPU() != null ? apu.getVMaterialesAPU() : BigDecimal.ZERO);
+        apuExistente.setVManoDeObraAPU(apu.getVManoDeObraAPU() != null ? apu.getVManoDeObraAPU() : BigDecimal.ZERO);
+        apuExistente.setVTransporteAPU(apu.getVTransporteAPU() != null ? apu.getVTransporteAPU() : BigDecimal.ZERO);
+        apuExistente.setVMiscAPU(apu.getVMiscAPU());
+
+        apuServicio.guardar(apuExistente);
+        return "redirect:/apu/inicioAPU";
+    }
+
 
 }

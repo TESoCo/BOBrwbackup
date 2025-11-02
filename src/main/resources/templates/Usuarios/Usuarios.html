@@ -435,47 +435,68 @@
             <h1>BOB</h1>
         </div>
         <ul class="nav-links">
-            <!-- Admin-only menu items -->
-            <div sec:authorize="hasRole('ADMIN')">
+
+            <!-- Dashboard - Para todos los usuarios autenticados -->
+            <div sec:authorize="isAuthenticated()">
                 <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            </div>
+
+            <!-- Gestión de Usuarios - Solo con permisos de usuario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
                 <li><a href="#" class="active"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
             </div>
 
             <!-- Menu items for users with inventory permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_INVENTARIO', 'CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
+            <!-- Inventario - Con permisos de inventario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
                 <li><a th:href="@{/inventario}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
             </div>
 
-            <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL', 'VER_MATERIAL')">
+            <!-- Materiales - Con permisos de material -->
+            <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
                 <li><a th:href="@{/material/inicioMAterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
             </div>
 
-            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU', 'VER_APU')">
+            <!-- APUs - Con permisos de APU -->
+            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
                 <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
             </div>
 
             <!-- Menu items for users with progress permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_AVANCES', 'REGISTRAR_AVANCES')">
+            <!-- Avances - Con permisos de avance -->
+            <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
                 <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
             </div>
 
             <!-- Menu items for users with budget permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_OBRAS', 'GESTIONAR_OBRAS','LEER OBRAS')">
+            <!-- Obras - Con permisos de obra -->
+            <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
                 <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
             </div>
 
             <!-- Supervisor and Admin menu items -->
-            <div sec:authorize="hasAnyRole('SUPERVISOR', 'ADMIN')">
+            <!-- Contratistas - Con permisos de contratista -->
+            <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
                 <li><a th:href="@{/contratista}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+            </div>
+            <!-- Proveedores - Con permisos de proveedor -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
                 <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
             </div>
 
             <!-- Menu items for users with report permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_REPORTES', 'GENERAR_REPORTES')">
+            <!-- Reportes - Para roles ADMIN y SUPERVISOR -->
+            <div sec:authorize="hasAnyRole('ADMIN', 'SUPERVISOR')">
                 <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
             </div>
 
+            <!-- Fotodatos - Con permisos de fotodato -->
+            <div sec:authorize="hasAnyAuthority('CREAR_FOTODATO', 'EDITAR_FOTODATO')">
+                <li><a href="#"><i class="fas fa-camera"></i> <span>Fotodatos</span></a></li>
+            </div>
+
             <!-- Admin-only configuration -->
+            <!-- Configuración - Solo ADMIN -->
             <div sec:authorize="hasRole('ADMIN')">
                 <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
             </div>
@@ -618,9 +639,10 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <button class="btn btn-primary btn-sm" th:attr="data-id=${usuario.idUsuario}">
+                            <a th:href="@{/usuarios/editar/{id}(id=${usuario.idUsuario})}"
+                               class="btn btn-primary btn-sm">
                                 <i class="fas fa-edit"></i> Editar
-                            </button>
+                            </a>
                             <form th:action="@{/usuarios/eliminar/} + ${usuario.idUsuario}" method="post" style="display: inline;">
                                 <button type="submit" class="btn btn-danger btn-sm"
                                         onclick="return confirm('¿Está seguro de que desea eliminar este usuario?')">
@@ -656,13 +678,26 @@
     </div>
 </div>
 
+<!-- Modal de actualización exitosa -->
+<div th:if="${param.actualizacionExitosa}" class="modal" style="display: block; position: fixed; z-index: 1000; background: rgba(0,0,0,0.5); width: 100%; height: 100%; top: 0; left: 0;">
+    <div style="background: white; margin: 10% auto; padding: 2rem; border-radius: 8px; max-width: 400px; text-align: center;">
+        <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success); margin-bottom: 1rem;"></i>
+        <h3>¡Éxito!</h3>
+        <p>Usuario actualizado correctamente</p>
+        <button class="btn btn-primary" onclick="this.closest('.modal').style.display='none'">Aceptar</button>
+    </div>
+</div>
+
+
 <script>
     // Cerrar modal al hacer clic fuera
     window.onclick = function(event) {
-        const modal = document.querySelector('.modal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
     }
 
     // Smooth animations

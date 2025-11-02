@@ -27,69 +27,6 @@ public class ProtoBOB {
 		SpringApplication.run(ProtoBOB.class, args);
 	}
 
-    @Bean
-    public CommandLineRunner crearAdminPorDefecto(
-            UsuarioServicio usuarioServicio,
-            PersonaServicio personaServicio,
-            RolServicio rolServicio,
-            PasswordEncoder passwordEncoder) {
-
-        return args -> {
-            // Verificar si ya existe un administrador
-                if (usuarioServicio.encontrarPorNombreUsuario("admin") == null) {
-                    try {
-                        // 1. Crear persona
-                        Persona persona = new Persona();
-                        persona.setNombre("Administrador");
-                        persona.setApellido("Sistema");
-                        persona.setTelefono("000-000-0000");
-                        persona.setCorreo("admin@bob.com");
-
-                        System.out.println("Guardando persona...");
-                        Persona personaGuardada = personaServicio.salvar(persona);
-                        System.out.println("Persona guardada con ID: " + personaGuardada.getIdPersona());
-
-
-
-
-                                // 2. Crear rol ADMIN si no existe
-                        Rol rolAdmin = rolServicio.listarRoles().stream()
-                                .filter(rol -> "ADMIN".equalsIgnoreCase(rol.getNombreRol()))
-                                .findFirst()
-                                .orElse(null);
-
-                        if (rolAdmin == null) {
-                            rolAdmin = new Rol();
-                            rolAdmin.setNombreRol("ADMIN");
-                            rolAdmin.setDescripRol("Administrador del sistema con todos los permisos");
-                            rolServicio.guardar(rolAdmin);
-                        }
-
-
-
-                        // 3. Crear usuario admin
-                        Usuario usuario = new Usuario();
-                        usuario.setNombreUsuario("admin");
-                        usuario.setPass_usuario(passwordEncoder.encode("admin123")); // Contraseña por defecto
-                        usuario.setCargo("Administrador del Sistema");
-                        usuario.setPersona(persona);
-                        usuario.setRol(rolAdmin);
-
-                        usuarioServicio.guardar(usuario);
-
-                        System.out.println("Usuario administrador creado:");
-                        System.out.println("Usuario: admin");
-                        System.out.println("Contraseña: admin123");
-
-                    } catch (Exception e) {
-                        System.err.println("Error creando usuario administrador: " + e.getMessage());
-                    }
-                } else {
-                    System.out.println("Usuario administrador ya existe");
-            }
-        };
-    }
-
 
     @Configuration
 
@@ -131,6 +68,7 @@ public class ProtoBOB {
                             .requestMatchers("/css/**", "/js/**", "/login", "/presupuestos/**").permitAll()
                             .requestMatchers("/BOBWS*", "/BOBWS/*").permitAll()
                             .requestMatchers("/api/**").permitAll() // Allow API access with no auth
+                            .requestMatchers("/usuarios/foto/**").permitAll() // Permitir acceso a fotos de perfil
 
                             // Role-based access control
                             .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -160,8 +98,14 @@ public class ProtoBOB {
                             .requestMatchers("/proveedor/editar").hasAuthority("EDITAR_PROVEEDOR")
                             .requestMatchers("/rol/crear").hasAuthority("CREAR_ROL")
                             .requestMatchers("/rol/editar").hasAuthority("EDITAR_ROL")
-                            .requestMatchers("/usuario/crear").hasAuthority("CREAR_USUARIO")
+                            .requestMatchers("/usuario/registrar").hasAuthority("CREAR_USUARIO")
                             .requestMatchers("/usuario/editar").hasAuthority("EDITAR_USUARIO")
+
+                            // Usuarios endpoints - permission based
+                            .requestMatchers("/usuarios/registrar").hasAnyAuthority("CREAR_USUARIO", "ROLE_ADMIN")
+                            .requestMatchers("/usuarios/editar/**").hasAnyAuthority("EDITAR_USUARIO", "ROLE_ADMIN")
+                            .requestMatchers("/usuarios/eliminar/**").hasAnyAuthority("EDITAR_USUARIO", "ROLE_ADMIN")
+                            .requestMatchers("/usuarios").hasAnyAuthority("CREAR_USUARIO", "EDITAR_USUARIO", "ROLE_ADMIN")
 
                             // Combined role and permission access
                             .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "SUPERVISOR")

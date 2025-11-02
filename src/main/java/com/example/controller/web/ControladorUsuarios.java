@@ -52,7 +52,7 @@ public class ControladorUsuarios {
      * Mostrar la página principal de gestión de usuarios con datos reales
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('CREAR_USUARIO') or hasAuthority('EDITAR_USUARIO')")
     public String mostrarGestionUsuarios(Model model) {
         try {
             // Obtener lista REAL de usuarios
@@ -106,7 +106,7 @@ public class ControladorUsuarios {
      * Mostrar formulario de registro de usuario
      */
     @GetMapping("/registrar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('CREAR_USUARIO')")
     public String mostrarFormularioRegistro(Model model) {
         try {
             // Obtener lista REAL de roles disponibles
@@ -124,7 +124,7 @@ public class ControladorUsuarios {
      * Procesar registro de nuevo usuario - CREA PERSONA Y USUARIO
      */
     @PostMapping("/registrar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('CREAR_USUARIO')")
     public String registrarUsuario(
             @RequestParam String nombre,
             @RequestParam String apellido,
@@ -257,7 +257,7 @@ public class ControladorUsuarios {
      * Eliminar usuario
      */
     @PostMapping("/eliminar/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('EDITAR_USUARIO')")
     public String eliminarUsuario(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             Usuario usuario = usuarioServicio.encontrarPorId(id);
@@ -274,9 +274,8 @@ public class ControladorUsuarios {
 
                 //  También eliminar la persona asociada
                 Persona persona = usuario.getPersona();
-                personaServicio.borrar(persona);
-                System.out.println("Usuario eliminado: " + id);
                 usuarioServicio.borrar(usuario);
+                System.out.println("Usuario eliminado: " + id);
                 if (persona != null) {
                     personaServicio.borrar(persona);
                     System.out.println("Persona eliminada: " + persona.getIdPersona());
@@ -298,8 +297,165 @@ public class ControladorUsuarios {
         }
     return "redirect:/usuarios";
 
+    }
+
+    /**
+     * Mostrar formulario de edición de usuario
+     */
+    @GetMapping("/editar/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_USUARIO')")
+    public String mostrarFormularioEdicion(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+
+        try {
+            // Buscar el usuario por ID
+            Usuario usuario = usuarioServicio.encontrarPorId(id);
+            if(usuario==null){
+                redirectAttributes.addFlashAttribute("error","Usuaro no encontrado");
+                return  "redirect:/usuarios";
+            }
+
+            // Obtener lista REAL de roles disponibles
+            List<Rol> roles = rolServicio.listarRoles();
+
+            // Agregar datos al modelo
+            model.addAttribute("usuario", usuario);
+            model.addAttribute("roles", roles);
+            model.addAttribute("persona", usuario.getPersona());
+
+            return "usuarios/editarUsuario";
+
+        } catch (Exception e) {
+            System.err.println("Error al cargar formulario de edición: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al cargar formulario de edición");
+            return "redirect:/usuarios";
+        }
 
     }
+
+
+    /**
+     * Procesar actualización de usuario
+     */
+    @PostMapping("/editar/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_USUARIO')")
+    public String actualizarUsuario(
+            @PathVariable Long id,
+            @RequestParam String nombre,
+            @RequestParam String apellido,
+            @RequestParam String telefono,
+            @RequestParam String correo,
+            @RequestParam String nombreUsuario,
+            @RequestParam(required = false) String password, // Opcional para edición
+            @RequestParam String cargo,
+            @RequestParam String rolSeleccionado,
+            @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
+            @RequestParam(value = "eliminarFoto", defaultValue = "false") boolean eliminarFoto,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            // Buscar el usuario existente
+            Usuario usuarioExistente = usuarioServicio.encontrarPorId(id);
+            if (usuarioExistente == null) {
+                redirectAttributes.addFlashAttribute("error", "Usuario no encontrado");
+                return "redirect:/usuarios";
+            }
+
+            // Validar campos obligatorios
+            if (nombre == null || nombre.isEmpty() ||
+                    apellido == null || apellido.isEmpty() ||
+                    telefono == null || telefono.isEmpty() ||
+                    correo == null || correo.isEmpty() ||
+                    nombreUsuario == null || nombreUsuario.isEmpty() ||
+                    cargo == null || cargo.isEmpty() ||
+                    rolSeleccionado == null || rolSeleccionado.isEmpty()) {
+
+                redirectAttributes.addFlashAttribute("error", "Todos los campos son obligatorios");
+                return "redirect:/usuarios/editar/" + id;
+            }
+
+            // Verificar si el nombre de usuario ya existe (excluyendo el usuario actual)
+            Usuario usuarioConMismoNombre = usuarioServicio.encontrarPorNombreUsuario(nombreUsuario);
+            if (usuarioConMismoNombre != null && !usuarioConMismoNombre.getIdUsuario().equals(id)) {
+                redirectAttributes.addFlashAttribute("error", "El nombre de usuario ya está en uso");
+                return "redirect:/usuarios/editar/" + id;
+            }
+
+            // 1. ACTUALIZAR LA PERSONA
+            Persona persona = usuarioExistente.getPersona();
+            persona.setNombre(nombre);
+            persona.setApellido(apellido);
+            persona.setTelefono(telefono);
+            persona.setCorreo(correo);
+            personaServicio.salvar(persona);
+
+            // 2. BUSCAR EL ROL SELECCIONADO
+            Rol rol = null;
+            List<Rol> roles = rolServicio.listarRoles();
+            for (Rol r : roles) {
+                if (rolSeleccionado.equalsIgnoreCase(r.getNombreRol())) {
+                    rol = r;
+                    break;
+                }
+            }
+
+            if (rol == null) {
+                redirectAttributes.addFlashAttribute("error", "No se pudo asignar un rol válido");
+                return "redirect:/usuarios/editar/" + id;
+            }
+
+            // 3. ACTUALIZAR EL USUARIO
+            usuarioExistente.setNombreUsuario(nombreUsuario);
+            usuarioExistente.setCargo(cargo);
+            usuarioExistente.setRol(rol);
+
+            // Actualizar contraseña solo si se proporcionó una nueva
+            if (password != null && !password.isEmpty()) {
+                usuarioExistente.setPass_usuario(passwordEncoder.encode(password));
+            }
+
+            // 4. MANEJO DE LA FOTO DE PERFIL
+            if (eliminarFoto) {
+                // Eliminar foto existente
+                usuarioExistente.setFotoPerfil(null);
+                usuarioExistente.setFotoTipo(null);
+            } else if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+                // Validar tipo de archivo
+                String contentType = fotoPerfil.getContentType();
+                if (!contentType.startsWith("image/")) {
+                    redirectAttributes.addFlashAttribute("error", "El archivo debe ser una imagen");
+                    return "redirect:/usuarios/editar/" + id;
+                }
+
+                // Validar tamaño (máximo 5MB)
+                if (fotoPerfil.getSize() > 5 * 1024 * 1024) {
+                    redirectAttributes.addFlashAttribute("error", "La imagen debe ser menor a 5MB");
+                    return "redirect:/usuarios/editar/" + id;
+                }
+
+                // Actualizar foto
+                byte[] fotoBytes = fotoPerfil.getBytes();
+                usuarioExistente.setFotoPerfil(fotoBytes);
+                usuarioExistente.setFotoTipo(contentType);
+            }
+            // Si no se elimina ni se sube nueva foto, se mantiene la existente
+
+            // Guardar cambios
+            usuarioServicio.guardar(usuarioExistente);
+
+            redirectAttributes.addFlashAttribute("success", "Usuario actualizado exitosamente");
+            return "redirect:/usuarios?actualizacionExitosa=true";
+
+        } catch (Exception e) {
+            System.err.println("Error al actualizar usuario: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al actualizar usuario: " + e.getMessage());
+            return "redirect:/usuarios/editar/" + id;
+        }
+    }
+
+
+
 
         //nodo que sirve las fotos
     @GetMapping("/foto/{idUsuario}")
@@ -329,5 +485,7 @@ public class ControladorUsuarios {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
 }
