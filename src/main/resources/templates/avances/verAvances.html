@@ -184,6 +184,11 @@
         background: #dc2626;
     }
 
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
     /* Detail card */
     .detail-card {
         background: white;
@@ -208,6 +213,84 @@
 
     .detail-value {
         color: var(--secondary);
+    }
+
+    /* Photo gallery */
+    .photo-section {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 1.5rem;
+    }
+
+    .photo-card {
+        border: 1px solid #e2e8f0;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .photo-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .photo-img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+
+    .photo-info {
+        padding: 1rem;
+    }
+
+    .photo-date {
+        font-size: 0.875rem;
+        color: var(--secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    .photo-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .no-photos {
+        text-align: center;
+        padding: 2rem;
+        color: var(--secondary);
+        background: #f8fafc;
+        border-radius: var(--border-radius);
+        border: 1px dashed #cbd5e1;
+    }
+
+    /* Status badge */
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-anulado {
+        background: #fee2e2;
+        color: #991b1b;
     }
 
     /* Responsive */
@@ -246,6 +329,14 @@
 
         .detail-label {
             margin-bottom: 0.5rem;
+        }
+
+        .photo-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+
+        .photo-actions {
+            flex-direction: column;
         }
     }
   </style>
@@ -334,66 +425,226 @@
       </a>
     </div>
 
-    <!-- Detail Card -->
+    <!-- Información General del Avance -->
     <div class="detail-card">
+      <h2 style="margin-bottom: 1.5rem;">Información General</h2>
+
       <div class="detail-row">
         <div class="detail-label">ID Avance:</div>
         <div class="detail-value" th:text="${avance.idAvance}"></div>
       </div>
 
       <div class="detail-row">
+        <div class="detail-label">Estado:</div>
+        <div class="detail-value">
+          <span th:if="${avance.anular}" class="status-badge status-anulado">Anulado</span>
+          <span th:unless="${avance.anular}" class="status-badge status-active">Activo</span>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Fecha del Avance:</div>
+        <div class="detail-value" th:text="${avance.fechaAvance}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Cantidad Ejecutada:</div>
+        <div class="detail-value" th:text="${avance.cantEjec}"></div>
+      </div>
+    </div>
+
+    <!-- Información de la Obra -->
+    <div class="detail-card">
+      <h2 style="margin-bottom: 1.5rem;">Información de la Obra</h2>
+
+      <div class="detail-row">
         <div class="detail-label">ID Obra:</div>
-        <div class="detail-value" th:text="${avance.idObra}"></div>
+        <div class="detail-value" th:text="${avance.idObra.idObra}"></div>
       </div>
 
       <div class="detail-row">
         <div class="detail-label">Nombre de la Obra:</div>
+        <div class="detail-value" th:text="${avance.idObra.nombreObra}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Etapa:</div>
+        <div class="detail-value" th:text="${avance.idObra.etapa}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Fecha Inicio:</div>
+        <div class="detail-value" th:text="${avance.idObra.fechaIni}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Fecha Fin:</div>
+        <div class="detail-value" th:text="${avance.idObra.fechaFin}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Ubicación:</div>
         <div class="detail-value">
-                    <span th:each="presupuesto : ${presupuestos}"
-                          th:if="${presupuesto.idObra == avance.idObra}"
-                          th:text="${presupuesto.nombreObra}">
-                    </span>
+          <span th:text="${'N: ' + avance.idObra.cooNObra + ', E: ' + avance.idObra.cooEObra}"></span>
         </div>
       </div>
+    </div>
 
-      <div class="detail-row">
-        <div class="detail-label">Fecha:</div>
-        <div class="detail-value" th:text="${avance.fecha}"></div>
-      </div>
-
-      <div class="detail-row">
-        <div class="detail-label">ID Usuario:</div>
-        <div class="detail-value" th:text="${avance.idUsuario}"></div>
-      </div>
+    <!-- Información de la Actividad -->
+    <div class="detail-card">
+      <h2 style="margin-bottom: 1.5rem;">Información de la Actividad</h2>
 
       <div class="detail-row">
         <div class="detail-label">ID Actividad:</div>
-        <div class="detail-value" th:text="${avance.idAPU}"></div>
-      </div>
-
-      <div class="detail-row">
-        <div class="detail-label">Cantidad:</div>
-        <div class="detail-value" th:text="${avance.cantidad}"></div>
+        <div class="detail-value" th:text="${avance.idApu.idAPU}"></div>
       </div>
 
       <div class="detail-row">
         <div class="detail-label">Nombre de Actividad:</div>
-        <div class="detail-value">
-                    <span th:each="apu : ${apus}"
-                          th:if="${apu.idAPU == avance.idAPU}"
-                          th:text="${apu.nombreAPU}">
-                    </span>
-        </div>
+        <div class="detail-value" th:text="${avance.idApu.nombreAPU}"></div>
       </div>
 
       <div class="detail-row">
-        <div class="detail-label">Unidades de Actividad:</div>
+        <div class="detail-label">Descripción:</div>
+        <div class="detail-value" th:text="${avance.idApu.descAPU}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Unidades:</div>
+        <div class="detail-value" th:text="${avance.idApu.unidadesAPU}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Valor Materiales:</div>
+        <div class="detail-value" th:text="${avance.idApu.vMaterialesAPU}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Valor Mano de Obra:</div>
+        <div class="detail-value" th:text="${avance.idApu.vManoDeObraAPU}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Valor Transporte:</div>
+        <div class="detail-value" th:text="${avance.idApu.vTransporteAPU}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Valor Misceláneos:</div>
+        <div class="detail-value" th:text="${avance.idApu.vMiscAPU}"></div>
+      </div>
+    </div>
+
+    <!-- Información del Contratista -->
+    <div class="detail-card" th:if="${avance.idContratista != null}">
+      <h2 style="margin-bottom: 1.5rem;">Información del Contratista</h2>
+
+      <div class="detail-row">
+        <div class="detail-label">ID Contratista:</div>
+        <div class="detail-value" th:text="${avance.idContratista.idContratista}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Nombre del Contratista:</div>
+        <div class="detail-value" th:text="${avance.idContratista.nombreContratista}"></div>
+      </div>
+
+      <div class="detail-row" th:if="${avance.idContratista.idPersona != null}">
+        <div class="detail-label">Contacto:</div>
         <div class="detail-value">
-                    <span th:each="apu : ${apus}"
-                          th:if="${apu.idAPU == avance.idAPU}"
-                          th:text="${apu.unidadesAPU}">
-                    </span>
+          <span th:text="${avance.idContratista.idPersona.nombre + ' ' + avance.idContratista.idPersona.apellido}"></span>
+          <br>
+          <span th:text="${'Tel: ' + avance.idContratista.idPersona.telefono}"></span>
+          <br>
+          <span th:text="${'Email: ' + avance.idContratista.idPersona.correo}"></span>
         </div>
+      </div>
+    </div>
+
+    <!-- Información del Usuario -->
+    <div class="detail-card">
+      <h2 style="margin-bottom: 1.5rem;">Información del Usuario</h2>
+
+      <div class="detail-row">
+        <div class="detail-label">ID Usuario:</div>
+        <div class="detail-value" th:text="${avance.idUsuario.idUsuario}"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Nombre de Usuario:</div>
+        <div class="detail-value" th:text="${avance.idUsuario.nombreUsuario}"></div>
+      </div>
+    </div>
+
+    <!-- Sección de Fotos -->
+    <div class="photo-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0;">Fotos del Avance</h2>
+        <a th:href="@{/fotodatos/capturar/} + ${avance.idAvance}" class="btn btn-primary">
+          <i class="fas fa-camera"></i> Tomar Nueva Foto
+        </a>
+      </div>
+
+      <!-- ALERTA DE ESTADO -->
+      <div th:if="${fotos == null}" style="background: #dc3545; color: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+        <h4>🚨 CRÍTICO: fotos es NULL</h4>
+        <p>No se pudieron cargar las fotos del avance.</p>
+      </div>
+
+      <div th:if="${fotos != null and fotos.empty}" style="background: #ffc107; color: black; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+        <h4>⚠️ AVISO: No hay fotos registradas</h4>
+        <p>El avance ID <span th:text="${avance.idAvance}"></span> no tiene fotos asociadas.</p>
+        <p><strong>Total de fotos:</strong> 0</p>
+      </div>
+
+      <div th:if="${fotos != null and !fotos.empty}" style="background: #28a745; color: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+        <h4>✅ FOTOS ENCONTRADAS</h4>
+        <p><strong>Total de fotos:</strong> <span th:text="${fotos.size()}"></span></p>
+        <div th:each="foto, stat : ${fotos}">
+          <p>Foto <span th:text="${stat.index + 1}"></span>:
+            ID=<span th:text="${foto.idFotoDato}"></span>,
+            Bytes=<span th:text="${foto.foto != null ? foto.foto.length : 'NULL'}"></span>
+          </p>
+        </div>
+      </div>
+
+      <!-- GALERÍA SOLO SI HAY FOTOS -->
+      <div th:if="${fotos != null and !fotos.empty}">
+        <div class="photo-grid">
+          <div th:each="foto : ${fotos}" class="photo-card">
+            <img th:src="@{'/fotodatos/imagen/' + ${foto.idFotoDato}}"
+                 class="photo-img"
+                 alt="Foto del avance"
+                 style="width: 100%; height: 180px; object-fit: cover; border: 2px solid blue;"
+                 onload="console.log('✅ Imagen cargada:', this.src)"
+                 >
+
+            <div class="photo-info">
+              <div class="photo-date">
+                <i class="fas fa-calendar"></i>
+                <span th:text="${foto.fechaFoto}"></span>
+              </div>
+              <div class="photo-actions">
+                <a th:href="@{/fotodatos/ver/} + ${foto.idFotoDato}" class="btn btn-sm btn-secondary">
+                  <i class="fas fa-eye"></i> Ver
+                </a>
+                <a th:href="@{/fotodatos/eliminar/} + ${foto.idFotoDato}" class="btn btn-sm btn-danger"
+                   onclick="return confirm('¿Está seguro de eliminar esta foto?')">
+                  <i class="fas fa-trash"></i> Eliminar
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MENSAJE SI NO HAY FOTOS -->
+      <div th:if="${fotos == null or fotos.empty}" class="no-photos">
+        <i class="fas fa-camera" style="font-size: 3rem; margin-bottom: 1rem; color: #cbd5e1;"></i>
+        <p>No hay fotos registradas para este avance</p>
+        <p style="font-size: 0.9rem; color: #94a3b8; margin-top: 0.5rem;">
+          Haz clic en "Tomar Nueva Foto" para agregar la primera foto
+        </p>
       </div>
     </div>
   </main>

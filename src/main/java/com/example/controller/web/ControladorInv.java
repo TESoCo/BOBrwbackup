@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.List;
 
 @Controller
-@RequestMapping("/inventario")
+@RequestMapping("/inventarios")
 public class ControladorInv {
 
     @Autowired
@@ -38,7 +38,7 @@ public class ControladorInv {
     @Autowired
     private UsuarioServicio usuarioServicio;
 
-    @GetMapping("/inventario")
+    @GetMapping
     public String inventario(Model model) {
         List<Inventario> inventarios = inventarioServicio.listaInventarios();
         model.addAttribute("inventarios", inventarios);

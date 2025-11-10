@@ -123,8 +123,15 @@ public class ControladorAPU {
             return "redirect:/apu/inicioAPU";
         }
 
-        if (!archivo.getContentType().equals("text/csv") &&
-                !archivo.getOriginalFilename().toLowerCase().endsWith(".csv")) {
+        String contentType = archivo.getContentType();
+        String originalFilename = archivo.getOriginalFilename();
+
+        System.out.println("Archivo recibido: " + originalFilename);
+        System.out.println("Content-Type: " + contentType);
+        System.out.println("Tamaño: " + archivo.getSize() + " bytes");
+
+        if (!"text/csv".equals(contentType) &&
+                !originalFilename.toLowerCase().endsWith(".csv")) {
             redirectAttributes.addFlashAttribute("error", "El archivo debe ser un CSV válido");
             return "redirect:/apu/inicioAPU";
         }
@@ -143,13 +150,15 @@ public class ControladorAPU {
             List<Apu> apusImportados = apuServicio.importarAPUsDesdeCSV(archivo, usuario);
 
             // Save all imported APUs
-            for (Apu apu:apusImportados)
-            {
-                apuServicio.guardar(apu);
-            };
+            if (!apusImportados.isEmpty()) {
+                apuServicio.guardarTodos(apusImportados);
+                redirectAttributes.addFlashAttribute("success",
+                        "Se importaron " + apusImportados.size() + " APUs correctamente");
+            } else {
+                redirectAttributes.addFlashAttribute("warning",
+                        "El archivo CSV no contenía datos válidos para importar");
+            }
 
-            redirectAttributes.addFlashAttribute("success",
-                    "Se importaron " + apusImportados.size() + " APUs correctamente");
 
         } catch (IOException e) {
             redirectAttributes.addFlashAttribute("error",

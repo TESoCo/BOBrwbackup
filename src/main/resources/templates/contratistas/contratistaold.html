@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://thymeleaf.org" xmlns:thattr="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Building Optimization Baseline - Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"/>
+    <link rel="stylesheet" href="CSS/styles.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Menú superior -->
+<header>
+    <nav class="menu">
+
+        <div class="logo-container">
+            <img src="../static/IMG/imagen-bob.png" alt="Logo BOB" class="logo">
+            <div class="logo-text-container">
+                <h1 class="logo-text">Building Optimization Baseline</h1>
+                <p class="logo-subtext">Gestión inteligente de proyectos de construcción</p>
+            </div>
+        </div>
+
+        <ul class="nav-links">
+            <li><a th:href="@{error404.html}">Perfil</a></li>
+            <li><a th:href="@{index.html}" class="active">Cerrar Sesión</a></li>
+        </ul>
+    </nav>
+</header>
+
+<!-- Menú lateral y contenido -->
+<main>
+    <div class="menu-dasboard">
+        <div class="menu">
+            <a class="enlace" href="dashboardADMIN.html"><i class="bx bx-home"></i><span>Inicio</span></a>
+            <a class="enlace" href="inventario.html"><i class="bx bx-box"></i><span>Inventario</span></a>
+            <a class="enlace" href="avances.html"><i class="bx bx-buildings"></i><span>Avances</span></a>
+            <a class="enlace" href="contratistaold.html"><i class="bx bx-receipt"></i><span>Contratista</span></a>
+            <a class="enlace" href="presupuesto.html"><i class="bx bx-money-withdraw"></i><span>Presupuesto</span></a>
+            <a class="enlace" href="proveedores.html"><i class="bx bx-hard-hat"></i><span>Proveedores</span></a>
+            <a class="enlace" href="usuarios.html"><i class="bx bxs-user-detail"></i><span>Usuarios</span></a>
+            <a class="enlace" href="#reportes"><i class="bx bx-line-chart"></i><span>Reportes</span></a>
+            <a class="enlace" href="#configuracion"><i class="bx bx-cog"></i><span>Configuración</span></a>
+        </div>
+    </div>
+
+    <!-- Reemplaza el espacio vacío después del menú lateral con este contenido -->
+    <div class="dashboard-content">
+        <div class="contractor-header">
+            <h2><i class='bx bx-receipt'></i> Gestión de Contratistas</h2>
+            <!-- 1. Nuevo contratista (ya existía) -->
+            <button class="btn-add" id="addContractorBtn">
+                <i class='bx bx-plus'></i> Nuevo Contratista
+            </button>
+
+            <!-- 2. Descargar Excel (nuevo) -->
+            <a th:href="@{/contratistas/excel}" class="btn-export">
+                <i class='bx bx-download'></i> Descargar Excel
+            </a>
+
+            <!-- 3. Enviar por correo (ya existía, solo abre modal) -->
+            <button class="btn-export" id="sendReportBtn">
+                <i class='bx bx-envelope'></i> Enviar Reporte
+            </button>
+        </div>
+
+        <div class="contractor-filters">
+            <div class="search-box">
+                <i class='bx bx-search'></i>
+                <input type="text" placeholder="Buscar contratista...">
+            </div>
+
+        </div>
+
+        <div class="contractor-summary">
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class='bx bx-group'></i>
+                </div>
+                <div class="summary-content">
+                    <h3>Contratistas Totales</h3>
+                    <div class="summary-value" th:text="${#lists.size(contratistas)}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Esta es la tabla de contratistas -->
+
+        <div class="contractor-table-container">
+            <table class="contractor-table">
+                <thead>
+                <tr>
+                    <th>Empresa</th>
+                    <th>Contacto</th>
+                    <th>Dirección</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${contratistas}">
+                    <td>
+                        <div class="contractor-info">
+                            <strong th:text="${c.nombreContratista}">Nombre</strong><br>
+                            <small th:text="'NIT: ' + ${c.informacionComercial.nitRut}">NIT</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="contact-info">
+                            <div><i class='bx bx-user'></i> <span th:text="${c.idPersona.nombre} + ' ' + ${c.idPersona.apellido}"/></div>
+                            <div><i class='bx bx-phone'></i> <span th:text="${c.idPersona.telefono}"/></div>
+                            <div><i class='bx bx-envelope'></i> <span th:text="${c.idPersona.correo}"/></div>
+                        </div>
+                    </td>
+                    <td th:text="${c.informacionComercial.direccion}">Dirección</td>
+                    <td>
+                        <div class="action-buttons">
+                            <!-- EDITAR -->
+                            <button class="btn-action edit"
+                                    thattr:data-id="${c.idContratista}"
+                                    title="Editar"><i class='bx bx-edit'></i></button>
+
+                            <!-- ELIMINAR -->
+                            <form th:action="@{/contratistas/eliminar/{id}(id=${c.idContratista})}" method="post"
+                                  style="display:inline;"
+                                  onsubmit="return confirm('¿Seguro de eliminar este contratista?');">
+                                <button type="submit" class="btn-action delete" title="Eliminar"><i class='bx bx-trash'></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-controls">
+            <button class="pagination-btn" disabled>
+                <i class='bx bx-chevron-left'></i>
+            </button>
+            <span class="page-info">Página 1 de 3</span>
+            <button class="pagination-btn">
+                <i class='bx bx-chevron-right'></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal para agregar/editar contratista -->
+    <div class="modal" id="contractorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Agregar Nuevo Contratista</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="contractorForm" th:action="@{/contratistas/guardar}" th:object="${contratista}" method="post">
+                    <!-- hidden id fields -->
+                    <input type="hidden" id="contractorId" name="idContratista"/>
+                    <input type="hidden" id="personaId" name="idPersona"/>
+                    <input type="hidden" id="infoId" name="idInfoComerc"/>
+                    <input type="hidden" id="originalNitRut" name="originalNitRut"/>
+
+                    <!-- Sección: Información Comercial -->
+                    <div class="form-section">
+                        <h4>Información Comercial</h4>
+
+                        <!-- Selector de información comercial existente (solo en creación) -->
+                        <div class="form-group" id="existingCommercialInfoGroup">
+                            <label for="existingCommercialInfo">Usar información comercial existente:</label>
+                            <select id="existingCommercialInfo" name="existingCommercialInfoId">
+                                <option value="">-- Crear nueva información comercial --</option>
+                                <option th:each="info : ${informacionesComerciales}"
+                                        th:value="${info.idInfoComerc}"
+                                        th:text="${info.nitRut + ' - ' + info.correoElectronico}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="contractorName">Nombre/Razón Social *</label>
+                                <input type="text" id="contractorName" required name="nombreContratista">
+                            </div>
+                            <div class="form-group">
+                                <label for="contractorNIT">NIT/Identificación *</label>
+                                <input type="text" id="contractorNIT" required name="nitRut">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="contractorSpecialty">Especialidad *</label>
+                                <select id="contractorSpecialty" required name="producto">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Construcción general">Construcción general</option>
+                                    <option value="Instalaciones eléctricas">Instalaciones eléctricas</option>
+                                    <option value="Plomería y saneamiento">Plomería y saneamiento</option>
+                                    <option value="Pintura y acabados">Pintura y acabados</option>
+                                    <option value="Estructura metálica">Estructura metálica</option>
+                                    <option value="Trabajos en alturas">Trabajos en alturas</option>
+                                    <option value="Otra">Otra</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="contactEmail">Email Comercial *</label>
+                                <input type="email" id="contactEmail" required name="correoComercial">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contractorAddress">Dirección *</label>
+                            <input type="text" id="contractorAddress" required name="direccion"
+                                   placeholder="Ej: Calle 123 # 45-67">
+                            <small class="form-help">Formato: Calle/Carrera/Avenida + Número + # + Número-Número</small>
+                        </div>
+
+                        <!-- Información de Pago -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="paymentMethod">Forma de Pago *</label>
+                                <select id="paymentMethod" required name="formaPago">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                                    <option value="Cheque">Cheque</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="bank">Banco *</label>
+                                <input type="text" id="bank" required name="banco">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="accountNumber">Número de Cuenta *</label>
+                            <input type="text" id="accountNumber" required name="numCuenta">
+                        </div>
+                    </div>
+
+                    <!-- Sección: Persona de Contacto -->
+                    <div class="form-section">
+                        <h4>Persona de Contacto</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="contactName">Nombre *</label>
+                                <input type="text" id="contactName" required name="nombre">
+                            </div>
+                            <div class="form-group">
+                                <label for="contactLastName">Apellido *</label>
+                                <input type="text" id="contactLastName" required name="apellido">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="contactPhone">Teléfono *</label>
+                                <input type="tel" id="contactPhone" required name="telefono">
+                            </div>
+                            <div class="form-group">
+                                <label for="contactEmailPersonal">Email Personal *</label>
+                                <input type="email" id="contactEmailPersonal" required name="correo">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel">Cancelar</button>
+                        <button type="submit" class="btn-save" id="btnGuardarContratista">Guardar Contratista</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para enviar reporte por correo -->
+    <div class="modal" id="emailReportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Enviar Reporte de Contratistas</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="emailReportForm">
+                    <div class="form-group">
+                        <label>Destinatarios:</label>
+                        <div class="recipients-list">
+                            <div class="recipient-checkbox" th:each="contratista : ${contratistas}">
+                                <input type="checkbox" name="recipients"
+                                       th:value="${contratista.idPersona.correo}"
+                                       th:attr="data-name=${contratista.idPersona.nombre} + ' ' + ${contratista.idPersona.apellido}">
+                                <label th:text="${contratista.idPersona.nombre} + ' ' + ${contratista.idPersona.apellido} + ' (' + ${contratista.idPersona.correo} + ')'"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customEmail">Correo personalizado:</label>
+                        <input type="email" id="customEmail" name="customEmail"
+                               placeholder="Ingrese correo manualmente">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailSubject">Asunto:</label>
+                        <input type="text" id="emailSubject" name="subject"
+                               value="Reporte de Contratistas - Building Optimization Baseline" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emailMessage">Mensaje:</label>
+                        <textarea id="emailMessage" name="message" rows="4" required>
+Estimado contratista,
+
+Adjunto encontrará el reporte actualizado de contratistas.
+
+Saludos cordiales,
+Equipo Building Optimization Baseline
+                            </textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel">Cancelar</button>
+                        <button type="submit" class="btn-send">Enviar Reporte</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    </main>
+
+    <footer>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Building Optimization Baseline. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+<script>
+    /* ===========  ADD / EDIT  ================== */
+const addBtn   = document.getElementById('addContractorBtn');
+const modal    = document.getElementById('contractorModal');
+const form     = document.getElementById('contractorForm');
+const btnSave  = document.getElementById('btnGuardarContratista');
+const spanClose= modal.querySelector('.close-modal');
+const btnCancel= modal.querySelector('.btn-cancel');
+const existingCommercialInfoGroup = document.getElementById('existingCommercialInfoGroup');
+const existingCommercialInfoSelect = document.getElementById('existingCommercialInfo');
+
+/* open empty modal */
+addBtn.addEventListener('click', () => openModal(false));
+
+/* open filled modal */
+document.querySelectorAll('.btn-action.edit').forEach(b =>
+  b.addEventListener('click', () => {
+    const id = b.getAttribute('data-id');
+    fetch(`/contratistas/api/${id}`)
+      .then(r => r.json())
+      .then(c => fillModal(c));
+  })
+);
+
+function openModal(isEdit){
+  modal.style.display = 'block';
+  document.getElementById('modalTitle').innerText =
+        isEdit ? 'Editar Contratista' : 'Nuevo Contratista';
+  btnSave.innerText = isEdit ? 'Actualizar' : 'Guardar';
+
+  // Mostrar selector de info comercial solo en modo creación
+  existingCommercialInfoGroup.style.display = isEdit ? 'none' : 'block';
+
+  if(!isEdit) {
+    form.reset();
+    // Cargar informaciones comerciales existentes
+    loadExistingCommercialInfo();
+  }
+}
+
+function loadExistingCommercialInfo() {
+  fetch('/contratistas/informaciones-comerciales')
+    .then(r => r.json())
+    .then(data => {
+      const select = existingCommercialInfoSelect;
+      select.innerHTML = '<option value="">-- Crear nueva información comercial --</option>';
+      data.forEach(info => {
+        const option = document.createElement('option');
+        option.value = info.idInfoComerc;
+        option.textContent = `${info.nitRut} - ${info.correoElectronico}`;
+        select.appendChild(option);
+      });
+    });
+}
+
+// Cuando se selecciona una info comercial existente, llenar los campos
+existingCommercialInfoSelect.addEventListener('change', function() {
+  if (this.value) {
+    fetch(`/contratistas/informacion-comercial/${this.value}`)
+      .then(r => r.json())
+      .then(info => {
+        document.getElementById('contractorNIT').value = info.nitRut;
+        document.getElementById('contactEmail').value = info.correoElectronico;
+        document.getElementById('contractorAddress').value = info.direccion;
+        document.getElementById('paymentMethod').value = info.formaPago;
+        document.getElementById('bank').value = info.banco;
+        document.getElementById('accountNumber').value = info.numCuenta;
+        document.getElementById('contractorSpecialty').value = info.producto;
+
+        // Deshabilitar campos para evitar modificación
+        document.getElementById('contractorNIT').disabled = true;
+        document.getElementById('contactEmail').disabled = true;
+      });
+  } else {
+    // Habilitar campos si se selecciona "Crear nueva"
+    document.getElementById('contractorNIT').disabled = false;
+    document.getElementById('contactEmail').disabled = false;
+  }
+});
+
+function fillModal(c){
+  openModal(true);
+
+  // IDs
+  document.getElementById('contractorId').value = c.idContratista;
+  document.getElementById('personaId').value = c.idPersona.idPersona;
+  document.getElementById('infoId').value = c.informacionComercial.idInfoComerc;
+  document.getElementById('originalNitRut').value = c.informacionComercial.nitRut;
+
+  // Información de la empresa
+  document.getElementById('contractorName').value = c.nombreContratista;
+  document.getElementById('contractorNIT').value = c.informacionComercial.nitRut;
+  document.getElementById('contractorSpecialty').value = c.informacionComercial.producto;
+  document.getElementById('contactEmail').value = c.informacionComercial.correoElectronico;
+  document.getElementById('contractorAddress').value = c.informacionComercial.direccion;
+
+  // Información de pago
+  document.getElementById('paymentMethod').value = c.informacionComercial.formaPago;
+  document.getElementById('bank').value = c.informacionComercial.banco;
+  document.getElementById('accountNumber').value = c.informacionComercial.numCuenta;
+
+  // Persona de contacto
+  document.getElementById('contactName').value = c.idPersona.nombre;
+  document.getElementById('contactLastName').value = c.idPersona.apellido;
+  document.getElementById('contactPhone').value = c.idPersona.telefono;
+  document.getElementById('contactEmailPersonal').value = c.idPersona.correo;
+}
+
+spanClose.onclick = btnCancel.onclick = () => modal.style.display = 'none';
+window.onclick    = e => { if(e.target === modal) modal.style.display = 'none'; };
+</script>
+
+</body>
+</html>

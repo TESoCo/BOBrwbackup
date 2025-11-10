@@ -403,12 +403,12 @@
       <!-- Menu items for users with inventory permissions -->
       <!-- Inventario - Con permisos de inventario -->
       <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
-        <li><a th:href="@{/inventario}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
+        <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
       </div>
 
       <!-- Materiales - Con permisos de material -->
       <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
-        <li><a th:href="@{/material/inicioMAterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
+        <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
       </div>
 
       <!-- APUs - Con permisos de APU -->
@@ -431,7 +431,7 @@
       <!-- Supervisor and Admin menu items -->
       <!-- Contratistas - Con permisos de contratista -->
       <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
-        <li><a th:href="@{/contratista}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+        <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
       </div>
       <!-- Proveedores - Con permisos de proveedor -->
       <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
@@ -565,7 +565,7 @@
         <i class="fas fa-map-marker-alt"></i>
         <h4>No hay obras con coordenadas registradas</h4>
         <p>Para ver el mapa, asegúrate de que las obras tengan coordenadas norte y este.</p>
-        <a th:href="@{/obras/inicioObras}" class="btn btn-primary">
+        <a th:href="@{/obras/inicioObra}" class="btn btn-primary">
           <i class="fas fa-plus"></i> Crear Nueva Obra
         </a>
       </div>

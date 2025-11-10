@@ -3,7 +3,10 @@ package com.example.servicio;
 import com.example.dao.APUDao;
 import com.example.domain.Apu;
 import com.example.domain.Usuario;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,10 +63,26 @@ public class APUServicioImp implements APUServicio {
     public List<Apu> importarAPUsDesdeCSV(MultipartFile file, Usuario usuario) throws IOException {
         List<Apu> apusImportados = new ArrayList<>();
 
-        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
-            List<String[]> records = reader.readAll();
+        try {
+                CSVParser parser = new CSVParserBuilder()
+                        .withSeparator(',')
+                        .withQuoteChar('"')
+                        .withEscapeChar('\\')
+                        .build();
+
+
+                CSVReader reader = new CSVReaderBuilder(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))
+                        .withCSVParser(parser)
+                        .build();
+                List<String[]> records = reader.readAll();
+            reader.close();
+
 
             System.out.println("Total de filas en CSV: " + records.size()); // DEBUG
+
+            if (!records.isEmpty()) {
+                System.out.println("Encabezados: " + String.join(" | ", records.get(0)));
+            }
 
             // Skip header row (index 0) and process data rows
             for (int i = 1; i < records.size(); i++) {
@@ -75,11 +95,13 @@ public class APUServicioImp implements APUServicio {
                         {
                             String descripcionTruncada = apu.getDescAPU().substring(0, 250);
                             apu.setDescAPU(descripcionTruncada);
+                            System.out.println("⚠️  Descripción truncada a 250 caracteres");
                         }
                         if (apu.getNombreAPU()!=null && apu.getNombreAPU().length()>100)
                         {
                             String nombreTruncado = apu.getNombreAPU().substring(0, 100);
                             apu.setNombreAPU(nombreTruncado);
+                            System.out.println("⚠️  Nombre truncado a 100 caracteres");
                         }
 
 
@@ -94,8 +116,10 @@ public class APUServicioImp implements APUServicio {
             }
         } catch (CsvException e) {
             throw new IOException("Error parsing CSV file", e);
+        } catch (Exception e) {
+            throw new IOException("Error processing CSV: " + e.getMessage(), e);
         }
-
+        System.out.println("📊 Total de APUs procesados: " + apusImportados.size());
         return apusImportados;
     }
 
@@ -126,16 +150,44 @@ public class APUServicioImp implements APUServicio {
 
     private String cleanValue(String value) {
         if (value == null) return "";
-        return value.replace("\"", "").trim();
+        try {
+            // Limpiar caracteres problemáticos
+            String cleaned = value
+                    .replace("\"", "") // Remover comillas dobles
+                    .replace("\uFFFD", "") // Remover caracteres de reemplazo Unicode
+                    .replaceAll("[\\x00-\\x1F\\x7F]", "") // Remover caracteres de control
+                    .replaceAll("\\s+", " ") // Normalizar espacios múltiples
+                    .trim();
+
+            // Verificar si hay caracteres problemáticos después de la limpieza
+            if (cleaned.chars().anyMatch(c -> c > 0x7F && c != 0xA0)) {
+                System.out.println("⚠️  Texto con caracteres especiales detectado: " + cleaned.substring(0, Math.min(50, cleaned.length())));
+            }
+
+            return cleaned.isEmpty() ? "" : cleaned;
+        } catch (Exception e) {
+            System.err.println("Error cleaning value: '" + value + "' - " + e.getMessage());
+            return "";
+        }
     }
 
     private BigDecimal parseBigDecimal(String value) {
         if (value == null || value.trim().isEmpty() || value.equals("null")) {
             return BigDecimal.ZERO;
         }
-        try {
-            String cleanValue = value.replace("\"", "").replace(",", "").trim();
-            return cleanValue.isEmpty() ? BigDecimal.ZERO : new BigDecimal(cleanValue);
+
+        try { String cleanValue = value.replace("\"", "")
+                    .replace(",", "") // Remover separadores de miles
+                    .replace(" ", "")
+                    .trim();
+
+            // Si está vacío después de limpiar, retornar cero
+            if (cleanValue.isEmpty()) {
+                return BigDecimal.ZERO;
+                }
+
+            return new BigDecimal(cleanValue);
+
         } catch (NumberFormatException e) {
             System.err.println("Error parsing number: " + value);
             return BigDecimal.ZERO;

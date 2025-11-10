@@ -1,5 +1,6 @@
 package com.example.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -44,6 +45,7 @@ public class Usuario implements Serializable {
     //Relacion muchos a uno con rol, un rol puede ser asignado a varios usuarios
     @ManyToOne
     @JoinColumn(name = "id_Rol", referencedColumnName = "id_Rol")
+    @JsonBackReference("usuario-rol")
     private Rol rol;
 
     //Relacion de uno a uno con persona

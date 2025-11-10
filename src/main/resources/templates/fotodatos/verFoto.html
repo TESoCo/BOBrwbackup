@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ver Foto</title>
+    <style>
+        .photo-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .photo-image {
+            max-width: 100%;
+            max-height: 80vh;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .photo-info {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="photo-container">
+    <h1>Detalle de Foto</h1>
+
+    <div th:if="${fotoDato != null}">
+        <img th:src="@{/fotodatos/imagen/} + ${fotoDato.idFotoDato}"
+             alt="Foto del avance" class="photo-image">
+
+        <div class="photo-info">
+            <p><strong>ID Foto:</strong> <span th:text="${fotoDato.idFotoDato}"></span></p>
+            <p><strong>Avance ID:</strong> <span th:text="${fotoDato.idAvance.idAvance}"></span></p>
+            <p><strong>Fecha:</strong> <span th:text="${fotoDato.fechaFoto}"></span></p>
+            <p><strong>Coordenadas:</strong>
+                <span th:text="${fotoDato.cooNFoto} + ', ' + ${fotoDato.cooEFoto}"></span>
+            </p>
+            <p><strong>Obra:</strong> <span th:text="${fotoDato.idAvance.idObra.nombreObra}"></span></p>
+        </div>
+
+        <div>
+            <a th:href="@{/avances/detalle/} + ${fotoDato.idAvance.idAvance}"
+               class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Avance
+            </a>
+            <a th:href="@{/fotodatos/eliminar/} + ${fotoDato.idFotoDato}"
+               class="btn btn-danger"
+               onclick="return confirm('¿Está seguro de eliminar esta foto?')">
+                <i class="fas fa-trash"></i> Eliminar Foto
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${fotoDato == null}">
+        <p>La foto no existe o ha sido eliminada</p>
+        <a th:href="@{/avances/inicioAvances}" class="btn btn-primary">
+            Volver a Avances
+        </a>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</body>
+</html>

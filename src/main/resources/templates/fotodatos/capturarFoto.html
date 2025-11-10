@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Capturar Foto</title>
+  <style>
+    .camera-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .video-container {
+        position: relative;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    #video {
+        width: 100%;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+    }
+    #canvas {
+        display: none;
+    }
+    .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+    .btn-secondary {
+        background: #64748b;
+        color: white;
+    }
+    .btn-success {
+        background: #10b981;
+        color: white;
+    }
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+    .captured-image {
+        max-width: 100%;
+        border: 2px solid #10b981;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+    .location-info {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .upload-section {
+        margin-top: 30px;
+        padding: 20px;
+        border-top: 1px solid #ddd;
+    }
+    .preview-container {
+        text-align: center;
+        margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="camera-container">
+  <h1>Capturar Foto para Avance</h1>
+  <p>Avance ID: <span th:text="${avance.idAvance}"></span> - <span th:text="${avance.idObra.nombreObra}"></span></p>
+
+  <!-- Información de ubicación -->
+  <div class="location-info">
+    <h3>📍 Ubicación</h3>
+    <p id="locationStatus">Obteniendo ubicación...</p>
+    <input type="hidden" id="cooN" name="cooN">
+    <input type="hidden" id="cooE" name="cooE">
+  </div>
+
+  <!-- Cámara -->
+  <div class="video-container">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="controls">
+    <button id="startCamera" class="btn btn-primary">
+      <i class="fas fa-camera"></i> Iniciar Cámara
+    </button>
+    <button id="switchCamera" class="btn btn-secondary" style="display: none;">
+      <i class="fas fa-sync-alt"></i> Cambiar Cámara
+    </button>
+    <button id="capture" class="btn btn-success" disabled>
+      <i class="fas fa-camera"></i> Capturar Foto
+    </button>
+    <button id="retake" class="btn btn-secondary" disabled>
+      <i class="fas fa-redo"></i> Volver a Capturar
+    </button>
+  </div>
+
+  <!-- Vista previa de imagen capturada -->
+  <div id="capturedContainer" class="preview-container" style="display: none;">
+    <h3>Vista Previa</h3>
+    <img id="capturedImage" class="captured-image" alt="Foto capturada">
+    <div style="margin-top: 15px;">
+      <button id="savePhoto" class="btn btn-success">
+        <i class="fas fa-save"></i> Guardar Foto
+      </button>
+      <button id="cancelPhoto" class="btn btn-danger">
+        <i class="fas fa-times"></i> Cancelar
+      </button>
+    </div>
+  </div>
+
+  <!-- Formulario para guardar -->
+  <form id="photoForm" th:action="@{/fotodatos/guardarDesdeCamara/} + ${avance.idAvance}"
+        method="post" enctype="multipart/form-data">
+    <input type="file" id="fotoFile" name="fotoFile" accept="image/*" style="display: none;">
+    <input type="hidden" id="formCooN" name="cooN">
+    <input type="hidden" id="formCooE" name="cooE">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+  </form>
+
+  <!-- Sección de subir archivo -->
+  <div class="upload-section">
+    <h3>📁 O subir archivo existente</h3>
+    <form th:action="@{/fotodatos/subirArchivo/} + ${avance.idAvance}"
+          method="post" enctype="multipart/form-data">
+      <div style="margin-bottom: 15px;">
+        <input type="file" name="archivoFoto" accept="image/*" required
+               style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; width: 100%;">
+      </div>
+      <input type="hidden" id="fileCooN" name="cooN">
+      <input type="hidden" id="fileCooE" name="cooE">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-upload"></i> Subir Archivo
+      </button>
+    </form>
+  </div>
+
+  <div style="margin-top: 30px; text-align: center;">
+    <a th:href="@{/avances/detalle/} + ${avance.idAvance}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Volver al Avance
+    </a>
+  </div>
+</div>
+
+<script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const capturedImage = document.getElementById('capturedImage');
+  const startCameraBtn = document.getElementById('startCamera');
+  const switchCameraBtn = document.getElementById('switchCamera');
+  const captureBtn = document.getElementById('capture');
+  const retakeBtn = document.getElementById('retake');
+  const savePhotoBtn = document.getElementById('savePhoto');
+  const cancelPhotoBtn = document.getElementById('cancelPhoto');
+  const capturedContainer = document.getElementById('capturedContainer');
+  const photoForm = document.getElementById('photoForm');
+  const fotoFileInput = document.getElementById('fotoFile');
+  const formCooN = document.getElementById('formCooN');
+  const formCooE = document.getElementById('formCooE');
+  const fileCooN = document.getElementById('fileCooN');
+  const fileCooE = document.getElementById('fileCooE');
+  const locationStatus = document.getElementById('locationStatus');
+
+  let stream = null;
+  let currentLocation = null;
+  let currentFacingMode = 'environment'; // 'user' para frontal, 'environment' para trasera
+
+  // Obtener ubicación
+  function getLocation() {
+      if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+              position => {
+                  currentLocation = {
+                      latitude: position.coords.latitude,
+                      longitude: position.coords.longitude
+                  };
+                  locationStatus.innerHTML =
+                      `<strong>📍 Ubicación obtenida:</strong><br>
+                       Latitud: ${currentLocation.latitude.toFixed(6)}<br>
+                       Longitud: ${currentLocation.longitude.toFixed(6)}`;
+
+                  // Actualizar campos de coordenadas
+                  formCooN.value = currentLocation.latitude;
+                  formCooE.value = currentLocation.longitude;
+                  fileCooN.value = currentLocation.latitude;
+                  fileCooE.value = currentLocation.longitude;
+              },
+              error => {
+                  console.error('Error obteniendo ubicación:', error);
+                  locationStatus.innerHTML =
+                      '<strong>⚠️ No se pudo obtener la ubicación</strong><br>' +
+                      'Puede continuar sin ubicación GPS';
+              },
+              {
+                  enableHighAccuracy: true,
+                  timeout: 15000,
+                  maximumAge: 0
+              }
+          );
+      } else {
+          locationStatus.innerHTML =
+              '<strong>❌ Geolocalización no soportada</strong><br>' +
+              'Su navegador no soporta geolocalización';
+      }
+  }
+
+  // Iniciar cámara
+  async function startCamera(facingMode = 'environment') {
+      try {
+          // Detener stream anterior si existe
+          if (stream) {
+              stream.getTracks().forEach(track => track.stop());
+          }
+
+          const constraints = {
+              video: {
+                  facingMode: facingMode,
+                  width: { ideal: 1920 },
+                  height: { ideal: 1080 }
+              }
+          };
+
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          video.srcObject = stream;
+          captureBtn.disabled = false;
+          startCameraBtn.style.display = 'none';
+          switchCameraBtn.style.display = 'inline-block';
+
+      } catch (err) {
+          console.error('Error al acceder a la cámara:', err);
+          alert('No se pudo acceder a la cámara: ' + err.message);
+      }
+  }
+
+  // Cambiar entre cámaras
+  function switchCamera() {
+      currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+      startCamera(currentFacingMode);
+  }
+
+  // Capturar foto
+  function capturePhoto() {
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convertir a Blob
+      canvas.toBlob(blob => {
+          const imageUrl = URL.createObjectURL(blob);
+          capturedImage.src = imageUrl;
+          capturedContainer.style.display = 'block';
+
+          // Crear File desde Blob
+          const file = new File([blob], 'foto_avance_' + Date.now() + '.jpg', {
+              type: 'image/jpeg',
+              lastModified: new Date().getTime()
+          });
+
+          // Asignar al input file
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          fotoFileInput.files = dataTransfer.files;
+
+      }, 'image/jpeg', 0.8);
+
+      // Detener stream
+      if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+      }
+  }
+
+  // Volver a capturar
+  function retakePhoto() {
+      capturedContainer.style.display = 'none';
+      startCameraBtn.style.display = 'inline-block';
+      switchCameraBtn.style.display = 'none';
+      captureBtn.disabled = true;
+      startCamera(currentFacingMode);
+  }
+
+  // Cancelar foto
+  function cancelPhoto() {
+      capturedContainer.style.display = 'none';
+      startCameraBtn.style.display = 'inline-block';
+      switchCameraBtn.style.display = 'none';
+      captureBtn.disabled = true;
+  }
+
+  // Guardar foto
+  function savePhoto() {
+      if (fotoFileInput.files.length > 0) {
+          photoForm.submit();
+      } else {
+          alert('No hay foto para guardar');
+      }
+  }
+
+  // Event Listeners
+  startCameraBtn.addEventListener('click', () => startCamera('environment'));
+  switchCameraBtn.addEventListener('click', switchCamera);
+  captureBtn.addEventListener('click', capturePhoto);
+  retakeBtn.addEventListener('click', retakePhoto);
+  cancelPhotoBtn.addEventListener('click', cancelPhoto);
+  savePhotoBtn.addEventListener('click', savePhoto);
+
+  // Inicializar ubicación
+  getLocation();
+</script>
+
+<!-- Font Awesome para íconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</body>
+</html>

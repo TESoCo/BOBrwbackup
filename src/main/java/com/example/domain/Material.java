@@ -1,6 +1,7 @@
 // Material.java
 package com.example.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.io.Serializable;
@@ -40,23 +41,21 @@ public class Material implements Serializable {
 
 
     // From proveedores_material (proveedor ID)
-    @ManyToMany(fetch = FetchType.EAGER)// 👈 Tipo de relación y carga
-    @JoinTable(// 👈 Define la tabla intermedia
-            name = "proveedores_material", // 👈 Nombre de la tabla junction
-            joinColumns = @JoinColumn(name = "id_Material"),// 👈 Columna de esta entidad
-            inverseJoinColumns = @JoinColumn(name = "id_Proveedor") // 👈 Columna de la otra entidad
-    )
-    private List<Proveedor> proveedorList;
+    @ManyToMany(mappedBy = "materialList", fetch = FetchType.EAGER)
+    @JsonManagedReference("proveedor-material")
+    private List<Proveedor> proveedorList;;
 
 
     //RELACIONES INVERSAS PARA OTRAS ENTIDADES
 
     // Material needs the reverse relationship, para agregar material a los apus
     @OneToMany(mappedBy = "material", cascade = CascadeType.ALL)
+    @JsonManagedReference("materialesapu-material")
     private List<MaterialesApu> materialesApus = new ArrayList<>();
 
     // Material needs the reverse relationship, para agregar material a los apus
     @OneToMany(mappedBy = "material", cascade = CascadeType.ALL)
+    @JsonManagedReference("materialesinventario-material")
     private List<MaterialesInventario> materialesInventarios = new ArrayList<>();
 
 

@@ -382,7 +382,7 @@
                     <div class="activity-row">
                         <div class="activity-select">
                             <select id="activityDropdown" name="idApu" class="form-control" required disabled>
-                                <option value="">Primero seleccione una obra</option>
+                                <option value="">Primero, seleccione una obra</option>
                             </select>
                         </div>
 
@@ -396,6 +396,7 @@
                 <!-- Hidden inputs that will be submitted -->
                 <div id="hiddenInputs">
                     <input type="hidden" name="idUsuario" value="4">
+
                 </div>
 
                 <!-- Submit Button -->
@@ -421,53 +422,74 @@
         updateFormState();
 
         obraDropdown.addEventListener('change', function() {
-            const selectedObraId = this.value;
+    const selectedObraId = this.value;
+    console.log('Obra seleccionada ID:', selectedObraId);
 
-            // Limpiar y deshabilitar dropdown de actividades
-            activityDropdown.innerHTML = '<option value="">Cargando actividades...</option>';
-            activityDropdown.disabled = true;
-            cantidadInput.disabled = true;
-            submitBtn.disabled = true;
+    // Limpiar y deshabilitar dropdown de actividades
+    activityDropdown.innerHTML = '<option value="">Cargando actividades...</option>';
+    activityDropdown.disabled = true;
+    cantidadInput.disabled = true;
+    cantidadInput.value = '';
+    submitBtn.disabled = true;
 
-            if (!selectedObraId) {
-                activityDropdown.innerHTML = '<option value="">Primero seleccione una obra</option>';
-                updateFormState();
-                return;
+    if (!selectedObraId) {
+        activityDropdown.innerHTML = '<option value="">Primero seleccione una obra</option>';
+        updateFormState();
+        return;
+    }
+
+    // Hacer una petición al servidor para obtener los APUs de la obra seleccionada
+    fetch(`/avances/obtenerAPUsPorObra/${selectedObraId}`)
+        .then(response => {
+            console.log('Respuesta del servidor - Status:', response.status, 'OK:', response.ok);
+            console.log('Content-Type:', response.headers.get('content-type'));
+
+            // Primero verifica el tipo de contenido
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // Si no es JSON, leer como texto para ver qué devuelve
+                return response.text().then(text => {
+                    console.log('Respuesta no JSON recibida:', text.substring(0, 200));
+                    throw new Error(`El servidor devolvió: ${contentType || 'sin content-type'}`);
+                });
             }
 
-            // Hacer una petición al servidor para obtener los APUs de la obra seleccionada
-            fetch(`/avances/obtenerAPUsPorObra/${selectedObraId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error al cargar las actividades');
-                    }
-                    return response.json();
-                })
-                .then(apus => {
-                    // Limpiar el dropdown
-                    activityDropdown.innerHTML = '<option value="">Seleccione una actividad...</option>';
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(apus => {
+            console.log('APUs recibidos:', apus);
 
-                    if (apus && apus.length > 0) {
-                        // Llenar el dropdown con las actividades
-                        apus.forEach(apu => {
-                            const option = document.createElement('option');
-                            option.value = apu.idAPU;
-                            option.textContent = `${apu.nombreAPU} (${apu.unidadesAPU})`;
-                            activityDropdown.appendChild(option);
-                        });
-                        activityDropdown.disabled = false;
-                    } else {
-                        activityDropdown.innerHTML = '<option value="">No hay actividades disponibles para esta obra</option>';
-                    }
+            // Limpiar el dropdown
+            activityDropdown.innerHTML = '<option value="">Seleccione una actividad...</option>';
 
-                    updateFormState();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    activityDropdown.innerHTML = '<option value="">Error al cargar actividades</option>';
-                    updateFormState();
+            if (apus && apus.length > 0) {
+                // Llenar el dropdown con las actividades
+                apus.forEach(apu => {
+                    const option = document.createElement('option');
+                    option.value = apu.idAPU;
+                    const nombre = apu.nombreAPU || 'Sin nombre';
+                    const unidades = apu.unidadesAPU || 'Sin unidades';
+                    option.textContent = `${nombre} (${unidades})`;
+                    activityDropdown.appendChild(option);
                 });
+                activityDropdown.disabled = false;
+                console.log(`Se cargaron ${apus.length} actividades`);
+            } else {
+                activityDropdown.innerHTML = '<option value="">No hay actividades disponibles para esta obra</option>';
+                console.warn('No se encontraron actividades para esta obra');
+            }
+
+            updateFormState();
+        })
+        .catch(error => {
+            console.error('Error al cargar actividades:', error);
+            activityDropdown.innerHTML = '<option value="">Error: ' + error.message + '</option>';
+            updateFormState();
         });
+});
 
         activityDropdown.addEventListener('change', function() {
             updateFormState();

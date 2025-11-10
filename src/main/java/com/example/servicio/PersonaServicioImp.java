@@ -34,4 +34,5 @@ public class PersonaServicioImp implements PersonaServicio {
     public Persona localizarPersona(Persona persona) {
         return personaDao.findByIdPersona(persona.getIdPersona());
     }
+
 }

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Capturar Foto</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 20px;
+    }
+    #camera {
+        width: 100%;
+        max-width: 500px;
+        border: 1px solid #ccc;
+    }
+    #capturedImage {
+        width: 100%;
+        max-width: 500px;
+        border: 1px solid #ccc;
+    }
+    button {
+        padding: 10px 20px;
+        margin: 10px;
+        font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+<h1>Capturar Foto para el Avance <span th:text="${idAvance}"></span></h1>
+
+<div>
+  <video id="camera" autoplay playsinline></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <img id="capturedImage" alt="Captured image" style="display: none;"/>
+</div>
+
+<div>
+  <button id="captureButton">Capturar Foto</button>
+  <button id="retakeButton" style="display: none;">Volver a Capturar</button>
+  <button id="sendButton" style="display: none;">Enviar Foto</button>
+</div>
+
+<script>
+  const video = document.getElementById('camera');
+  const canvas = document.getElementById('canvas');
+  const capturedImage = document.getElementById('capturedImage');
+  const captureButton = document.getElementById('captureButton');
+  const retakeButton = document.getElementById('retakeButton');
+  const sendButton = document.getElementById('sendButton');
+  let stream = null;
+  let capturedImageData = null;
+
+  // Acceder a la cámara
+  async function startCamera() {
+      try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          video.srcObject = stream;
+      } catch (err) {
+          console.error("Error al acceder a la cámara: ", err);
+          alert("No se pudo acceder a la cámara.");
+      }
+  }
+
+  // Capturar foto
+  captureButton.addEventListener('click', () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      capturedImageData = canvas.toDataURL('image/jpeg');
+      capturedImage.src = capturedImageData;
+      capturedImage.style.display = 'block';
+      video.style.display = 'none';
+      captureButton.style.display = 'none';
+      retakeButton.style.display = 'inline-block';
+      sendButton.style.display = 'inline-block';
+  });
+
+  // Volver a capturar
+  retakeButton.addEventListener('click', () => {
+      capturedImage.style.display = 'none';
+      video.style.display = 'block';
+      captureButton.style.display = 'inline-block';
+      retakeButton.style.display = 'none';
+      sendButton.style.display = 'none';
+  });
+
+  // Enviar foto al servidor
+  sendButton.addEventListener('click', async () => {
+      if (!capturedImageData) {
+          alert("No hay imagen capturada.");
+          return;
+      }
+
+      // Obtener coordenadas (opcional)
+      let cooN = null;
+      let cooE = null;
+      if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+              position => {
+                  cooN = position.coords.latitude;
+                  cooE = position.coords.longitude;
+                  sendData(cooN, cooE);
+              },
+              error => {
+                  console.error("Error obteniendo ubicación: ", error);
+                  sendData(null, null);
+              }
+          );
+      } else {
+          sendData(null, null);
+      }
+  });
+
+  function sendData(cooN, cooE) {
+      const formData = new FormData();
+      formData.append('idAvance', document.querySelector('span').innerText);
+      formData.append('imagenBase64', capturedImageData);
+      if (cooN) formData.append('cooN', cooN);
+      if (cooE) formData.append('cooE', cooE);
+
+      fetch('/avances/guardarFotoDato', {
+          method: 'POST',
+          body: formData
+      })
+      .then(response => {
+          if (response.ok) {
+              alert('Foto guardada exitosamente.');
+              window.location.href = '/avances/detalle/' + document.querySelector('span').innerText;
+          } else {
+              alert('Error al guardar la foto.');
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          alert('Error al guardar la foto.');
+      });
+  }
+
+  // Iniciar cámara al cargar la página
+  startCamera();
+</script>
+</body>
+</html>

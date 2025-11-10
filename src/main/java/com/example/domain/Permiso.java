@@ -1,6 +1,7 @@
 package com.example.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -25,12 +26,8 @@ public class Permiso implements Serializable {
     private String nombrePermiso;
 
     //Tabla "rol_permiso"
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "rol_permiso",
-            joinColumns = @JoinColumn(name = "id_Permiso"),
-            inverseJoinColumns = @JoinColumn(name = "id_Rol")
-    )
+    // LADO INVERSO - usar mappedBy
+    @ManyToMany(mappedBy = "permisoList", fetch = FetchType.EAGER)
+    @JsonManagedReference("rol-permiso")
     private List<Rol> rolList;
-
 }

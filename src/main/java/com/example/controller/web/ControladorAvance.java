@@ -45,6 +45,8 @@ public class ControladorAvance
     private ContratistaServicio contratistaServicio;
     @Autowired
     private ProveedorServicio proveedorServicio;
+    @Autowired
+    private FotoDatoServicio fotoDatoServicio;
 
 
     //Acá están los métodos
@@ -138,11 +140,12 @@ public class ControladorAvance
     @GetMapping("/agregarAvance")
     public String formAnexarAvance(Model model, org.springframework.security.core.Authentication authentication){
         List<Obra> obras = obraServicio.listaObra();
+        List<Apu> apus = apuServicio.listarElementos();
 
 
         model.addAttribute("avance", new Avance());
         model.addAttribute("obras",obras);
-
+        model.addAttribute("apus",apus);
 
         //INFORMACION DE USUARIO PARA HEADER Y PERMISOS
         if (authentication != null && authentication.isAuthenticated()) {
@@ -168,6 +171,7 @@ public class ControladorAvance
             model.addAttribute("isAdmin", isAdmin);
             model.addAttribute("isSupervisor", isSupervisor);
             model.addAttribute("isOperativo", isOperativo);
+
         }
 
         return "avances/agregarAvance";
@@ -197,7 +201,7 @@ public class ControladorAvance
         avance.setIdUsuario(usuarioServicio.encontrarPorId(idUsuario) );
         avance.setIdObra(obraServicio.localizarObra(idObra));
         avance.setFechaAvance(LocalDate.parse(fecha));
-        avance.setIdApu(APUServicio.obtenerPorId(idApu));
+        avance.setIdApu(apuServicio.obtenerPorId(idApu));
         avance.setCantEjec(cantidad);
 
         avanceServicio.salvar(avance);
@@ -207,13 +211,36 @@ public class ControladorAvance
 
     //Función y forma de editado
     @GetMapping("/cambiar/{idAvance}")
-    public String cambiarAvance(@PathVariable Long idAvance, Model model) {
+    public String cambiarAvance(@PathVariable Long idAvance, Model model, org.springframework.security.core.Authentication authentication) {
         Avance avance = avanceServicio.localizarAvance(idAvance);
+        List<Obra> obras = obraServicio.listaObra();
+        List<Apu> apus = apuServicio.listarElementos();
+
         model.addAttribute("avance", avance);
-        model.addAttribute("Actividad", avanceServicio.localizarAvance(idAvance));
-        model.addAttribute("Editando", true); // ← This forces EDIT mode
-        model.addAttribute("matriz", apuServicio.listarElementos());
-        return "avances/verAvances";
+        model.addAttribute("obras", obras);
+        model.addAttribute("apus", apus);
+
+        // INFORMACION DE USUARIO PARA HEADER Y PERMISOS
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+            model.addAttribute("nombreUsuario", username);
+            model.addAttribute("autoridades", authorities);
+
+            boolean isAdmin = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+            boolean isSupervisor = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
+            boolean isOperativo = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
+
+            model.addAttribute("isAdmin", isAdmin);
+            model.addAttribute("isSupervisor", isSupervisor);
+            model.addAttribute("isOperativo", isOperativo);
+        }
+
+        return "avances/editarAvance"; // Cambia a la vista correcta
     }
 
 
@@ -232,19 +259,20 @@ public class ControladorAvance
 
     //funcionalidad para guardar cambios
     @PostMapping("/actualizar/{idAvance}")
-    public String actualizarPresupuesto(
-        Authentication auth, // Add this parameter to get the logged-in user
+    public String actualizarAvance(
         @PathVariable Long idAvance,
         @ModelAttribute Avance avance,
         @RequestParam Double cantidad,
         @RequestParam Long idUsuario,
         @RequestParam Long idObra,
         @RequestParam String fecha,
+        @RequestParam Long idAPU,
         BindingResult result,
-        @RequestParam Long idApu,
         Model model) {
+
+
         if (result.hasErrors()) {
-            return "redirect:/avances/cambiar/" + idAvance;
+            return "avances/editarAvance";
         }
 
         // Get the username from the authentication object
@@ -253,10 +281,9 @@ public class ControladorAvance
         avance.setIdUsuario(usuarioServicio.encontrarPorId(idUsuario));
         avance.setIdObra(obraServicio.localizarObra(idObra));
         avance.setFechaAvance(LocalDate.parse(fecha));
-        avance.setIdApu(APUServicio.obtenerPorId(idApu));
+        avance.setIdApu(apuServicio.obtenerPorId(idAPU));
         avance.setCantEjec(cantidad);
         avance.setAnular(false);
-
 
         avanceServicio.actualizar(avance);
         return "redirect:/avances/inicioAvances";
@@ -264,15 +291,54 @@ public class ControladorAvance
 
     //Ver detalle (sólo lectura)
     @GetMapping("/detalle/{idAvance}")
-    public String detalleAvance(@PathVariable Long idAvance, Model model) {
+    public String detalleAvance(@PathVariable Long idAvance, Model model, org.springframework.security.core.Authentication authentication) {
         Avance avance = avanceServicio.localizarAvance(idAvance);
-        List<Apu> matriz = APUServicio.listarElementos();
+        List<Apu> matriz = apuServicio.listarElementos();
         List<Obra> obras = obraServicio.listaObra();
 
+        List<FotoDato> fotos = fotoDatoServicio.listaFotoDatoAv(avance);
+
+        // DEBUG: Verificar qué se está cargando
+        System.out.println("=== DEBUG DETALLE AVANCE ===");
+        System.out.println("Avance ID: " + idAvance);
+        System.out.println("Avance encontrado: " + (avance != null));
+        System.out.println("Fotos encontradas: " + (fotos != null ? fotos.size() : "null"));
+
+        if (fotos != null) {
+            for (int i = 0; i < fotos.size(); i++) {
+                FotoDato foto = fotos.get(i);
+                System.out.println("Foto " + i + ": ID=" + foto.getIdFotoDato() +
+                        ", Bytes=" + (foto.getFoto() != null ? foto.getFoto().length : "NULL"));
+            }
+        }
+
         model.addAttribute("avance", avance);
+        model.addAttribute("fotos", fotos);
+
+        // INFORMACION DE USUARIO PARA HEADER Y PERMISOS
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+            model.addAttribute("nombreUsuario", username);
+            model.addAttribute("autoridades", authorities);
+
+            boolean isAdmin = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+            boolean isSupervisor = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
+            boolean isOperativo = authorities.stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
+
+            model.addAttribute("isAdmin", isAdmin);
+            model.addAttribute("isSupervisor", isSupervisor);
+            model.addAttribute("isOperativo", isOperativo);
+        }
+
         model.addAttribute("actividad", avanceServicio.localizarAvance(idAvance));
         model.addAttribute("obras",obras);
         model.addAttribute("matriz", matriz);
+
         model.addAttribute("Editando", false); // ← This forces VIEW mode
         return "avances/verAvances";
     }
@@ -378,14 +444,28 @@ public class ControladorAvance
     @GetMapping("/obtenerAPUsPorObra/{idObra}")
     @ResponseBody
     public List<Apu> obtenerAPUsPorObra(@PathVariable Long idObra) {
-        Obra obra = obraServicio.localizarObra(idObra);
-        if (obra != null && obra.getApusObraList() != null) {
-            // Extraer los APUs de la lista de ApusObra
-            return obra.getApusObraList().stream()
-                    .map(ApusObra::getApu)
-                    .collect(Collectors.toList());
+
+        try {
+            Obra obra = obraServicio.localizarObra(idObra);
+            System.out.println("Obra encontrada: " + (obra != null ? obra.getNombreObra() : "null"));
+
+            if (obra != null && obra.getApusObraList() != null) {
+                List<Apu> apus = obra.getApusObraList().stream()
+                        .map(ApusObra::getApu)
+                        .collect(Collectors.toList());
+                System.out.println("Número de APUs encontrados: " + apus.size());
+                return apus;
+            }
+
+            System.out.println("No se encontraron APUs para la obra");
+            return Collections.emptyList();
+        } catch (Exception e) {
+            // Log the error for debugging
+            System.err.println("Error al obtener APUs para obra " + idObra + ": " + e.getMessage());
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+
+
     }
 
     @GetMapping("/excelCorreo")
@@ -517,7 +597,6 @@ public class ControladorAvance
             throw new RuntimeException("Error al generar reporte de avances con filtros: " + e.getMessage(), e);
         }
     }
-
 }
 
 

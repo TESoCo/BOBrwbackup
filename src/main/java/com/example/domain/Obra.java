@@ -1,6 +1,7 @@
 // CombinedObraEntity.java
 package com.example.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -65,6 +66,7 @@ public class Obra implements Serializable {
     // From apus_obra table
     // Many-to-many relationship for APUS/cantidades (separate table)
     @OneToMany(mappedBy = "obra", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("apusobra-obra")
     private List<ApusObra> apusObraList = new ArrayList<>();
 
 }

@@ -323,47 +323,68 @@
         <h1>BOB</h1>
     </div>
     <ul class="nav-links">
-        <!-- Admin-only menu items -->
-        <div sec:authorize="hasRole('ADMIN')">
-            <li><a th:href="@{/dashboard}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-            <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
+
+        <!-- Dashboard - Para todos los usuarios autenticados -->
+        <div sec:authorize="isAuthenticated()">
+            <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+        </div>
+
+        <!-- Gestión de Usuarios - Solo con permisos de usuario -->
+        <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
+            <li><a th:href="@{/usuarios}" class="active"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
         </div>
 
         <!-- Menu items for users with inventory permissions -->
-        <div sec:authorize="hasAnyAuthority('VER_INVENTARIO', 'CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
-            <li><a th:href="@{/inventario}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
+        <!-- Inventario - Con permisos de inventario -->
+        <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
+            <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
         </div>
 
-        <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL', 'VER_MATERIAL')">
+        <!-- Materiales - Con permisos de material -->
+        <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
             <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
         </div>
 
-        <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU', 'VER_APU')">
+        <!-- APUs - Con permisos de APU -->
+        <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
             <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
         </div>
 
         <!-- Menu items for users with progress permissions -->
-        <div sec:authorize="hasAnyAuthority('VER_AVANCES', 'REGISTRAR_AVANCES')">
-            <li><a th:href="@{/avances/inicioAvances}" class="active"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
+        <!-- Avances - Con permisos de avance -->
+        <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
+            <li><a href="#" class="active"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
         </div>
 
         <!-- Menu items for users with budget permissions -->
-        <div sec:authorize="hasAnyAuthority('VER_OBRAS', 'GESTIONAR_OBRAS','LEER OBRAS')">
+        <!-- Obras - Con permisos de obra -->
+        <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
             <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
         </div>
 
         <!-- Supervisor and Admin menu items -->
-        <div sec:authorize="hasAnyRole('SUPERVISOR', 'ADMIN')">
-            <li><a th:href="@{/contratista}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+        <!-- Contratistas - Con permisos de contratista -->
+        <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
+            <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+        </div>
+        <!-- Proveedores - Con permisos de proveedor -->
+        <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
             <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
         </div>
 
         <!-- Menu items for users with report permissions -->
-        <div sec:authorize="hasAnyAuthority('VER_REPORTES', 'GENERAR_REPORTES')">
+        <!-- Reportes - Para roles ADMIN y SUPERVISOR -->
+        <div sec:authorize="hasAnyRole('ADMIN', 'SUPERVISOR')">
             <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
         </div>
 
+        <!-- Fotodatos - Con permisos de fotodato -->
+        <div sec:authorize="hasAnyAuthority('CREAR_FOTODATO', 'EDITAR_FOTODATO')">
+            <li><a href="#"><i class="fas fa-camera"></i> <span>Fotodatos</span></a></li>
+        </div>
+
         <!-- Admin-only configuration -->
+        <!-- Configuración - Solo ADMIN -->
         <div sec:authorize="hasRole('ADMIN')">
             <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
         </div>
@@ -460,10 +481,6 @@
         </form>
 </div>
 
-
-
-
-
 <br>
 
     <div class="table-container">
@@ -480,18 +497,21 @@
                 </thead>
                 <tbody>
                 <tr th:each="avance : ${avances}">
-                    <td th:if="${avance.anular == true}">
-                        <td th:text="${avance.idAvance}"></td>
-                        <td th:text="${avance.idObra.idObra}"></td>
-                        <td th:text="${avance.idObra.nombreObra}"></td>
-                        <td th:text="${avance.fechaAvance}"></td>
-                    </td>
-
+                    <td th:text="${avance.idAvance}"></td>
+                    <td th:text="${avance.idObra.idObra}"></td>
+                    <td th:text="${avance.idObra.nombreObra}"></td>
+                    <td th:text="${avance.fechaAvance}"></td>
                     <td class="actions">
-                        <a th:href="@{/avances/cambiar/} + ${avance.idAvance}" class="btn">Editar</a>
-                        <a th:href="@{/avances/anular/} + ${avance.idAvance}" class="btn"
-                           onclick="return confirm('¿Está seguro que desea anular este avance?')">Anular</a>
-                        <a th:href="@{/avances/detalle/}+${avance.idAvance}" class="btn">Ver Detalle</a>
+                        <a th:href="@{/avances/cambiar/} + ${avance.idAvance}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a th:href="@{/avances/anular/} + ${avance.idAvance}" class="btn btn-sm btn-warning"
+                           onclick="return confirm('¿Está seguro que desea anular este avance?')">
+                            <i class="fas fa-ban"></i> Anular
+                        </a>
+                        <a th:href="@{/avances/detalle/} + ${avance.idAvance}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-eye"></i> Ver Detalle
+                        </a>
                     </td>
                 </tr>
                 </tbody>

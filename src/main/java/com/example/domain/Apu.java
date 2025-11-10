@@ -1,6 +1,8 @@
 // CombinedObraEntity.java
 package com.example.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -32,6 +34,7 @@ public class Apu implements Serializable {
 
     @ManyToOne //un usuario puede crear muchos APUs
     @JoinColumn(name = "id_Usuario")
+    @JsonBackReference("apu-usuario")
     private Usuario idUsuario;
 
 
@@ -70,12 +73,14 @@ public class Apu implements Serializable {
     // Relación inversa
     // Apu needs the reverse relationship, para agregar apus a las obras
     @OneToMany(mappedBy = "apu", cascade = CascadeType.ALL)//Un APU puede asignarse a muchas obras
+    @JsonManagedReference("apusobra-apu")
     private List<ApusObra> apusObraList = new ArrayList<>();
 
     //`materiales_apu`
     //Relacion muchos a muchos con materiales
     // Relación inversa
     @OneToMany(mappedBy = "apu", cascade = CascadeType.ALL)//Un APU puede contener muchos materiales
+    @JsonManagedReference("materialesapu-apu")
     private List<MaterialesApu> materialesApus = new ArrayList<>();
 
 

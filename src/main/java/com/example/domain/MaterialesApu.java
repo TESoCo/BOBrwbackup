@@ -1,5 +1,6 @@
 package com.example.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -20,14 +21,14 @@ public class MaterialesApu implements Serializable {
     @Id
     @ManyToOne
     @JoinColumn(name = "id_APU")
-    @JsonIgnore // Prevent circular reference
+    @JsonBackReference("materialesapu-apu")
     private Apu apu;
 
     // Relación Many-to-One con material
     @Id
     @ManyToOne
     @JoinColumn(name = "id_Material")
-    @JsonIgnore // Prevent circular reference
+    @JsonBackReference("materialesapu-material")
     private Material material;
 
 
