@@ -28,9 +28,19 @@ public class FotoDato implements Serializable {
     private Avance idAvance;
 
     // From imagen_fotodato
-    @Lob
-    @Column(name = "foto", table = "imagen_fotodato", columnDefinition = "LONGBLOB")
-    private byte[] foto;
+    // ID del archivo en MongoDB GridFS
+    @Column(name = "gridfs_file_id", table = "imagen_fotodato", length = 100)
+    private String gridfsFileId;
+
+    @Column(name = "nombre_archivo", table = "imagen_fotodato", length = 255)
+    private String nombreArchivo;
+
+    @Column(name = "tamanio_archivo", table = "imagen_fotodato")
+    private Long tamanioArchivo;
+
+    @Column(name = "tipo_mime", table = "imagen_fotodato", length = 100)
+    private String tipoMime;
+
 
     // From ubicacion_fotodato
     @Column(name = "CooN_Foto", table = "ubicacion_fotodato")

@@ -36,7 +36,7 @@ public class ControladorFotoDato {
         return "fotodatos/capturarFoto";
     }
 
-    // Guardar foto desde la cámara (usando MultipartFile directamente)
+    // Guardar foto desde la cámara (usando GriFS en Mongo alta)
     @PostMapping("/guardarDesdeCamara/{idAvance}")
     public String guardarDesdeCamara(
             @PathVariable Long idAvance,
@@ -51,16 +51,22 @@ public class ControladorFotoDato {
                 return "redirect:/avances/detalle/" + idAvance;
             }
 
-            Avance avance = avanceServicio.localizarAvance(idAvance);
+// Verificar tamaño (máximo 8MB para MongoDB gratis)
+            if (fotoFile.getSize() > 8 * 1024 * 1024) {
+                model.addAttribute("error", "La imagen es demasiado grande. Máximo 8MB.");
+                return "redirect:/avances/detalle/" + idAvance;
+            }
 
+            Avance avance = avanceServicio.localizarAvance(idAvance);
+            // Crear entidad FotoDato
             FotoDato fotoDato = new FotoDato();
             fotoDato.setIdAvance(avance);
-            fotoDato.setFoto(fotoFile.getBytes()); // Blob directo
+
             fotoDato.setCooNFoto(cooN);
             fotoDato.setCooEFoto(cooE);
             fotoDato.setFechaFoto(LocalDate.now());
 
-            fotoDatoServicio.salvar(fotoDato);
+            fotoDatoServicio.salvar(fotoDato, fotoFile);
 
             return "redirect:/avances/detalle/" + idAvance;
 
@@ -85,18 +91,20 @@ public class ControladorFotoDato {
 
                 FotoDato fotoDato = new FotoDato();
                 fotoDato.setIdAvance(avance);
-                fotoDato.setFoto(archivoFoto.getBytes()); // Blob directo
                 fotoDato.setCooNFoto(cooN);
                 fotoDato.setCooEFoto(cooE);
                 fotoDato.setFechaFoto(LocalDate.now());
 
-                fotoDatoServicio.salvar(fotoDato);
+                fotoDatoServicio.salvar(fotoDato, archivoFoto);
             }
 
             return "redirect:/avances/detalle/" + idAvance;
 
         } catch (IOException e) {
             model.addAttribute("error", "Error al subir el archivo: " + e.getMessage());
+            return "redirect:/avances/detalle/" + idAvance;
+        } catch (Exception e) {
+            model.addAttribute("error", "Error inesperado: " + e.getMessage());
             return "redirect:/avances/detalle/" + idAvance;
         }
     }
@@ -112,31 +120,53 @@ public class ControladorFotoDato {
     // Eliminar foto
     @GetMapping("/eliminar/{idFotoDato}")
     public String eliminarFoto(@PathVariable Long idFotoDato) {
-        FotoDato fotoDato = fotoDatoServicio.localizarFotoDato(idFotoDato);
-        Long idAvance = fotoDato.getIdAvance().getIdAvance();
-        fotoDatoServicio.borrar(fotoDato);
-        return "redirect:/avances/detalle/" + idAvance;
+        try {
+            FotoDato fotoDato = fotoDatoServicio.localizarFotoDato(idFotoDato);
+            Long idAvance = fotoDato.getIdAvance().getIdAvance();
+            fotoDatoServicio.borrar(fotoDato);// El servicio ahora maneja la eliminación tanto de MySQL como de MongoDB GridFS
+            return "redirect:/avances/detalle/" + idAvance;
+        } catch (Exception e) {
+            return "redirect:/avances/inicioAvances";
+        }
     }
 
-    // Mostrar imagen individual
+    // Servir imágenes desde MongoDB GridFS
     @GetMapping("/imagen/{idFotoDato}")
     @ResponseBody
     public ResponseEntity<byte[]> mostrarImagen(@PathVariable Long idFotoDato) {
         try {
             FotoDato fotoDato = fotoDatoServicio.localizarFotoDato(idFotoDato);
 
-            if (fotoDato == null || fotoDato.getFoto() == null || fotoDato.getFoto().length == 0) {
-                // Retornar una imagen placeholder o error 404
+            if (fotoDato == null || fotoDato.getGridfsFileId() == null) {
                 return ResponseEntity.notFound().build();
+            }
+
+            // Obtener archivo desde MongoDB GridFS usando el servicio
+            byte[] imageData = fotoDatoServicio.obtenerArchivoFoto(fotoDato.getGridfsFileId());
+
+            if (imageData == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Determinar content type
+            MediaType mediaType = MediaType.IMAGE_JPEG;
+            if (fotoDato.getTipoMime() != null) {
+                try {
+                    mediaType = MediaType.parseMediaType(fotoDato.getTipoMime());
+                } catch (Exception e) {
+                    // Usar JPEG por defecto si hay error
+                    mediaType = MediaType.IMAGE_JPEG;
+                }
             }
 
             // Configurar headers para correcta visualización
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.IMAGE_JPEG); // Asumiendo que son JPEG
-            headers.setContentLength(fotoDato.getFoto().length);
+            headers.setContentType(mediaType); // Asumiendo que son JPEG
+            headers.setContentLength(imageData.length);
             headers.setCacheControl("max-age=3600"); // Cache por 1 hora
+            headers.set("Content-Disposition", "inline; filename=\"" + fotoDato.getNombreArchivo() + "\"");
 
-            return new ResponseEntity<>(fotoDato.getFoto(), headers, HttpStatus.OK);
+            return new ResponseEntity<>(imageData, headers, org.springframework.http.HttpStatus.OK);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

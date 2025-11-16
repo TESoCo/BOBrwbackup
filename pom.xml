@@ -129,7 +129,11 @@
 			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
 		</dependency>
 
-
+		<!-- Dependencias MongoDB -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+		</dependency>
 
 
 

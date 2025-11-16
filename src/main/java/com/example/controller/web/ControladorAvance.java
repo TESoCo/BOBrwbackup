@@ -195,10 +195,10 @@ public class ControladorAvance
         System.out.println("Logged in username: " + username);
 
         // Load the full user object from database
-        Usuario usuarioLogeado = usuarioServicio.encontrarPorId(idUsuario) ;
+        Usuario usuarioLogeado = usuarioServicio.encontrarPorNombreUsuario(username) ;
 
         Avance avance = new Avance();
-        avance.setIdUsuario(usuarioServicio.encontrarPorId(idUsuario) );
+        avance.setIdUsuario(usuarioLogeado );
         avance.setIdObra(obraServicio.localizarObra(idObra));
         avance.setFechaAvance(LocalDate.parse(fecha));
         avance.setIdApu(apuServicio.obtenerPorId(idApu));
@@ -216,9 +216,14 @@ public class ControladorAvance
         List<Obra> obras = obraServicio.listaObra();
         List<Apu> apus = apuServicio.listarElementos();
 
+        // CARGAR FOTOS PARA LA EDICIÓN
+        List<FotoDato> fotos = fotoDatoServicio.listaFotoDatoAv(avance);
+
         model.addAttribute("avance", avance);
         model.addAttribute("obras", obras);
         model.addAttribute("apus", apus);
+        model.addAttribute("fotos", fotos);
+
 
         // INFORMACION DE USUARIO PARA HEADER Y PERMISOS
         if (authentication != null && authentication.isAuthenticated()) {
@@ -291,7 +296,7 @@ public class ControladorAvance
 
     //Ver detalle (sólo lectura)
     @GetMapping("/detalle/{idAvance}")
-    public String detalleAvance(@PathVariable Long idAvance, Model model, org.springframework.security.core.Authentication authentication) {
+    public String detalleAvance(@PathVariable Long idAvance, Model model, org.springframework.security.core.Authentication authentication) throws IOException {
         Avance avance = avanceServicio.localizarAvance(idAvance);
         List<Apu> matriz = apuServicio.listarElementos();
         List<Obra> obras = obraServicio.listaObra();
@@ -307,13 +312,27 @@ public class ControladorAvance
         if (fotos != null) {
             for (int i = 0; i < fotos.size(); i++) {
                 FotoDato foto = fotos.get(i);
-                System.out.println("Foto " + i + ": ID=" + foto.getIdFotoDato() +
-                        ", Bytes=" + (foto.getFoto() != null ? foto.getFoto().length : "NULL"));
+                try {
+                    byte[] archivoBytes = fotoDatoServicio.obtenerArchivoFoto(foto.getGridfsFileId());
+                    System.out.println("Foto " + i + ": ID=" + foto.getIdFotoDato() +
+                            ", GridFS ID=" + foto.getGridfsFileId() +
+                            ", Bytes=" + (archivoBytes != null ? archivoBytes.length : "NULL") +
+                            ", Nombre=" + foto.getNombreArchivo());
+                } catch (Exception e) {
+                    System.out.println("Foto " + i + ": ID=" + foto.getIdFotoDato() +
+                            ", GridFS ID=" + foto.getGridfsFileId() +
+                            ", ERROR=" + e.getMessage());
+
+                }
             }
         }
 
+        //el autor original de el avance
+        Usuario autor = avance.getIdUsuario();
+
         model.addAttribute("avance", avance);
         model.addAttribute("fotos", fotos);
+        model.addAttribute("autor", autor);
 
         // INFORMACION DE USUARIO PARA HEADER Y PERMISOS
         if (authentication != null && authentication.isAuthenticated()) {

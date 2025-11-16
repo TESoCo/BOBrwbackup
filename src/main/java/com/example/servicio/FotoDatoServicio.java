@@ -4,7 +4,9 @@ import com.example.domain.Apu;
 import com.example.domain.Avance;
 import com.example.domain.FotoDato;
 import com.example.domain.Usuario;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -12,11 +14,13 @@ public interface FotoDatoServicio {
 
     public List<FotoDato> listaFotoDatoAv (Avance avance);
 
-    public void salvar(FotoDato fotoDato);
+    public void salvar(FotoDato fotoDato, MultipartFile archivo) throws IOException;
 
     public void borrar(FotoDato fotoDato);
 
     FotoDato localizarFotoDato (Long entryId);
+
+    public byte[] obtenerArchivoFoto(String gridfsFileId) throws IOException;
 
     // New search methods
     List<FotoDato> buscarPorIdAvance(Long idAvance);

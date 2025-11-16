@@ -541,22 +541,22 @@
 
       <div class="detail-row">
         <div class="detail-label">ID Contratista:</div>
-        <div class="detail-value" th:text="${avance.idContratista.idContratista}"></div>
+        <div class="detail-value" th:text="${avance.idContratista?.idContratista}"></div>
       </div>
 
       <div class="detail-row">
         <div class="detail-label">Nombre del Contratista:</div>
-        <div class="detail-value" th:text="${avance.idContratista.nombreContratista}"></div>
+        <div class="detail-value" th:text="${avance.idContratista?.nombreContratista}"></div>
       </div>
 
-      <div class="detail-row" th:if="${avance.idContratista.idPersona != null}">
+      <div class="detail-row" th:if="${avance.idContratista?.idPersona != null}">
         <div class="detail-label">Contacto:</div>
         <div class="detail-value">
-          <span th:text="${avance.idContratista.idPersona.nombre + ' ' + avance.idContratista.idPersona.apellido}"></span>
+          <span th:text="${avance.idContratista?.idPersona.nombre + ' ' + avance.idContratista?.idPersona?.apellido}"></span>
           <br>
-          <span th:text="${'Tel: ' + avance.idContratista.idPersona.telefono}"></span>
+          <span th:text="${'Tel: ' + avance.idContratista?.idPersona?.telefono}"></span>
           <br>
-          <span th:text="${'Email: ' + avance.idContratista.idPersona.correo}"></span>
+          <span th:text="${'Email: ' + avance.idContratista?.idPersona?.correo}"></span>
         </div>
       </div>
     </div>
@@ -567,12 +567,12 @@
 
       <div class="detail-row">
         <div class="detail-label">ID Usuario:</div>
-        <div class="detail-value" th:text="${avance.idUsuario.idUsuario}"></div>
+        <div class="detail-value" th:text="${autor.idUsuario}"></div>
       </div>
 
       <div class="detail-row">
         <div class="detail-label">Nombre de Usuario:</div>
-        <div class="detail-value" th:text="${avance.idUsuario.nombreUsuario}"></div>
+        <div class="detail-value" th:text="${autor.nombreUsuario}"></div>
       </div>
     </div>
 
@@ -585,50 +585,48 @@
         </a>
       </div>
 
-      <!-- ALERTA DE ESTADO -->
-      <div th:if="${fotos == null}" style="background: #dc3545; color: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-        <h4>🚨 CRÍTICO: fotos es NULL</h4>
-        <p>No se pudieron cargar las fotos del avance.</p>
-      </div>
-
-      <div th:if="${fotos != null and fotos.empty}" style="background: #ffc107; color: black; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-        <h4>⚠️ AVISO: No hay fotos registradas</h4>
-        <p>El avance ID <span th:text="${avance.idAvance}"></span> no tiene fotos asociadas.</p>
-        <p><strong>Total de fotos:</strong> 0</p>
-      </div>
-
-      <div th:if="${fotos != null and !fotos.empty}" style="background: #28a745; color: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-        <h4>✅ FOTOS ENCONTRADAS</h4>
-        <p><strong>Total de fotos:</strong> <span th:text="${fotos.size()}"></span></p>
-        <div th:each="foto, stat : ${fotos}">
-          <p>Foto <span th:text="${stat.index + 1}"></span>:
-            ID=<span th:text="${foto.idFotoDato}"></span>,
-            Bytes=<span th:text="${foto.foto != null ? foto.foto.length : 'NULL'}"></span>
-          </p>
-        </div>
-      </div>
-
-      <!-- GALERÍA SOLO SI HAY FOTOS -->
+      <!-- GALERÍA FUNCIONAL MEJORADA -->
       <div th:if="${fotos != null and !fotos.empty}">
+        <div style="background: #28a745; color: white; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+          <h4>✅ FOTOS ENCONTRADAS: <span th:text="${fotos.size()}"></span></h4>
+        </div>
+
         <div class="photo-grid">
           <div th:each="foto : ${fotos}" class="photo-card">
-            <img th:src="@{'/fotodatos/imagen/' + ${foto.idFotoDato}}"
-                 class="photo-img"
-                 alt="Foto del avance"
-                 style="width: 100%; height: 180px; object-fit: cover; border: 2px solid blue;"
-                 onload="console.log('✅ Imagen cargada:', this.src)"
-                 >
+            <!-- Contenedor de imagen con manejo de errores -->
+            <div style="width: 100%; height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8f9fa; position: relative;">
+              <img th:src="@{'/fotodatos/imagen/' + ${foto.idFotoDato}}"
+                   style="max-width: 100%; max-height: 100%; object-fit: cover;"
+                   alt="Foto del avance ID [[${foto.idFotoDato}]]"
+                   onerror="this.style.display='none'; document.getElementById('error-${foto.idFotoDato}').style.display='flex';">
+
+              <!-- Mensaje de error que se muestra si la imagen falla -->
+              <div id="error-[[${foto.idFotoDato}]]"
+                   style="display: none; flex-direction: column; align-items: center; justify-content: center; color: #6c757d; padding: 20px; position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                <span>Imagen no disponible</span>
+                <small style="margin-top: 5px;">ID: [[${foto.gridfsFileId}]]</small>
+              </div>
+            </div>
 
             <div class="photo-info">
               <div class="photo-date">
                 <i class="fas fa-calendar"></i>
                 <span th:text="${foto.fechaFoto}"></span>
               </div>
+              <div th:if="${foto.cooNFoto != null and foto.cooEFoto != null}"
+                   style="font-size: 0.8rem; color: #6b7280; margin: 5px 0;">
+                <i class="fas fa-map-marker-alt"></i>
+                N:[[${foto.cooNFoto}]] E:[[${foto.cooEFoto}]]
+              </div>
               <div class="photo-actions">
-                <a th:href="@{/fotodatos/ver/} + ${foto.idFotoDato}" class="btn btn-sm btn-secondary">
+                <a th:href="@{'/fotodatos/imagen/' + ${foto.idFotoDato}}"
+                   target="_blank"
+                   class="btn btn-sm btn-secondary">
                   <i class="fas fa-eye"></i> Ver
                 </a>
-                <a th:href="@{/fotodatos/eliminar/} + ${foto.idFotoDato}" class="btn btn-sm btn-danger"
+                <a th:href="@{/fotodatos/eliminar/} + ${foto.idFotoDato}"
+                   class="btn btn-sm btn-danger"
                    onclick="return confirm('¿Está seguro de eliminar esta foto?')">
                   <i class="fas fa-trash"></i> Eliminar
                 </a>
@@ -649,5 +647,33 @@
     </div>
   </main>
 </div>
+<script th:inline="javascript">
+  console.log('=== DIAGNÓSTICO FOTOS ===');
+  console.log('Total de fotos en modelo: [[${fotos != null ? fotos.size() : 'NULL'}]]');
+
+  // Verificar todas las imágenes después de que cargue la página
+  window.addEventListener('load', function() {
+      const images = document.querySelectorAll('.photo-card img');
+      console.log('Imágenes encontradas en DOM:', images.length);
+
+      images.forEach((img, index) => {
+          console.log(`Imagen ${index}:`, {
+              src: img.src,
+              complete: img.complete,
+              naturalWidth: img.naturalWidth,
+              naturalHeight: img.naturalHeight,
+              clientWidth: img.clientWidth,
+              clientHeight: img.clientHeight
+          });
+
+          // Forzar recarga si es necesario
+          if (!img.complete || img.naturalWidth === 0) {
+              console.log(`Recargando imagen ${index}`);
+              const originalSrc = img.src;
+              img.src = originalSrc + '&t=' + new Date().getTime();
+          }
+      });
+  });
+</script>
 </body>
 </html>
