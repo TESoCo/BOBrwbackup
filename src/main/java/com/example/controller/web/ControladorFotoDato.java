@@ -66,7 +66,7 @@ public class ControladorFotoDato {
             fotoDato.setCooEFoto(cooE);
             fotoDato.setFechaFoto(LocalDate.now());
 
-            fotoDatoServicio.salvar(fotoDato, fotoFile);
+            fotoDatoServicio.salvar(fotoDato,fotoFile);
 
             return "redirect:/avances/detalle/" + idAvance;
 
@@ -95,7 +95,7 @@ public class ControladorFotoDato {
                 fotoDato.setCooEFoto(cooE);
                 fotoDato.setFechaFoto(LocalDate.now());
 
-                fotoDatoServicio.salvar(fotoDato, archivoFoto);
+                fotoDatoServicio.salvar(fotoDato,archivoFoto);
             }
 
             return "redirect:/avances/detalle/" + idAvance;

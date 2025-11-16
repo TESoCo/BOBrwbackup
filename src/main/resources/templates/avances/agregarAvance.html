@@ -447,7 +447,7 @@
 
         <!-- Create Form -->
         <div class="form-container">
-            <form th:action="@{/avances/salvar}" method="post" th:object="${avance}" id="avanceForm">
+            <form th:action="@{/avances/salvar}" method="post" enctype="multipart/form-data" th:object="${avance}" id="avanceForm">
                 <!-- Work Name Input -->
                 <div class="form-group">
                     <label for="obraDropdown"><b>Nombre de la obra:</b></label>
@@ -677,7 +677,7 @@
                         } else {
                             noSuggestionText.textContent = resultado.obra
                                 ? `La obra más cercana está a ${resultado.distancia.toFixed(1)}km. Seleccione manualmente.`
-                                : 'No se encontraron obras con coordenadas. Seleccione manualmente.';
+                                : 'No se encontraron obras cercanas con coordenadas. Seleccione manualmente.';
                             noSuggestion.style.display = 'block';
                         }
                     },

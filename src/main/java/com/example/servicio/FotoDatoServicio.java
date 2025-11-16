@@ -1,6 +1,5 @@
 package com.example.servicio;
 
-import com.example.domain.Apu;
 import com.example.domain.Avance;
 import com.example.domain.FotoDato;
 import com.example.domain.Usuario;
@@ -14,11 +13,13 @@ public interface FotoDatoServicio {
 
     public List<FotoDato> listaFotoDatoAv (Avance avance);
 
-    public void salvar(FotoDato fotoDato, MultipartFile archivo) throws IOException;
+    void salvar(FotoDato fotoDato, MultipartFile archivo) throws IOException;
 
     public void borrar(FotoDato fotoDato);
 
     FotoDato localizarFotoDato (Long entryId);
+
+    void salvarConBytes(FotoDato fotoDato, byte[] imageBytes, String filename, String contentType) throws IOException;
 
     public byte[] obtenerArchivoFoto(String gridfsFileId) throws IOException;
 

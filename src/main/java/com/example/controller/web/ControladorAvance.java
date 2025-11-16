@@ -7,7 +7,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import java.io.ByteArrayOutputStream;
@@ -185,28 +185,144 @@ public class ControladorAvance
             @RequestParam Long idObra,
             @RequestParam String fecha,
             @RequestParam Long idApu,
-            @RequestParam Double cantidad) {
+            @RequestParam Double cantidad,
+            @RequestParam(value = "photoBase64", required = false) String photoBase64,
+            @RequestParam(value = "photoCooN", required = false) Double photoCooN,
+            @RequestParam(value = "photoCooE", required = false) Double photoCooE,
+            @RequestParam(value = "photoFile", required = false) MultipartFile photoFile) {
 
-        // Get the currently authenticated user
-        org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
+        try {
 
-        // For now, let's just print it to verify it works
-        System.out.println("Logged in username: " + username);
+            System.out.println("=== INICIO GUARDADO AVANCE ===");
+            System.out.println("📝 Datos recibidos:");
+            System.out.println("   - ID Obra: " + idObra);
+            System.out.println("   - ID APU: " + idApu);
+            System.out.println("   - Cantidad: " + cantidad);
+            System.out.println("   - PhotoBase64: " + (photoBase64 != null ? "SÍ (" + photoBase64.length() + " chars)" : "NO"));
+            System.out.println("   - PhotoFile: " + (photoFile != null && !photoFile.isEmpty() ? "SÍ (" + photoFile.getOriginalFilename() + ")" : "NO"));
+            System.out.println("   - Coordenadas: N=" + photoCooN + ", E=" + photoCooE);
 
-        // Load the full user object from database
-        Usuario usuarioLogeado = usuarioServicio.encontrarPorNombreUsuario(username) ;
+            // Get the currently authenticated user
+            org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth.getName();
 
-        Avance avance = new Avance();
-        avance.setIdUsuario(usuarioLogeado );
-        avance.setIdObra(obraServicio.localizarObra(idObra));
-        avance.setFechaAvance(LocalDate.parse(fecha));
-        avance.setIdApu(apuServicio.obtenerPorId(idApu));
-        avance.setCantEjec(cantidad);
+            // Load the full user object from database
+            Usuario usuarioLogeado = usuarioServicio.encontrarPorNombreUsuario(username) ;
 
-        avanceServicio.salvar(avance);
-        return "redirect:/avances/inicioAvances";
+            // For now, let's just print it to verify it works
+            System.out.println("Logged in username: " + username);
+
+
+
+            Avance avance = new Avance();
+            avance.setIdUsuario(usuarioLogeado );
+            avance.setIdObra(obraServicio.localizarObra(idObra));
+            avance.setFechaAvance(LocalDate.parse(fecha));
+            avance.setIdApu(apuServicio.obtenerPorId(idApu));
+            avance.setCantEjec(cantidad);
+            avance.setAnular(false);
+            avanceServicio.salvar(avance);
+
+
+
+            //PROCESAR FOTO SI SE PROPORCIONA
+            procesarFotoParaAvance(avance, photoBase64, photoFile, photoCooN, photoCooE);
+            System.out.println("Avance guardado con ID: " + avance.getIdAvance());
+
+            return "redirect:/avances/inicioAvances";
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return "redirect:/avances/agregarAvance?error=Error: " + e.getMessage();
+
+        }
+
     }
+
+    private void procesarFotoParaAvance(Avance avance, String photoBase64, MultipartFile photoFile,
+                                        Double cooN, Double cooE) {
+        try {
+            // Solo procesar si hay foto
+            // Verificar si hay foto para procesar
+            boolean tieneFotoBase64 = photoBase64 != null && !photoBase64.isEmpty();
+            boolean tienePhotoFile = photoFile != null && !photoFile.isEmpty();
+
+            if (!tieneFotoBase64 && !tienePhotoFile) {
+                System.out.println("No hay foto para procesar para el avance ID: " + avance.getIdAvance());
+                return;
+            }
+
+            // Crear entidad FotoDato
+            FotoDato fotoDato = new FotoDato();
+            fotoDato.setIdAvance(avance);
+            fotoDato.setCooNFoto(cooN);
+            fotoDato.setCooEFoto(cooE);
+            fotoDato.setFechaFoto(LocalDate.now());
+
+            if (tienePhotoFile) {
+                // Procesar archivo subido
+                System.out.println("Procesando archivo subido: " + photoFile.getOriginalFilename());
+                fotoDatoServicio.salvar(fotoDato, photoFile);
+            } else if (tieneFotoBase64) {
+                // Procesar foto Base64 desde cámara
+                System.out.println("Procesando foto desde cámara (Base64)");
+                procesarFotoBase64(fotoDato, photoBase64);
+            }
+            System.out.println("Foto guardada para avance ID: " + avance.getIdAvance());
+
+        } catch (Exception e) {
+            System.err.println("Error al procesar foto: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // MÉTOD0 PARA PROCESAR BASE64 (SIMPLIFICADO)
+    // Reemplaza el mét0do procesarFotoBase64 con este código corregido:
+    private void procesarFotoBase64(FotoDato fotoDato, String base64Data) {
+        try {
+            if (base64Data == null || base64Data.isEmpty()) {
+                System.err.println("Datos Base64 vacíos o nulos");
+                return;
+            }
+
+            // Separar el prefijo de los datos reales
+            String[] parts = base64Data.split(",");
+            if (parts.length < 2) {
+                System.err.println("Formato Base64 inválido");
+                return;
+            }
+
+            String base64Image = parts[1];
+            byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+
+            // Determinar tipo MIME
+            String mimeType = "image/jpeg";
+            String filename = "foto_capturada.jpg";
+            if (parts[0].contains("image/png")) {
+                mimeType = "image/png";
+                filename = "foto_capturada.png";
+            }
+
+            // Crear MultipartFile temporal
+            MultipartFile multipartFile = new com.example.util.ByteArrayMultipartFile(
+                    imageBytes,
+                    "file",
+                    filename,
+                    mimeType
+            );
+
+            // Usar el mét0do salvar normal con MultipartFile
+            fotoDatoServicio.salvar(fotoDato, multipartFile);
+
+            System.out.println(" Foto Base64 procesada y guardada en GridFS. Tamaño: " + imageBytes.length + " bytes");
+
+        } catch (Exception e) {
+            System.err.println("Error al procesar Base64: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
 
 
     //Función y forma de editado
@@ -330,9 +446,13 @@ public class ControladorAvance
         //el autor original de el avance
         Usuario autor = avance.getIdUsuario();
 
+        //Contratista si lo hay
+        Contratista contratista = avance.getIdContratista();
+
         model.addAttribute("avance", avance);
         model.addAttribute("fotos", fotos);
         model.addAttribute("autor", autor);
+        model.addAttribute("contratista", contratista);
 
         // INFORMACION DE USUARIO PARA HEADER Y PERMISOS
         if (authentication != null && authentication.isAuthenticated()) {
