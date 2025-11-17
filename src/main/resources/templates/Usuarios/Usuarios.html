@@ -449,7 +449,7 @@
             <!-- Menu items for users with inventory permissions -->
             <!-- Inventario - Con permisos de inventario -->
             <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
-                <li><a th:href="@{/inventario}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
+                <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
             </div>
 
             <!-- Materiales - Con permisos de material -->
