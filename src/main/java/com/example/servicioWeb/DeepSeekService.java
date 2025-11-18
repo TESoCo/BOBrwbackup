@@ -1,5 +1,6 @@
 package com.example.servicioWeb;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -12,6 +13,9 @@ import java.util.*;
 
 @Service
 public class DeepSeekService {
+
+    @Autowired
+    private AIService aiService;
 
     @Value("${deepseek.api.key:}")
     private String apiKey;
@@ -33,7 +37,7 @@ public class DeepSeekService {
     public List<Map<String, String>> generarMaterialesDesdeDescripcion(String descripcionApu) {
         System.out.println("=== DEEPSEEK SERVICE GRATUITO ===");
 
-        // Si no hay API key configurada, usar método local
+
         if (apiKey == null || apiKey.isEmpty() || apiKey.equals("tu_api_key_aqui")) {
             System.out.println("API key no configurada - usando generador local");
             return generarMaterialesLocalmente(descripcionApu);
@@ -49,7 +53,7 @@ public class DeepSeekService {
         } catch (Exception e) {
             System.out.println("Error con API DeepSeek: " + e.getMessage());
             System.out.println("Usando generador local como fallback");
-            return generarMaterialesLocalmente(descripcionApu);
+            throw new RuntimeException("Error al generar materiales: " + e.getMessage());
         }
     }
 

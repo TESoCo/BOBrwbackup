@@ -6,6 +6,7 @@ import com.example.domain.Usuario;
 import com.example.servicio.APUServicio;
 import com.example.servicio.MaterialServicio;
 import com.example.servicio.UsuarioServicio;
+import com.example.servicioWeb.AIService;
 import com.example.servicioWeb.DeepSeekService;
 import com.example.servicioWeb.OpenRouterService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,9 @@ public class ControladorMaterial {
 
     @Autowired
     private OpenRouterService openRouterService;
+
+    @Autowired
+    private AIService aiService;
 
 
 
@@ -98,7 +102,7 @@ public class ControladorMaterial {
         return "redirect:/material/inicioMaterial";
     }
 
-    // Método GET para mostrar el formulario de edición
+    // Mét0do GET para mostrar el formulario de edición
     @GetMapping("/editar/{id}")
     public String mostrarFormularioEdicion(@PathVariable Long id, Model model) {
         Material material = materialServicio.obtenerPorId(id);
@@ -144,8 +148,9 @@ public class ControladorMaterial {
             Model model) {
 
         try {
+            //  USAR SERVICIO HÍBRIDO EN LUGAR DE DEEPSEEK
             List<Map<String, String>> materialesGenerados =
-                    deepSeekService.generarMaterialesDesdeDescripcion(descripcionApu);
+                    aiService.generarMateriales(descripcionApu);
 
             model.addAttribute("materialesGenerados", materialesGenerados);
             model.addAttribute("descripcionApu", descripcionApu);
@@ -227,7 +232,7 @@ public class ControladorMaterial {
     @PostMapping("/generarDesdeApu")
     public String generarMaterialesDesdeApu(
             @RequestParam Long apuId,
-            @RequestParam(defaultValue = "import") String tabActiva, // ✅ Nuevo parámetro
+            @RequestParam(defaultValue = "import") String tabActiva, //  Nuevo parámetro
             Model model) {
 
         System.out.println("=== GENERAR MATERIALES DESDE APU ===");
@@ -245,9 +250,9 @@ public class ControladorMaterial {
 
             System.out.println("APU encontrado: " + apuSeleccionado.getNombreAPU());
 
-            // ✅ USAR OPENROUTER EN LUGAR DE DEEPSEEK
+            // USAR SERVICIO HÍBRIDO
             List<Map<String, String>> materialesGenerados =
-                    openRouterService.generarMaterialesDesdeDescripcion(apuSeleccionado.getDescAPU());
+                    aiService.generarMateriales(apuSeleccionado.getDescAPU());
 
             System.out.println("Materiales generados: " + materialesGenerados.size());
 
@@ -264,26 +269,61 @@ public class ControladorMaterial {
         return recargarFormulario(model, tabActiva); // ✅ Pasar la pestaña
     }
 
-    // Método de prueba
-    @GetMapping("/probarOpenRouter")
-    @ResponseBody
-    public String probarOpenRouter() {
-        try {
-            System.out.println("=== PROBANDO OPENROUTER ===");
-            List<Map<String, String>> materiales = openRouterService.generarMaterialesDesdeDescripcion("Muro de concreto simple");
-            return "✅ OpenRouter FUNCIONA! Materiales generados: " + materiales.size();
-        } catch (Exception e) {
-            return "❌ Error OpenRouter: " + e.getMessage();
-        }
-    }
+
 
     private String recargarFormulario(Model model, String tabActiva) {
         List<Apu> apus = apuServicio.listarElementos();
         model.addAttribute("apus", apus);
         model.addAttribute("material", new Material());
-        model.addAttribute("tabActiva", tabActiva); // ✅ Pasar pestaña a la vista
+        model.addAttribute("tabActiva", tabActiva); //  Pasar pestaña a la vista
         return "material/crearMaterial";
     }
+
+    @GetMapping("/probarServiciosIA")
+    @ResponseBody
+    public String probarServiciosIA() {
+        StringBuilder resultado = new StringBuilder();
+        resultado.append("=== PRUEBA SERVICIOS IA ===\n\n");
+
+        String descripcionPrueba = "Muro de contención en gaviones con piedra y geotextil";
+
+        resultado.append("Descripción: ").append(descripcionPrueba).append("\n\n");
+
+        // Probar servicio híbrido
+        try {
+            List<Map<String, String>> materiales = aiService.generarMateriales(descripcionPrueba);
+            resultado.append("✅ SERVICIO HÍBRIDO FUNCIONA!\n");
+            resultado.append("Materiales generados: ").append(materiales.size()).append("\n");
+            for (Map<String, String> material : materiales) {
+                resultado.append("  - ").append(material.get("nombre"))
+                        .append(" (").append(material.get("unidad")).append(") $")
+                        .append(material.get("precio")).append("\n");
+            }
+        } catch (Exception e) {
+            resultado.append("❌ SERVICIO HÍBRIDO FALLÓ: ").append(e.getMessage()).append("\n");
+        }
+
+        resultado.append("\n--- Pruebas individuales ---\n");
+
+        // Probar DeepSeek individualmente
+        try {
+            List<Map<String, String>> materialesDeepSeek = deepSeekService.generarMaterialesDesdeDescripcion(descripcionPrueba);
+            resultado.append("✅ DEEPSEEK FUNCIONA: ").append(materialesDeepSeek.size()).append(" materiales\n");
+        } catch (Exception e) {
+            resultado.append("❌ DEEPSEEK FALLÓ: ").append(e.getMessage()).append("\n");
+        }
+
+        // Probar OpenRouter individualmente
+        try {
+            List<Map<String, String>> materialesOpenRouter = openRouterService.generarMaterialesDesdeDescripcion(descripcionPrueba);
+            resultado.append("✅ OPENROUTER FUNCIONA: ").append(materialesOpenRouter.size()).append(" materiales\n");
+        } catch (Exception e) {
+            resultado.append("❌ OPENROUTER FALLÓ: ").append(e.getMessage()).append("\n");
+        }
+
+        return resultado.toString();
+    }
+
 
     @GetMapping("/buscarApu")
     @ResponseBody

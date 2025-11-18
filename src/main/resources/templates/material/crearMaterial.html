@@ -953,6 +953,23 @@ function probarTabs() {
     console.log('Tabs encontrados:', document.querySelectorAll('.tab').length);
     console.log('Contenidos de tabs encontrados:', document.querySelectorAll('.tab-content').length);
 }
+    // ✅ SOLUCIÓN SIMPLE: Verificar si hay materiales generados y mostrar esa pestaña
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar si hay materiales generados (después de recarga)
+    const materialesGenerados = document.querySelector('#import-tab .table-container');
+    const tieneMaterialesGenerados = materialesGenerados && materialesGenerados.querySelector('tbody tr');
+
+    if (tieneMaterialesGenerados) {
+        console.log('✅ Materiales generados detectados, mostrando pestaña de importación');
+        cambiarTab('import');
+    } else {
+        // Usar la pestaña del servidor si está definida
+        const serverTab = '[[${tabActiva}]]';
+        if (serverTab && serverTab !== 'single') {
+            cambiarTab(serverTab);
+        }
+    }
+});
 </script>
 </body>
 </html>
