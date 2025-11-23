@@ -17,6 +17,9 @@ public class AIService {
     @Autowired
     private OpenRouterService openRouterService;
 
+    @Autowired
+    private GeminiService geminiService;
+
     public List<Map<String, String>> generarMateriales(String descripcion) {
         // Intentar OpenRouter primero
         try {
@@ -27,6 +30,18 @@ public class AIService {
         } catch (Exception e) {
             System.out.println("❌ OpenRouter falló: " + e.getMessage());
         }
+
+        // 2° Intento: Gemini (nueva opción)
+        try {
+            System.out.println("🔄 2° Intentando Gemini...");
+            List<Map<String, String>> materiales = geminiService.generarMaterialesDesdeDescripcion(descripcion);
+            System.out.println("✅ Gemini exitoso: " + materiales.size() + " materiales");
+            return materiales;
+        } catch (Exception e) {
+            System.out.println("❌ Gemini falló: " + e.getMessage());
+        }
+
+
 
         // Fallback a DeepSeek
         try {

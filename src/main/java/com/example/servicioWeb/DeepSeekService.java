@@ -14,9 +14,6 @@ import java.util.*;
 @Service
 public class DeepSeekService {
 
-    @Autowired
-    private AIService aiService;
-
     @Value("${deepseek.api.key:}")
     private String apiKey;
 
@@ -30,17 +27,21 @@ public class DeepSeekService {
     private final ObjectMapper objectMapper;
 
     public DeepSeekService() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(30000); // 30 segundos
+        factory.setReadTimeout(30000);    // 30 segundos
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
     }
 
     public List<Map<String, String>> generarMaterialesDesdeDescripcion(String descripcionApu) {
         System.out.println("=== DEEPSEEK SERVICE GRATUITO ===");
-
+        System.out.println("API Key configurada: " + (apiKey != null && !apiKey.isEmpty()));
+        System.out.println("API URL: " + apiUrl);
 
         if (apiKey == null || apiKey.isEmpty() || apiKey.equals("tu_api_key_aqui")) {
-            System.out.println("API key no configurada - usando generador local");
-            return generarMaterialesLocalmente(descripcionApu);
+            System.out.println("API key no configurada - Verifica las variables de entorno");
+            throw new RuntimeException("Error al generar materiales" );
         }
 
         try {
@@ -52,7 +53,7 @@ public class DeepSeekService {
 
         } catch (Exception e) {
             System.out.println("Error con API DeepSeek: " + e.getMessage());
-            System.out.println("Usando generador local como fallback");
+
             throw new RuntimeException("Error al generar materiales: " + e.getMessage());
         }
     }
@@ -61,7 +62,7 @@ public class DeepSeekService {
         String prompt = crearPrompt(descripcion);
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", "deepseek-chat");
+        requestBody.put("model", model);
         requestBody.put("messages", List.of(Map.of("role", "user", "content", prompt)));
         requestBody.put("temperature", 0.3);
         requestBody.put("max_tokens", 2000);
@@ -78,7 +79,8 @@ public class DeepSeekService {
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 JsonNode root = objectMapper.readTree(response.getBody());
-                return root.path("choices").get(0).path("message").path("content").asText();
+                String content = root.path("choices").get(0).path("message").path("content").asText();
+                return content;
             } else {
                 throw new Exception("Error HTTP: " + response.getStatusCode());
             }
@@ -131,29 +133,7 @@ public class DeepSeekService {
         }
     }
 
-    private List<Map<String, String>> generarMaterialesLocalmente(String descripcion) {
-        System.out.println("Usando generador local para: " + descripcion);
 
-        List<Map<String, String>> materiales = new ArrayList<>();
-        String descLower = descripcion.toLowerCase();
-
-        // Lógica local mejorada
-        if (descLower.contains("columna") || descLower.contains("concreto") || descLower.contains("fundición")) {
-            materiales.add(crearMaterial("Cemento gris", "Cemento para construcción general", "kg"));
-            materiales.add(crearMaterial("Arena lavada", "Arena fina para mezclas", "m³"));
-            materiales.add(crearMaterial("Grava triturada", "Grava de 1/2\" para concretos", "m³"));
-            materiales.add(crearMaterial("Varilla 1/2\"", "Varilla corrugada para refuerzo principal", "m"));
-            materiales.add(crearMaterial("Varilla 3/8\"", "Varilla para estribos y amarre", "m"));
-            materiales.add(crearMaterial("Madera", "Madera para formaleta", "m²"));
-            materiales.add(crearMaterial("Alambre de amarre", "Alambre negro para amarre", "kg"));
-        }
-
-        if (materiales.isEmpty()) {
-            materiales.add(crearMaterial("Material de construcción", "Material básico requerido", "und"));
-        }
-
-        return materiales;
-    }
 
     private Map<String, String> crearMaterial(String nombre, String descripcion, String unidad) {
         Map<String, String> material = new HashMap<>();

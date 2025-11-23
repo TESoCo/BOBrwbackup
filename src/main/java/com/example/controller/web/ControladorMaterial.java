@@ -8,6 +8,7 @@ import com.example.servicio.MaterialServicio;
 import com.example.servicio.UsuarioServicio;
 import com.example.servicioWeb.AIService;
 import com.example.servicioWeb.DeepSeekService;
+import com.example.servicioWeb.GeminiService;
 import com.example.servicioWeb.OpenRouterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -47,7 +48,8 @@ public class ControladorMaterial {
     @Autowired
     private AIService aiService;
 
-
+    @Autowired
+    private GeminiService geminiService;
 
     @GetMapping("/inicioMaterial")
     public String inicioMaterial(Model model, Authentication authentication) {
@@ -304,6 +306,15 @@ public class ControladorMaterial {
         }
 
         resultado.append("\n--- Pruebas individuales ---\n");
+
+        // Probar Gemini individualmente
+        try {
+            List<Map<String, String>> geminiResult = geminiService.generarMaterialesDesdeDescripcion("Prueba conexión");
+            resultado.append("✅ Gemini: FUNCIONA (").append(geminiResult.size()).append(" materiales)\n");
+        } catch (Exception e) {
+            resultado.append("❌ Gemini: FALLÓ - ").append(e.getMessage()).append("\n");
+        }
+
 
         // Probar DeepSeek individualmente
         try {
