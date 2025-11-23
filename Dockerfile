@@ -1,6 +1,11 @@
 # Build stage with Maven included
 FROM maven:3.9.9-eclipse-temurin-17-alpine AS builder
 
+# Set encoding environment variables
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
+
 WORKDIR /app
 
 # Copy project files
