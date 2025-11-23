@@ -141,6 +141,19 @@
             <artifactId>mongodb-driver-sync</artifactId>
         </dependency>
 
+        <!-- env para variables de entorno -->
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+
+        <!-- Dependencias postgre para base de datos en render -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
 
 	</dependencies>

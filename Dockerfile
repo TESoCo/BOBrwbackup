@@ -10,6 +10,7 @@ ENV LC_ALL C.UTF-8
 # Copy project files
 COPY pom.xml .
 COPY src ./src
+COPY .env .env
 
 # Build the application
 RUN mvn clean package -DskipTests
