@@ -30,7 +30,7 @@ public class DeepSeekService {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(30000); // 30 segundos
         factory.setReadTimeout(30000);    // 30 segundos
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = new RestTemplate(factory);
         this.objectMapper = new ObjectMapper();
     }
 
