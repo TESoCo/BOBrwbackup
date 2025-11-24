@@ -47,7 +47,7 @@ public class ControladorContratistas {
     private InfoComServicio infoComServicio;
 
     @GetMapping
-    public String inicioContrat(Model model){
+    public String inicioContrat(Model model){ //TODO 404 en esta página
         List<Contratista> contratistas = contratistaServicio.listarContratistas();
         List<InformacionComercial> informacionesComerciales = infoComServicio.comercialList();
         model.addAttribute("contratistas",contratistas);

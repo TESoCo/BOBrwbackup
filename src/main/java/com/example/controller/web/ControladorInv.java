@@ -45,6 +45,7 @@ public class ControladorInv {
         return "inventarios/inventario";
     }
 
+    // TODO esto no funciona, 404 en front
     @GetMapping("/crearInv")
     public String crearInv(Model model) {
         // Get the currently logged-in user

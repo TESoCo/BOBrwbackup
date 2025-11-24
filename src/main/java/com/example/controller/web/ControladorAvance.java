@@ -325,7 +325,7 @@ public class ControladorAvance
 
 
 
-    //Función y forma de editado
+    //Función y forma de editado TODO esto no aparece en front tiene problemas
     @GetMapping("/cambiar/{idAvance}")
     public String cambiarAvance(@PathVariable Long idAvance, Model model, org.springframework.security.core.Authentication authentication) {
         Avance avance = avanceServicio.localizarAvance(idAvance);
