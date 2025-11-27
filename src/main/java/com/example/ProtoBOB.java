@@ -64,8 +64,24 @@ public class ProtoBOB {
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
             http
                     .authorizeHttpRequests(auth -> auth
+
+                                    // 🔓 RUTAS PÚBLICAS (NO REQUIEREN LOGIN)
+                                    .requestMatchers(
+                                            "/",          // raíz
+                                            "/index",     // página principal
+                                            "/login",
+                                            "/CSS/**",    // estilos
+                                            "/js/**",     // scripts
+                                            "/IMG/**",    // imágenes (ojo mayúsculas si tu carpeta es IMG)
+                                            "/images/**",
+                                            "/webjars/**",
+                                            "/presupuestos/**",
+                                            "/BOBWS*", "/BOBWS/*",
+                                            "/api/**"
+                                    ).permitAll()
+
                             // Public endpoints
-                            .requestMatchers("/css/**", "/js/**", "/login", "/presupuestos/**").permitAll()
+                            .requestMatchers("/CSS/**", "/js/**", "/login", "/presupuestos/**").permitAll()
                             .requestMatchers("/BOBWS*", "/BOBWS/*").permitAll()
                             .requestMatchers("/api/**").permitAll() // Allow API access with no auth
                             .requestMatchers("/usuarios/foto/**").permitAll() // Permitir acceso a fotos de perfil
