@@ -22,9 +22,23 @@ public class MongoConfig {
     @Value("${spring.data.mongodb.uri}")
     private String mongoUri;
 
+    @Value("${spring.data.mongodb.database:protobob}")
+    private String databaseName;
+
     @Bean
     public MongoDatabaseFactory mongoDatabaseFactory() {
-        return new SimpleMongoClientDatabaseFactory(mongoUri);
+        // If URI doesn't have database, append it
+        String connectionString = mongoUri;
+        if (!mongoUri.endsWith("/" + databaseName) && !mongoUri.contains("/?")) {
+            if (mongoUri.endsWith("/")) {
+                connectionString = mongoUri + databaseName;
+            } else {
+                connectionString = mongoUri + "/" + databaseName;
+            }
+        }
+
+        System.out.println("Using MongoDB connection: " + connectionString);
+        return new SimpleMongoClientDatabaseFactory(connectionString);
     }
 
     @Bean
@@ -36,7 +50,6 @@ public class MongoConfig {
     public MappingMongoConverter mappingMongoConverter() {
         DbRefResolver dbRefResolver = new DefaultDbRefResolver(mongoDatabaseFactory());
         MappingMongoConverter converter = new MappingMongoConverter(dbRefResolver, mongoMappingContext());
-        // Eliminar el campo _class
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         return converter;
     }
