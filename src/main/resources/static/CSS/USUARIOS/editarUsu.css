@@ -1,0 +1,400 @@
+:root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --secondary: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --light: #f8fafc;
+    --dark: #1e293b;
+    --gray: #94a3b8;
+    --sidebar-width: 260px;
+    --header-height: 70px;
+    --border-radius: 8px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  background: #1c5dae;
+  color: white;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.sidebar-header {
+  padding: 1.5rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.sidebar-header img {
+  height: 66px;
+  margin-right: 10px;
+}
+
+.sidebar-header h1 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: black;
+}
+
+
+.nav-links {
+  list-style: none;
+  padding: 1rem 0;
+}
+
+.nav-links li {
+  margin-bottom: 0.2rem;
+}
+
+.nav-links a {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 1.5rem;
+  color: black;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.nav-links a:hover, .nav-links a.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-links i {
+  margin-right: 0.75rem;
+  width: 20px;
+  text-align: center;
+  color: black
+}
+
+/* Main content */
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    padding: 2rem;
+}
+
+/* Header */
+.header {
+    background: white;
+    box-shadow: var(--shadow);
+    padding: 1rem 2rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Role badges */
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.role-badge i {
+    margin-right: 0.35rem;
+}
+
+.admin-badge {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.supervisor-badge {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.operativo-badge {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+/* Form styles */
+.form-container {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.photo-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #dee2e6;
+    cursor: pointer;
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.photo-upload {
+    display: none;
+}
+
+.photo-container {
+    text-align: center;
+    margin-bottom: 20px;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.remove-photo {
+    margin-top: 10px;
+}
+
+/* Form controls */
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--dark);
+}
+
+.form-control {
+    border: 1px solid #d1d5db;
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-select {
+    border: 1px solid #d1d5db;
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    transition: all 0.3s;
+}
+
+.form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: var(--secondary);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    text-decoration: none;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: var(--secondary);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #475569;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    color: var(--secondary);
+    border: 1px solid var(--secondary);
+}
+
+.btn-outline-secondary:hover {
+    background: var(--secondary);
+    color: white;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+/* --- REGLAS CORRECTAS PARA MÓVIL (QUITA EL MODO DE 70PX) --- */
+/* ============================================== */
+/* REGLAS RESPONSIVAS PARA TABLETS Y MÓVILES */
+/* ============================================== */
+
+/* Para pantallas de hasta 992px (tabletas y móviles) */
+@media (max-width: 992px) {
+    /* 1. LAYOUT PRINCIPAL Y BOTÓN */
+    .app-container {
+      display: block; /* Anula el 'display: flex' de escritorio */
+    }
+
+    .main-content {
+      margin-left: 0; /* Anula cualquier margen fijo de escritorio */
+      padding: 1rem;
+      padding-top: 5rem; /* Da espacio libre para el botón fijo */
+    }
+
+    .menu-toggle {
+        display: block !important; /* Muestra el botón de menú */
+        z-index: 1100; /* Asegura que esté por encima del contenido */
+    }
+
+    /* 2. SIDEBAR (Off-Canvas - Oculto por defecto y con ancho completo) */
+    .sidebar {
+        width: var(--sidebar-width); /* Vuelve al ancho completo de 260px */
+        position: fixed;
+        height: 100vh;
+        z-index: 1050;
+
+        /* Regla clave: OCULTAR fuera de la pantalla */
+        transform: translateX(-100%); /* <-- ESTADO OCULTO PREDETERMINADO */
+        transition: transform 0.3s ease; /* Transición suave */
+    }
+
+    /* 3. RESTAURAR TEXTO (Anula los estilos de 'display: none' si existen) */
+    .sidebar-header h1, .nav-links span {
+        display: block !important; /* Asegura que el texto se vea */
+    }
+
+    .nav-links a {
+        justify-content: flex-start !important; /* Vuelve a alinear a la izquierda con el texto */
+        padding: 0.8rem 1.5rem !important; /* Restaurar padding normal */
+    }
+
+    .nav-links i {
+        margin-right: 0.75rem !important; /* Restaurar margen del icono */
+    }
+
+    /* 4. Estado Activo del Sidebar (cuando se pulsa el botón) */
+    .app-container.sidebar-active .sidebar {
+        transform: translateX(0) !important; /* Muestra el sidebar */
+    }
+
+    /* 5. Oscurece el contenido principal */
+    .app-container.sidebar-active .main-content {
+      filter: blur(2px);
+      pointer-events: none; /* Evita interacciones con el contenido borroso */
+    }
+
+    /* 6. Ajustes adicionales para el header en móvil si es necesario */
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+    }
+
+    .user-menu {
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    /* 7. Botones del formulario en columna para 768px y menos */
+    @media (max-width: 768px) {
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 1rem;
+            justify-content: center !important;
+            align-items: stretch;
+        }
+
+        .d-flex.justify-content-between .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+}
+
+/* Alert messages */
+.alert {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.app-container.sidebar-active .sidebar {
+    transform: translateX(0) !important; /* Trae el sidebar de -100% a 0 */
+}

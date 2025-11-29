@@ -1,0 +1,143 @@
+/* CSS BASE DEL FORMULARIO */
+/* Define las variables que usas en el CSS en línea */
+:root {
+  --primary: #2563eb;
+  --secondary: #64748b;
+  --dark: #1e293b;
+  --success: #10b981;
+  --danger: #ef4444;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f1f5f9; /* Color de fondo del Dashboard */
+  color: var(--dark);
+  line-height: 1.6;
+}
+
+.registrar {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.registrar form {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.registrar h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--primary);
+}
+
+.registrar label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--dark);
+}
+
+.registrar input, .registrar select, .registrar .file-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.registrar fieldset {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.registrar legend {
+    padding: 0 10px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.enlace {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.enlace a {
+    color: var(--secondary);
+    text-decoration: none;
+}
+
+.enlace a:hover {
+    text-decoration: underline;
+}
+
+.file-input {
+    background: #f8f9fa;
+    cursor: pointer;
+}
+
+.file-input:hover {
+    background: #e9ecef;
+}
+
+.file-preview {
+    text-align: center;
+    margin: 10px 0;
+}
+
+.file-preview img {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+}
+
+.file-info {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Estilo para el botón de submit (ajustar si es necesario) */
+.registrar button[type="submit"] {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.registrar button[type="submit"]:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Estilos de mensajes de alerta */
+.alert {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background-color: #d1e7dd;
+    color: var(--success);
+    border: 1px solid #badbcc;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: var(--danger);
+    border: 1px solid #f5c6cb;
+}

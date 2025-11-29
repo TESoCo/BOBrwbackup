@@ -1,0 +1,675 @@
+:root {
+--primary: #2563eb;
+--primary-dark: #1d4ed8;
+--secondary: #64748b;
+--success: #10b981;
+--warning: #f59e0b;
+--danger: #ef4444;
+--light: #f8fafc;
+--dark: #1e293b;
+--gray: #94a3b8;
+--sidebar-width: 260px;
+--header-height: 70px;
+--border-radius: 8px;
+--shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: 'Roboto', sans-serif;
+background-color: #f1f5f9;
+color: var(--dark);
+line-height: 1.6;
+}
+
+/* Layout */
+.app-container {
+display: flex;
+min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+width: var(--sidebar-width);
+background: #1c5dae;
+color: white;
+position: fixed;
+height: 100vh;
+overflow-y: auto;
+transition: all 0.3s ease;
+z-index: 1000;
+}
+
+.sidebar-header {
+padding: 1.5rem 1.5rem;
+border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+display: flex;
+align-items: center;
+flex-direction: column;
+}
+
+.sidebar-header img {
+height: 80px;
+margin-right: 10px;
+}
+
+.sidebar-header h1 {
+font-size: 1.2rem;
+font-weight: 600;
+color: black;
+}
+
+.nav-links {
+list-style: none;
+padding: 1rem 0;
+}
+
+.nav-links li {
+margin-bottom: 0.2rem;
+}
+
+.nav-links a {
+display: flex;
+align-items: center;
+padding: 0.8rem 1.5rem;
+color: black;
+text-decoration: none;
+transition: all 0.3s;
+}
+
+.nav-links a:hover, .nav-links a.active {
+background: rgba(255, 255, 255, 0.1);
+color: white;
+}
+
+.nav-links i {
+margin-right: 0.75rem;
+width: 20px;
+text-align: center;
+color: black
+}
+
+/* Main content */
+.main-content {
+flex: 1;
+margin-left: var(--sidebar-width);
+padding: 2rem;
+}
+
+/* Header */
+.header {
+background: white;
+box-shadow: var(--shadow);
+padding: 1rem 2rem;
+border-radius: var(--border-radius);
+margin-bottom: 2rem;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.user-menu {
+display: flex;
+align-items: center;
+}
+
+.user-avatar {
+width: 40px;
+height: 40px;
+border-radius: 50%;
+background: var(--primary);
+color: white;
+display: flex;
+align-items: center;
+justify-content: center;
+margin-right: 0.75rem;
+font-weight: bold;
+}
+
+/* Dashboard grid */
+.dashboard-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+gap: 1.5rem;
+margin-bottom: 2rem;
+}
+
+.card {
+background: white;
+border-radius: var(--border-radius);
+box-shadow: var(--shadow);
+padding: 1.5rem;
+transition: transform 0.3s;
+}
+
+.card:hover {
+transform: translateY(-5px);
+}
+
+.card-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 1rem;
+}
+
+.card-icon {
+width: 50px;
+height: 50px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 1.5rem;
+}
+
+.bg-primary { background: rgba(37, 99, 235, 0.1); color: var(--primary); }
+.bg-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.bg-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+.bg-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+.card-value {
+font-size: 2rem;
+font-weight: 700;
+margin-bottom: 0.5rem;
+}
+
+.card-title {
+font-size: 1rem;
+color: var(--secondary);
+margin-bottom: 0.5rem;
+}
+
+.card-footer {
+display: flex;
+align-items: center;
+font-size: 0.875rem;
+}
+
+.positive { color: var(--success); }
+.negative { color: var(--danger); }
+
+/* Recent activity */
+.recent-activities {
+background: white;
+border-radius: var(--border-radius);
+box-shadow: var(--shadow);
+padding: 1.5rem;
+}
+
+.section-title {
+font-size: 1.25rem;
+font-weight: 600;
+margin-bottom: 1.5rem;
+padding-bottom: 0.75rem;
+border-bottom: 1px solid #e2e8f0;
+}
+
+.activity-list {
+list-style: none;
+}
+
+.activity-item {
+display: flex;
+padding: 1rem 0;
+border-bottom: 1px solid #e2e8f0;
+}
+
+.activity-item:last-child {
+border-bottom: none;
+}
+
+.activity-icon {
+width: 40px;
+height: 40px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+margin-right: 1rem;
+background: rgba(37, 99, 235, 0.1);
+color: var(--primary);
+}
+
+.activity-content {
+flex: 1;
+}
+
+.activity-title {
+font-weight: 500;
+margin-bottom: 0.25rem;
+}
+
+.activity-time {
+font-size: 0.875rem;
+color: var(--secondary);
+}
+
+/* Buttons */
+.btn {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+padding: 0.5rem 1rem;
+border-radius: var(--border-radius);
+font-weight: 500;
+cursor: pointer;
+transition: all 0.3s;
+border: none;
+text-decoration: none;
+}
+
+.btn i {
+margin-right: 0.5rem;
+}
+
+.btn-primary {
+background: var(--primary);
+color: white;
+}
+
+.btn-primary:hover {
+background: var(--primary-dark);
+}
+
+.btn-secondary {
+background: var(--secondary);
+color: white;
+}
+
+.btn-secondary:hover {
+background: #475569;
+}
+
+/* Role badges */
+.role-badge {
+display: inline-flex;
+align-items: center;
+padding: 0.35rem 0.75rem;
+border-radius: 50px;
+font-size: 0.875rem;
+font-weight: 500;
+margin-right: 0.5rem;
+margin-bottom: 0.5rem;
+}
+
+.role-badge i {
+margin-right: 0.35rem;
+}
+
+.admin-badge {
+background: rgba(239, 68, 68, 0.1);
+color: var(--danger);
+}
+
+.supervisor-badge {
+background: rgba(245, 158, 11, 0.1);
+color: var(--warning);
+}
+
+.operativo-badge {
+background: rgba(16, 185, 129, 0.1);
+color: var(--success);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+.sidebar {
+width: 70px;
+overflow: visible;
+}
+
+.sidebar-header h1, .nav-links span {
+display: none;
+}
+
+.nav-links a {
+justify-content: center;
+padding: 1rem;
+}
+
+.nav-links i {
+margin-right: 0;
+}
+
+.main-content {
+margin-left: 70px;
+}
+}
+
+@media (max-width: 768px) {
+.dashboard-grid {
+grid-template-columns: 1fr;
+}
+
+.main-content {
+padding: 1rem;
+}
+}
+/* Mensaje cuando no hay obras */
+.no-data-message {
+text-align: center;
+padding: 2rem;
+color: var(--secondary);
+background: #f8f9fa;
+border-radius: var(--border-radius);
+margin: 1rem 0;
+}
+
+.no-data-message i {
+font-size: 3rem;
+margin-bottom: 1rem;
+color: var(--gray);
+}
+
+/* Table styles */
+.table-container {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+th {
+    background: var(--primary);
+    color: white;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 500;
+}
+
+td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+
+tr:hover {
+    background-color: #f8fafc;
+}
+
+/* User avatar in table */
+.user-avatar-table {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+}
+
+.user-info-table {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.user-username {
+    font-size: 0.875rem;
+    color: var(--secondary);
+}
+
+/* Badges */
+.badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.badge-admin {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.badge-supervisor {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+.badge-operativo {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    text-decoration: none;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 70px;
+        overflow: visible;
+    }
+
+    .sidebar-header h1, .nav-links span {
+        display: none;
+    }
+
+    .nav-links a {
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .nav-links i {
+        margin-right: 0;
+    }
+
+    .main-content {
+        margin-left: 70px;
+    }
+}
+
+@media (max-width: 768px) {
+  /* 1. LAYOUT PRINCIPAL Y BOTÓN */
+  .app-container {
+    display: block; /* Anula el 'display: flex' de escritorio */
+  }
+
+  .main-content {
+    margin-left: 0; /* Anula el margen de 70px/260px */
+    padding: 1rem;
+    padding-top: 5rem; /* Da espacio libre para el botón fijo */
+  }
+
+  .menu-toggle {
+    display: block !important; /* Muestra el botón de menú */
+    z-index: 1200;
+  }
+
+  /* 2. SIDEBAR (Off-Canvas) */
+  .sidebar {
+    width: var(--sidebar-width); /* 260px (Ancho completo) */
+    position: fixed;
+    height: 100vh;
+    z-index: 1050;
+    /* Regla clave: OCULTAR fuera de la pantalla */
+    transform: translateX(-260px);
+    transition: transform 0.3s ease;
+  }
+
+  /* 3. RESTAURAR TEXTO (Anula estilos de 992px) */
+  .sidebar-header h1, .nav-links span {
+    display: block;
+  }
+
+  .nav-links a {
+    justify-content: flex-start; /* Vuelve a alinear a la izquierda con el texto */
+    padding: 0.8rem 1.5rem;
+  }
+
+  .nav-links i {
+    margin-right: 0.75rem;
+  }
+
+  /* 4. HEADER */
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .user-menu {
+    flex-wrap: wrap;
+    margin-top: 10px;
+    font-size: 0.9rem;
+  }
+
+  .user-menu > div {
+  /* Alinea el texto de Bienvenida y los badges horizontalmente */
+    display: flex;
+    flex-wrap: wrap; /* Permite que los roles salten de línea */
+    align-items: center;
+    gap: 0.5rem; /* Espacio entre los elementos */
+  }
+  /* 5. TABLA: Hacerla deslizable horizontalmente (Recomendado para tablas con muchas columnas) */
+  .table-container {
+      padding: 0.5rem; /* Reduce el padding del contenedor */
+      overflow-x: auto; /* Permite el desplazamiento horizontal */
+  }
+
+  table {
+      min-width: 700px; /* Forzamos un ancho mínimo para que el contenido no se comprima demasiado */
+  }
+
+  th, td {
+      padding: 0.75rem;
+      white-space: nowrap; /* Evita que el texto dentro de la celda se rompa */
+  }
+
+  .action-buttons {
+      flex-direction: column; /* Apila los botones de acción */
+      gap: 0.25rem;
+  }
+
+  .btn-sm {
+      width: 100%;
+      text-align: center;
+  }
+
+  .user-actions {
+          display: flex; /* Habilita flexbox */
+          justify-content: center; /* Centra el contenido horizontalmente */
+          margin-bottom: 1.5rem; /* Espacio debajo del botón antes de la tabla */
+  }
+}
+
+/* No data message */
+.no-data-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--secondary);
+}
+
+.no-data-message i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: var(--gray);
+}
+
+/*Vista desde celulara*/
+.menu-toggle {
+  display: none; /* Oculto por defecto en desktop */
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1100;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+/* 1. Muestra el Sidebar: Se activa con JS */
+.app-container.sidebar-active .sidebar {
+    transform: translateX(0) !important;
+}
+
+/* 2. Oscurece el contenido: Se activa con JS */
+.app-container.sidebar-active .main-content {
+  filter: blur(2px);
+  pointer-events: none;
+}
