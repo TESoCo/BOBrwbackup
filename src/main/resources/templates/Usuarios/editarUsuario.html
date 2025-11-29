@@ -1,364 +1,26 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      xmlns:th="http://www.thymeleaf.org">
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Usuario - BOB</title>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --secondary: #64748b;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --light: #f8fafc;
-            --dark: #1e293b;
-            --gray: #94a3b8;
-            --sidebar-width: 260px;
-            --header-height: 70px;
-            --border-radius: 8px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f1f5f9;
-            color: var(--dark);
-            line-height: 1.6;
-        }
-
-        /* Layout */
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--dark);
-            color: white;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .sidebar-header {
-            padding: 1.5rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-        }
-
-        .sidebar-header img {
-            height: 40px;
-            margin-right: 10px;
-        }
-
-        .sidebar-header h1 {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .nav-links {
-            list-style: none;
-            padding: 1rem 0;
-        }
-
-        .nav-links li {
-            margin-bottom: 0.2rem;
-        }
-
-        .nav-links a {
-            display: flex;
-            align-items: center;
-            padding: 0.8rem 1.5rem;
-            color: var(--gray);
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .nav-links a:hover, .nav-links a.active {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .nav-links i {
-            margin-right: 0.75rem;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Main content */
-        .main-content {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            padding: 2rem;
-        }
-
-        /* Header */
-        .header {
-            background: white;
-            box-shadow: var(--shadow);
-            padding: 1rem 2rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        /* Role badges */
-        .role-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.35rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .role-badge i {
-            margin-right: 0.35rem;
-        }
-
-        .admin-badge {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-        }
-
-        .supervisor-badge {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-
-        .operativo-badge {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        /* Form styles */
-        .form-container {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .form-section {
-            margin-bottom: 2rem;
-        }
-
-        .form-section-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .photo-preview {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #dee2e6;
-            cursor: pointer;
-        }
-
-        .photo-upload {
-            display: none;
-        }
-
-        .photo-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .remove-photo {
-            margin-top: 10px;
-        }
-
-        /* Form controls */
-        .form-label {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: var(--dark);
-        }
-
-        .form-control {
-            border: 1px solid #d1d5db;
-            border-radius: var(--border-radius);
-            padding: 0.75rem;
-            transition: all 0.3s;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .form-select {
-            border: 1px solid #d1d5db;
-            border-radius: var(--border-radius);
-            padding: 0.75rem;
-            transition: all 0.3s;
-        }
-
-        .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .form-text {
-            font-size: 0.875rem;
-            color: var(--secondary);
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            text-decoration: none;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-
-        .btn-secondary {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #475569;
-        }
-
-        .btn-outline-secondary {
-            background: transparent;
-            color: var(--secondary);
-            border: 1px solid var(--secondary);
-        }
-
-        .btn-outline-secondary:hover {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-        }
-
-        /* Responsive */
-        @media (max-width: 992px) {
-            .sidebar {
-                width: 70px;
-                overflow: visible;
-            }
-
-            .sidebar-header h1, .nav-links span {
-                display: none;
-            }
-
-            .nav-links a {
-                justify-content: center;
-                padding: 1rem;
-            }
-
-            .nav-links i {
-                margin-right: 0;
-            }
-
-            .main-content {
-                margin-left: 70px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 1rem;
-            }
-        }
-
-        /* Alert messages */
-        .alert {
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 1rem;
-        }
-
-        .alert-danger {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .alert-success {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
+    <link rel="stylesheet" th:href="@{/CSS/USUARIOS/editarUsu.css}"/>
+    <title>Editar Usuario</title>
 </head>
+
 <body>
-<div class="app-container">
+<button id="menu-toggle" class="menu-toggle">
+    <i class="fas fa-bars"></i>
+</button>
+<div class="app-container" id="app-container">
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
@@ -366,50 +28,71 @@
             <h1>BOB</h1>
         </div>
         <ul class="nav-links">
-            <!-- Admin-only menu items -->
-            <div sec:authorize="hasRole('ADMIN')">
+
+            <!-- Dashboard - Para todos los usuarios autenticados -->
+            <div sec:authorize="isAuthenticated()">
                 <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            </div>
+
+            <!-- Gestión de Usuarios - Solo con permisos de usuario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
                 <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
             </div>
 
             <!-- Menu items for users with inventory permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_INVENTARIO', 'CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
-                <li><a th:href="@{/inventario}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
+            <!-- Inventario - Con permisos de inventario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
+                <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
             </div>
 
-            <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL', 'VER_MATERIAL')">
-                <li><a th:href="@{/material/inicioMAterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
+            <!-- Materiales - Con permisos de material -->
+            <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
+                <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
             </div>
 
-            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU', 'VER_APU')">
+            <!-- APUs - Con permisos de APU -->
+            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
                 <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
             </div>
 
             <!-- Menu items for users with progress permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_AVANCES', 'REGISTRAR_AVANCES')">
+            <!-- Avances - Con permisos de avance -->
+            <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
                 <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
             </div>
 
             <!-- Menu items for users with budget permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_OBRAS', 'GESTIONAR_OBRAS','LEER OBRAS')">
+            <!-- Obras - Con permisos de obra -->
+            <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
                 <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
             </div>
 
             <!-- Supervisor and Admin menu items -->
-            <div sec:authorize="hasAnyRole('SUPERVISOR', 'ADMIN')">
-                <li><a th:href="@{/contratista}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+            <!-- Contratistas - Con permisos de contratista -->
+            <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
+                <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+            </div>
+            <!-- Proveedores - Con permisos de proveedor -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
                 <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
             </div>
 
             <!-- Menu items for users with report permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_REPORTES', 'GENERAR_REPORTES')">
-                <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
-            </div>
+            <!-- Reportes - Para roles ADMIN y SUPERVISOR
+            <div sec:authorize="hasAnyRole('ADMIN', 'SUPERVISOR')">
+              <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
+            </div> -->
+
+            <!-- Fotodatos - Con permisos de fotodato
+            <div sec:authorize="hasAnyAuthority('CREAR_FOTODATO', 'EDITAR_FOTODATO')">
+              <li><a href="#"><i class="fas fa-camera"></i> <span>Fotodatos</span></a></li>
+            </div> -->
 
             <!-- Admin-only configuration -->
+            <!-- Configuración - Solo ADMIN
             <div sec:authorize="hasRole('ADMIN')">
-                <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
-            </div>
+              <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
+            </div> -->
 
             <li>
                 <form th:action="@{/logout}" method="post" id="logoutForm">
@@ -485,23 +168,14 @@
                                      class="photo-preview"
                                      id="photoPreview"
                                      onclick="document.getElementById('fotoPerfil').click()">
-                                <img th:unless="${usuario.fotoPerfil != null}"
-                                     src="/images/default-avatar.png"
-                                     class="photo-preview"
-                                     id="photoPreview"
-                                     onclick="document.getElementById('fotoPerfil').click()">
+
                                 <input type="file" class="photo-upload" id="fotoPerfil" name="fotoPerfil" accept="image/*">
                                 <div class="mt-2">
                                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('fotoPerfil').click()">
                                         <i class="fas fa-camera me-1"></i>Cambiar Foto
                                     </button>
                                 </div>
-                                <div class="form-check remove-photo" th:if="${usuario.fotoPerfil != null}">
-                                    <input class="form-check-input" type="checkbox" name="eliminarFoto" id="eliminarFoto" value="true">
-                                    <label class="form-check-label text-danger" for="eliminarFoto">
-                                        <i class="fas fa-trash me-1"></i>Eliminar foto
-                                    </label>
-                                </div>
+
                             </div>
                         </div>
 
@@ -588,6 +262,7 @@
 </div>
 
 <script>
+    // --- LÓGICA DE VALIDACIÓN Y MANEJO DE IMAGEN (Mantener) ---
     // Preview de imagen al seleccionar archivo
     document.getElementById('fotoPerfil')?.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -595,7 +270,6 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('photoPreview').src = e.target.result;
-                // Desmarcar eliminar foto si se selecciona nueva
                 if (document.getElementById('eliminarFoto')) {
                     document.getElementById('eliminarFoto').checked = false;
                 }
@@ -636,6 +310,55 @@
                 }
             });
         });
+
+        // --- LÓGICA DEL MENÚ (SOLO MÓVIL - CORREGIDA PARA TU CSS) ---
+        const menuToggle = document.getElementById('menu-toggle');
+        const appContainer = document.getElementById('app-container'); // OBTENEMOS EL CONTENEDOR PRINCIPAL
+
+        // Función principal de manejo del botón de menú
+        menuToggle.addEventListener('click', function() {
+            // SOLO ACTIVA EN MÓVIL (<= 992px)
+            if (window.innerWidth <= 992) {
+                // Alternamos la clase en el CONTENEDOR PRINCIPAL (app-container)
+                appContainer.classList.toggle('sidebar-active');
+
+                // Toggle de Icono
+                const icon = menuToggle.querySelector('i');
+                if (appContainer.classList.contains('sidebar-active')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times'); // Muestra la X
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars'); // Muestra la hamburguesa
+                }
+            }
+            // En escritorio, no hace nada.
+        });
+
+        // Lógica para manejar el cambio de móvil a escritorio
+        function handleResize() {
+            const isMobile = window.innerWidth <= 992;
+            const icon = menuToggle.querySelector('i');
+
+            if (!isMobile) {
+                // Modo Escritorio: Forzamos el sidebar a estar visible
+                // QUITAMOS LA CLASE DEL CONTENEDOR para desactivar el off-canvas
+                appContainer.classList.remove('sidebar-active');
+
+                // Aseguramos el icono de hamburguesa al salir del modo móvil
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            } else {
+                // Modo Móvil: Si el menú está cerrado, aseguramos el icono de hamburguesa.
+                if (!appContainer.classList.contains('sidebar-active')) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+        handleResize(); // Ejecutar al cargar para establecer el estado inicial
     });
 </script>
 </body>

@@ -1,103 +1,228 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="es" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Building Optimization Baseline - Inventario</title>
-    <link rel="stylesheet" href="CSS/INVENTARIO/verInv.css">
+    <title>Building Optimization Baseline - Dashboard</title>
+    <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/CSS/INVENTARIO/verInv.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Leaflet CSS for map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
 </head>
 
 <body>
-
-<header>
-    <nav class="menu">
-        <div class="logo-container">
-            <img th:src="@{IMG/imagen-bob.png}" alt="Logo BOB" class="logo">
-            <div class="logo-text-container">
-                <h1 class="logo-text">Building Optimization Baseline</h1>
-                <p class="logo-subtext">Gestión inteligente de proyectos de construcción</p>
-            </div>
+<button id="menu-toggle" class="menu-toggle">
+    <i class="fas fa-bars"></i>
+</button>
+<div class="app-container" id="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img th:src="@{/IMG/imagen-bob.png}" alt="BOB Logo">
+            <h1>BOB</h1>
         </div>
         <ul class="nav-links">
-            <li><a th:href="@{error404.html}">Perfil</a></li>
+
+            <!-- Dashboard - Para todos los usuarios autenticados -->
+            <div sec:authorize="isAuthenticated()">
+                <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            </div>
+
+            <!-- Gestión de Usuarios - Solo con permisos de usuario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
+                <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
+            </div>
+
+            <!-- Menu items for users with inventory permissions -->
+            <!-- Inventario - Con permisos de inventario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
+                <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
+            </div>
+
+            <!-- Materiales - Con permisos de material -->
+            <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
+                <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
+            </div>
+
+            <!-- APUs - Con permisos de APU -->
+            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
+                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
+            </div>
+
+            <!-- Menu items for users with progress permissions -->
+            <!-- Avances - Con permisos de avance -->
+            <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
+                <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
+            </div>
+
+            <!-- Menu items for users with budget permissions -->
+            <!-- Obras - Con permisos de obra -->
+            <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
+                <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
+            </div>
+
+            <!-- Supervisor and Admin menu items -->
+            <!-- Contratistas - Con permisos de contratista -->
+            <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
+                <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+            </div>
+            <!-- Proveedores - Con permisos de proveedor -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
+                <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
+            </div>
+
+            <!-- Menu items for users with report permissions -->
+            <!-- Reportes - Para roles ADMIN y SUPERVISOR
+            <div sec:authorize="hasAnyRole('ADMIN', 'SUPERVISOR')">
+              <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
+            </div> -->
+
+            <!-- Fotodatos - Con permisos de fotodato
+            <div sec:authorize="hasAnyAuthority('CREAR_FOTODATO', 'EDITAR_FOTODATO')">
+              <li><a href="#"><i class="fas fa-camera"></i> <span>Fotodatos</span></a></li>
+            </div> -->
+
+            <!-- Admin-only configuration -->
+            <!-- Configuración - Solo ADMIN
+            <div sec:authorize="hasRole('ADMIN')">
+              <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
+            </div> -->
+
+            <li>
+                <form th:action="@{/logout}" method="post" id="logoutForm">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <a href="#" onclick="document.getElementById('logoutForm').submit()">
+                        <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                    </a>
+                </form>
+            </li>
         </ul>
-    </nav>
-</header>
+    </aside>
 
-<main>
-
-
-    <div class="dashboard-content">
-        <div class="inventory-header">
-            <h2><i class='bx bx-box'></i> Módulo de Inventario</h2>
+    <!-- Contenido principal -->
+    <main class="main-content">
+        <div class="header">
+            <h2>Módulo de Inventario</h2>
         </div>
 
-        <a class="back-link" th:href="@{/inventario}">
-            <i class='bx bx-arrow-back'></i> Regresar al inicio</a>
+        <div class="dashboard-content">
 
-        <div class="search-container">
-            <h2><i class='bx bx-search-alt'></i> Buscar Inventarios</h2>
-            <form class="search-form" th:action="@{/verInv}" method="get">
-                <label for="tipoBusqueda"><i class='bx bx-filter'></i> Buscar por:</label>
-                <select name="tipoBusqueda" id="tipoBusqueda">
-                    <option value="gestor">Nombre Gestor</option>
-                    <option value="obra">Nombre Obra</option>
-                    <option value="fecha">Fecha</option>
-                </select>
+            <a class="back-link" th:href="@{/inventarios}">
+                <i class='bx bx-arrow-back'></i> Regresar al inicio</a>
 
-                <input type="text" name="valorBusqueda" placeholder="Ingrese término de búsqueda...">
+            <div class="search-container">
+                <h2><i class='bx bx-search-alt'></i> Buscar Inventarios</h2>
+                <form class="search-form" th:action="@{/verInv}" method="get">
+                    <label for="tipoBusqueda"><i class='bx bx-filter'></i> Buscar por:</label>
+                    <select name="tipoBusqueda" id="tipoBusqueda">
+                        <option value="gestor">Nombre Gestor</option>
+                        <option value="obra">Nombre Obra</option>
+                        <option value="fecha">Fecha</option>
+                    </select>
 
-                <input type="submit" value="Buscar">
-            </form>
+                    <input type="text" name="valorBusqueda" placeholder="Ingrese término de búsqueda...">
+                    <input type="submit" value="Buscar">
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre Gestor</th>
+                        <th>Nombre Obra</th>
+                        <th>Tipo Registro</th>
+                        <th>Fecha</th>
+                        <th>Unidad de Medida</th>
+                        <th>Cantidad</th>
+                        <th>Material</th>
+                        <th>Precio por Unidad</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="inv : ${inventarios}">
+                        <td th:text="${inv.id_Inventario}"></td>
+                        <td th:text="${inv.nombreGestor}"></td>
+                        <td th:text="${inv.nombreobra}"></td>
+                        <td th:text="${inv.tipoRegistro}"></td>
+                        <td th:text="${inv.fecha}"></td>
+                        <td th:text="${inv.unidadMedida}"></td>
+                        <td th:text="${inv.cantidad}"></td>
+                        <td th:text="${inv.material}"></td>
+                        <td th:text="${inv.precioUnidad}"></td>
+
+                        <td>
+                            <a th:href="@{'/exportarExcelInv/' + ${inv.id_Inventario}}">
+                                <i class='bx bx-export'></i> Exportar
+                            </a>
+                            <form th:action="@{'/api/reportes/email/inventario/' + ${inv.id_Inventario}}" method="post">
+                                <input type="email" name="destinatario" placeholder="Correo destinatario" required>
+                                <button type="submit">
+                                    <i class='bx bx-envelope'></i> Enviar por correo
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="no-records" th:if="${inventarios == null or inventarios.empty}">
+                <p>No hay registros de inventario para mostrar.</p>
+            </div>
         </div>
+    </main>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuToggle = document.getElementById('menu-toggle');
+        const appContainer = document.getElementById('app-container');
+        const mainContent = document.querySelector('.main-content');
 
-        <div class="table-container">
-            <table>
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre Gestor</th>
-                    <th>Nombre Obra</th>
-                    <th>Tipo Registro</th>
-                    <th>Fecha</th>
-                    <th>Unidad de Medida</th>
-                    <th>Cantidad</th>
-                    <th>Material</th>
-                    <th>Precio por Unidad</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="inv : ${inventarios}">
-                    <td th:text="${inv.id_Inventario}"></td>
-                    <td th:text="${inv.nombreGestor}"></td>
-                    <td th:text="${inv.nombreobra}"></td>
-                    <td th:text="${inv.tipoRegistro}"></td>
-                    <td th:text="${inv.fecha}"></td>
-                    <td th:text="${inv.unidadMedida}"></td>
-                    <td th:text="${inv.cantidad}"></td>
-                    <td th:text="${inv.material}"></td>
-                    <td th:text="${inv.precioUnidad}"></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+        // Esta función maneja la apertura y cierre del menú al hacer clic en el botón
+        function toggleMenu() {
+            if (appContainer && menuToggle) {
+                // CAMBIO 1: Reemplazar 'sidebar-open' por 'sidebar-active'
+                appContainer.classList.toggle('sidebar-active');
+            }
+        }
 
-        <div class="no-records" th:if="${inventarios == null or inventarios.empty}">
-            <p>No hay registros de inventario para mostrar.</p>
-        </div>
+        // --- Event Listeners ---
 
-        <div class="export-container">
-            <form th:action="@{/exportarExcelInv}" method="get">
-                <button type="submit">
-                    <i class='bx bx-export'></i> Exportar a Excel
-                </button>
-            </form>
-        </div>
-    </div>
-</main>
+        // 1. Manejar el clic en el botón de hamburguesa/X
+        if (menuToggle) {
+            // Se añade event.stopPropagation() para evitar que el clic se propague al main-content y cierre el menú inmediatamente
+            menuToggle.addEventListener('click', function(event) {
+                event.stopPropagation();
+                toggleMenu();
+            });
+        }
 
+        // 2. Manejar el clic fuera del menú (en el contenido principal) para cerrarlo
+        if (mainContent) {
+            mainContent.addEventListener('click', function() {
+                // CAMBIO 2: Reemplazar 'sidebar-open' por 'sidebar-active'
+                if (appContainer.classList.contains('sidebar-active')) {
+                    appContainer.classList.remove('sidebar-active');
+                }
+            });
+        }
 
+        // 3. Manejar el cierre del menú si se redimensiona la ventana a desktop
+        window.addEventListener('resize', function() {
+            // CAMBIO 3: Reemplazar 'sidebar-open' por 'sidebar-active'
+            if (window.innerWidth > 768 && appContainer.classList.contains('sidebar-active')) {
+                appContainer.classList.remove('sidebar-active');
+            }
+        });
+    });
+</script>
 </body>
 </html>
