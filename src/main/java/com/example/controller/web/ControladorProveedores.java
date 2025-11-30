@@ -5,6 +5,8 @@ import com.example.domain.InformacionComercial;
 import com.example.domain.Material;
 import com.example.domain.Persona;
 import com.example.domain.Proveedor;
+import com.example.servicio.InfoComServicio;
+import com.example.servicio.PersonaServicio;
 import com.example.servicio.ProveedorServicio;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -36,11 +38,17 @@ public class ControladorProveedores {
 
     private final ProveedorServicio proveedorServicio;
     private final PersonaDao personaDao;
+    private final PersonaServicio personaServicio;
+    private final InfoComServicio infoComServicio;
 
     public ControladorProveedores(ProveedorServicio proveedorServicio,
-                                  PersonaDao personaDao) {
+                                  PersonaDao personaDao,
+                                  PersonaServicio personaServicio,
+                                  InfoComServicio infoComServicio) {
         this.proveedorServicio = proveedorServicio;
         this.personaDao = personaDao;
+        this.personaServicio = personaServicio;
+        this.infoComServicio = infoComServicio;
     }
 
     @InitBinder
@@ -90,14 +98,24 @@ public class ControladorProveedores {
         if (p.getInformacionComercial() == null) {
             p.setInformacionComercial(new InformacionComercial());
         }
-        // NO inicializar idPersona aquí
+
+        // Inicializar persona vacía para el formulario
+        if (p.getIdPersona() == null) {
+            p.setIdPersona(new Persona());
+        }
+
+        // todo: NO inicializar idPersona aquí
         model.addAttribute("proveedor", p);
         model.addAttribute("Editando", false);
+        model.addAttribute("informacionesComerciales",infoComServicio.comercialList());
+        model.addAttribute("infComProveedor", p.getInformacionComercial());
         return "proveedores/formulario";
     }
 
     @PostMapping("/salvar")
     public String salvar(@ModelAttribute("proveedor") Proveedor proveedor,
+                         @RequestParam(required = false) Long existingCommercialInfoId,
+                         @RequestParam(required = false) String originalNitRut,
                          BindingResult result,
                          Model model,
                          RedirectAttributes flash) {
@@ -111,17 +129,47 @@ public class ControladorProveedores {
         System.out.println("ID Persona recibido: " + (proveedor.getIdPersona() != null ? proveedor.getIdPersona().getIdPersona() : "NULL"));
         System.out.println("Info Comercial: " + (proveedor.getInformacionComercial() != null ? "Existe" : "NULL"));
 
-        if (proveedor.getInformacionComercial() != null) {
-            System.out.println("  - NIT: " + proveedor.getInformacionComercial().getNitRut());
-            System.out.println("  - Email: " + proveedor.getInformacionComercial().getCorreoElectronico());
-            System.out.println("  - Producto: " + proveedor.getInformacionComercial().getProducto());
+        // 1. CREAR/ACTUALIZAR LA PERSONA
+        Persona persona;
+        if (proveedor.getIdProveedor() != null) {
+            // Modo edición: usar la persona existente
+            Proveedor existing = proveedorServicio.buscarPorId(proveedor.getIdProveedor())
+                    .orElseThrow(() -> new IllegalArgumentException("Proveedor no existe"));
+            persona = existing.getIdPersona();
+            // Actualizar datos de la persona
+            if (proveedor.getIdPersona() != null) {
+                persona.setNombre(proveedor.getIdPersona().getNombre());
+                persona.setApellido(proveedor.getIdPersona().getApellido());
+                persona.setTelefono(proveedor.getIdPersona().getTelefono());
+                persona.setCorreo(proveedor.getIdPersona().getCorreo());
+            }
+        } else {
+            // Modo creación: crear nueva persona
+            persona = new Persona();
+            if (proveedor.getIdPersona() != null) {
+                persona.setNombre(proveedor.getIdPersona().getNombre());
+                persona.setApellido(proveedor.getIdPersona().getApellido());
+                persona.setTelefono(proveedor.getIdPersona().getTelefono());
+                persona.setCorreo(proveedor.getIdPersona().getCorreo());
+            }
         }
 
-        // Validar persona seleccionada
-        if (proveedor.getIdPersona() == null || proveedor.getIdPersona().getIdPersona() == null) {
-            result.rejectValue("idPersona.idPersona", "NotNull", "Debe seleccionar una persona");
-            System.out.println("ERROR: No se seleccionó persona");
+
+
+        // Validar persona creada
+        if (persona.getNombre() == null || persona.getNombre().trim().isEmpty()) {
+            result.rejectValue("idPersona.nombre", "NotEmpty", "El nombre es obligatorio");
         }
+        if (persona.getApellido() == null || persona.getApellido().trim().isEmpty()) {
+            result.rejectValue("idPersona.apellido", "NotEmpty", "El apellido es obligatorio");
+        }
+        if (persona.getTelefono() == null || persona.getTelefono().trim().isEmpty()) {
+            result.rejectValue("idPersona.telefono", "NotEmpty", "El teléfono es obligatorio");
+        }
+        if (persona.getCorreo() == null || persona.getCorreo().trim().isEmpty()) {
+            result.rejectValue("idPersona.correo", "NotEmpty", "El correo es obligatorio");
+        }
+
 
         // Validar información comercial
         if (proveedor.getInformacionComercial() == null) {
@@ -149,6 +197,13 @@ public class ControladorProveedores {
             }
         }
 
+
+        if (proveedor.getInformacionComercial() != null) {
+            System.out.println("  - NIT: " + proveedor.getInformacionComercial().getNitRut());
+            System.out.println("  - Email: " + proveedor.getInformacionComercial().getCorreoElectronico());
+            System.out.println("  - Producto: " + proveedor.getInformacionComercial().getProducto());
+        }
+
         // Si hay errores, volver al formulario
         if (result.hasErrors()) {
             System.out.println("\n=== ERRORES DE VALIDACIÓN ===");
@@ -165,6 +220,20 @@ public class ControladorProveedores {
         // Intentar guardar
         try {
             System.out.println("\n=== INICIANDO GUARDADO ===");
+
+            // Guardar la persona primero
+            personaServicio.salvar(persona);
+            System.out.println("Persona creada/actualizada con ID: " + persona.getIdPersona());
+
+            // Asignar la persona al proveedor
+            proveedor.setIdPersona(persona);
+
+            // Manejar información comercial existente si se seleccionó
+            if (existingCommercialInfoId != null && proveedor.getIdProveedor() == null) {
+                InformacionComercial existingInfo = infoComServicio.localizarPorId(existingCommercialInfoId);
+                proveedor.setInformacionComercial(existingInfo);
+            }
+
 
             proveedorServicio.guardar(proveedor);
 
@@ -212,6 +281,8 @@ public class ControladorProveedores {
         }
         model.addAttribute("proveedor", p);
         model.addAttribute("Editando", true);
+        model.addAttribute("informacionesComerciales",infoComServicio.comercialList());
+        model.addAttribute("infComProveedor", p.getInformacionComercial());
         return "proveedores/formulario";
     }
 
