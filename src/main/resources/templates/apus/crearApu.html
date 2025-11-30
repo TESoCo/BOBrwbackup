@@ -233,15 +233,6 @@
             background: var(--primary-dark);
         }
 
-        .btn-secondary {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #475569;
-        }
-
         .btn-success {
             background: var(--success);
             color: white;
@@ -258,6 +249,24 @@
 
         .btn-warning:hover {
             background: #e69008;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
         }
 
         .form-actions {
@@ -347,6 +356,258 @@
             display: none;
         }
 
+        /* Validation styles */
+        .error-message {
+            color: var(--danger);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .form-input.error, .form-textarea.error, .form-select.error {
+            border-color: var(--danger);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .detail-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        /* Materials Grid Styles */
+        .materials-grid-container {
+            margin-bottom: 1rem;
+        }
+
+        .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            background: #f8fafc;
+        }
+
+        .material-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .material-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .material-card.checked {
+            border-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        .material-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .material-checkbox {
+            margin-top: 0.25rem;
+        }
+
+        .material-card-title {
+            flex: 1;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .material-card-body {
+            margin-bottom: 1rem;
+        }
+
+        .material-description {
+            font-size: 0.875rem;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .material-price {
+            font-weight: 600;
+            color: var(--success);
+            font-size: 1.1rem;
+        }
+
+        .material-card-footer {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 0.75rem;
+        }
+
+        .quantity-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .quantity-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+
+        .quantity-input {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .quantity-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .quantity-input:disabled {
+            background-color: #f8fafc;
+            cursor: not-allowed;
+        }
+
+        .quantity-hint {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        /* Total Display */
+        .total-display-card {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid #bae6fd;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .total-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .total-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        /* Selected Summary */
+        .selected-summary {
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--secondary);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Role badges */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .admin-badge {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .supervisor-badge {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .operativo-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
         /* Responsive */
         @media (max-width: 992px) {
             .sidebar {
@@ -388,45 +649,14 @@
             .import-actions {
                 flex-direction: column;
             }
-        }
 
-        /* Validation styles */
-        .error-message {
-            color: var(--danger);
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-        }
+            .materials-grid {
+                grid-template-columns: 1fr;
+            }
 
-        .form-input.error, .form-textarea.error, .form-select.error {
-            border-color: var(--danger);
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .tab {
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            border-bottom-color: var(--primary);
-            color: var(--primary);
-            font-weight: 500;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
+            .search-filter-bar {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -582,16 +812,130 @@
                              th:errors="*{unidadesAPU}"></div>
                     </div>
 
-                    <div class="form-row">
-                        <!-- Valor Materiales (Optional) -->
-                        <div class="form-group">
-                            <label for="vMaterialesAPU" class="form-label">Valor Materiales</label>
-                            <input type="number" id="vMaterialesAPU" th:field="*{vMaterialesAPU}"
-                                   class="form-input" placeholder="0.00" min="0" step="0.01">
-                            <div class="error-message" th:if="${#fields.hasErrors('vMaterialesAPU')}"
-                                 th:errors="*{vMaterialesAPU}"></div>
+                    <!-- Material Selection Section - Improved -->
+                    <div class="detail-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-cubes"></i> Materiales del APU
+                        </h4>
+
+                        <!-- Search and Filter Bar -->
+                        <div class="search-filter-bar" style="margin-bottom: 1rem;">
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 250px;">
+                                    <input type="text" id="materialSearch" placeholder="Buscar material..."
+                                           class="form-input" style="padding: 0.5rem;">
+                                </div>
+                                <div style="width: 150px;">
+                                    <select id="materialSort" class="form-select" style="padding: 0.5rem;">
+                                        <option value="name">Ordenar por nombre</option>
+                                        <option value="price">Ordenar por precio</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
+                        <!-- Selected Materials Summary -->
+                        <div id="selectedMaterialsSummary" class="selected-summary" style="display: none;">
+                            <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: var(--border-radius); padding: 1rem; margin-bottom: 1rem;">
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <div>
+                                        <strong style="color: var(--primary);">
+                                            <span id="selectedCount">0</span> materiales seleccionados
+                                        </strong>
+                                        <div style="font-size: 0.875rem; color: var(--secondary); margin-top: 0.25rem;">
+                                            Total: $<span id="selectedTotal">0.00</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" id="clearSelection" class="btn btn-sm btn-secondary">
+                                        <i class="fas fa-times"></i> Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Materials Grid -->
+                        <div class="materials-grid-container">
+                            <div class="materials-grid" id="materialsGrid">
+                                <div th:each="material, status : ${materiales}" class="material-card"
+                                     th:attr="data-id=${material.idMaterial}, data-name=${material.nombreMaterial},
+                                             data-price=${material.precioMaterial}, data-description=${material.descripcionMaterial}">
+                                    <div class="material-card-header">
+                                        <input type="checkbox"
+                                               th:id="'material_' + ${material.idMaterial}"
+                                               th:value="${material.idMaterial}"
+                                               name="materialIds"
+                                               class="material-checkbox">
+                                        <label th:for="'material_' + ${material.idMaterial}" class="material-card-title">
+                                            <strong th:text="${material.nombreMaterial}"></strong>
+                                        </label>
+                                    </div>
+
+                                    <div class="material-card-body">
+                                        <div class="material-description" th:text="${material.descripcionMaterial}"></div>
+                                        <div class="material-price">
+                                            $<span th:text="${#numbers.formatDecimal(material.precioMaterial, 1, 'COMMA', 2, 'POINT')}"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="material-card-footer">
+                                        <div class="quantity-control">
+                                            <label class="quantity-label">Cantidad:</label>
+                                            <input type="number"
+                                                   th:id="'cantidad_' + ${material.idMaterial}"
+                                                   name="cantidades"
+                                                   placeholder="0.00"
+                                                   min="0.01"
+                                                   step="0.01"
+                                                   class="quantity-input"
+                                                   disabled>
+                                            <span class="quantity-hint">unidades</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div th:if="${materiales == null or materiales.empty}" class="empty-state">
+                                <i class="fas fa-box-open" style="font-size: 3rem; color: var(--gray); margin-bottom: 1rem;"></i>
+                                <h4>No hay materiales disponibles</h4>
+                                <p>Agrega materiales primero para poder seleccionarlos en el APU</p>
+                                <a th:href="@{/material/inicioMaterial}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Gestionar Materiales
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="quick-actions" style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button type="button" id="selectAll" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-check-double"></i> Seleccionar todos
+                            </button>
+                            <button type="button" id="deselectAll" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-times-circle"></i> Deseleccionar todos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Materials Total Display -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="total-display-card">
+                                <div class="total-label">
+                                    <i class="fas fa-calculator"></i>
+                                    Valor Total de Materiales
+                                </div>
+                                <div class="total-amount" id="vMaterialesAPUDisplay">
+                                    $0.00
+                                </div>
+                                <input type="hidden" id="vMaterialesAPU" th:field="*{vMaterialesAPU}">
+                                <div style="font-size: 0.875rem; color: var(--success); margin-top: 0.25rem;">
+                                    <i class="fas fa-sync-alt"></i> Se calcula automáticamente según los materiales seleccionados
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
                         <!-- Valor Mano de Obra (Optional) -->
                         <div class="form-group">
                             <label for="vManoDeObraAPU" class="form-label">Valor Mano de Obra</label>
@@ -600,9 +944,7 @@
                             <div class="error-message" th:if="${#fields.hasErrors('vManoDeObraAPU')}"
                                  th:errors="*{vManoDeObraAPU}"></div>
                         </div>
-                    </div>
 
-                    <div class="form-row">
                         <!-- Valor Transporte (Optional) -->
                         <div class="form-group">
                             <label for="vTransporteAPU" class="form-label">Valor Transporte</label>
@@ -611,7 +953,9 @@
                             <div class="error-message" th:if="${#fields.hasErrors('vTransporteAPU')}"
                                  th:errors="*{vTransporteAPU}"></div>
                         </div>
+                    </div>
 
+                    <div class="form-row">
                         <!-- Valor Misceláneo (Required) -->
                         <div class="form-group">
                             <label for="vMiscAPU" class="form-label required">Valor Misceláneo</label>
@@ -711,7 +1055,9 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Tab functionality
+        console.log('Initializing APU creation functionality...');
+
+        // ========== TAB FUNCTIONALITY ==========
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('.tab-content');
 
@@ -734,7 +1080,7 @@
             });
         });
 
-        // Single APU form validation
+        // ========== SINGLE APU FORM VALIDATION ==========
         const form = document.getElementById('apuForm');
         if (form) {
             form.addEventListener('submit', function(e) {
@@ -763,9 +1109,39 @@
                     }
                 });
 
+                // Validate materials
+                const selectedMaterials = document.querySelectorAll('.material-checkbox:checked');
+                let materialErrors = [];
+
+                selectedMaterials.forEach(checkbox => {
+                    const materialId = checkbox.value;
+                    const quantityInput = document.getElementById('cantidad_' + materialId);
+                    const materialName = checkbox.closest('.material-card').querySelector('strong').textContent;
+
+                    if (quantityInput && (!quantityInput.value || parseFloat(quantityInput.value) <= 0)) {
+                        quantityInput.style.borderColor = 'var(--danger)';
+                        isValid = false;
+                        materialErrors.push(materialName);
+                    } else if (quantityInput) {
+                        quantityInput.style.borderColor = '';
+                    }
+                });
+
                 if (!isValid) {
                     e.preventDefault();
-                    alert('Por favor complete todos los campos obligatorios correctamente.');
+                    let errorMessage = 'Por favor complete todos los campos obligatorios correctamente.';
+
+                    if (materialErrors.length > 0) {
+                        errorMessage += '\nIngrese cantidades válidas para: ' + materialErrors.join(', ');
+                    }
+
+                    alert(errorMessage);
+
+                    // Scroll to first error
+                    const firstError = document.querySelector('.form-input.error, input[style*="border-color: var(--danger)"]');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 }
             });
 
@@ -781,7 +1157,7 @@
             });
         }
 
-        // CSV Import functionality - SIMPLIFIED VERSION
+        // ========== CSV IMPORT FUNCTIONALITY ==========
         const csvFileInput = document.getElementById('csvFile');
         const dropZone = document.getElementById('dropZone');
         const fileName = document.getElementById('fileName');
@@ -831,7 +1207,6 @@
             }
         });
 
-        // Handle file selection - SIMPLIFIED
         function handleFileSelection(file) {
             if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
                 alert('Por favor seleccione un archivo CSV válido.');
@@ -840,7 +1215,7 @@
             }
 
             fileName.textContent = file.name;
-            importActions.style.display = 'flex'; // SHOW THE BUTTONS
+            importActions.style.display = 'flex';
         }
 
         // Cancel import
@@ -848,7 +1223,6 @@
             resetImport();
         });
 
-        // Reset import section
         function resetImport() {
             csvFileInput.value = '';
             fileName.textContent = '';
@@ -875,6 +1249,301 @@
                 submitBtn.disabled = false;
             }, 5000);
         });
+
+        // ========== IMPROVED MATERIALS MANAGEMENT ==========
+
+        function initializeMaterialsInterface() {
+            // Initialize search functionality
+            const searchInput = document.getElementById('materialSearch');
+            const sortSelect = document.getElementById('materialSort');
+            const clearSelectionBtn = document.getElementById('clearSelection');
+            const selectAllBtn = document.getElementById('selectAll');
+            const deselectAllBtn = document.getElementById('deselectAll');
+
+            // Search functionality
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const searchTerm = e.target.value.toLowerCase();
+                    filterMaterials(searchTerm);
+                });
+            }
+
+            // Sort functionality
+            if (sortSelect) {
+                sortSelect.addEventListener('change', function(e) {
+                    sortMaterials(e.target.value);
+                });
+            }
+
+            // Clear selection
+            if (clearSelectionBtn) {
+                clearSelectionBtn.addEventListener('click', function() {
+                    clearAllSelections();
+                });
+            }
+
+            // Select all
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', function() {
+                    selectAllMaterials();
+                });
+            }
+
+            // Deselect all
+            if (deselectAllBtn) {
+                deselectAllBtn.addEventListener('click', function() {
+                    deselectAllMaterials();
+                });
+            }
+
+            // Update material card appearance when checked
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('material-checkbox')) {
+                    const materialCard = e.target.closest('.material-card');
+                    const quantityInput = materialCard.querySelector('.quantity-input');
+
+                    if (e.target.checked) {
+                        materialCard.classList.add('checked');
+                        quantityInput.disabled = false;
+                        quantityInput.required = true;
+
+                        // Focus on quantity input
+                        setTimeout(() => {
+                            quantityInput.focus();
+                        }, 100);
+                    } else {
+                        materialCard.classList.remove('checked');
+                        quantityInput.disabled = true;
+                        quantityInput.required = false;
+                        quantityInput.value = '';
+                    }
+
+                    updateSelectedSummary();
+                    calculateMaterialsTotal();
+                }
+            });
+
+            // Update summary when quantities change
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('quantity-input') && !e.target.disabled) {
+                    clearTimeout(window.calculateTimeout);
+                    window.calculateTimeout = setTimeout(() => {
+                        updateSelectedSummary();
+                        calculateMaterialsTotal();
+                    }, 500);
+                }
+            });
+
+            // Initial update
+            updateSelectedSummary();
+        }
+
+        function filterMaterials(searchTerm) {
+            const materialCards = document.querySelectorAll('.material-card');
+
+            materialCards.forEach(card => {
+                const materialName = card.getAttribute('data-name').toLowerCase();
+                const materialDescription = card.getAttribute('data-description').toLowerCase();
+
+                if (materialName.includes(searchTerm) || materialDescription.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function sortMaterials(sortBy) {
+            const materialsGrid = document.getElementById('materialsGrid');
+            const materialCards = Array.from(document.querySelectorAll('.material-card'));
+
+            materialCards.sort((a, b) => {
+                if (sortBy === 'name') {
+                    return a.getAttribute('data-name').localeCompare(b.getAttribute('data-name'));
+                } else if (sortBy === 'price') {
+                    const priceA = parseFloat(a.getAttribute('data-price'));
+                    const priceB = parseFloat(b.getAttribute('data-price'));
+                    return priceA - priceB;
+                }
+                return 0;
+            });
+
+            // Reappend sorted cards
+            materialCards.forEach(card => materialsGrid.appendChild(card));
+        }
+
+        function updateSelectedSummary() {
+            const selectedMaterials = document.querySelectorAll('.material-checkbox:checked');
+            const selectedSummary = document.getElementById('selectedMaterialsSummary');
+            const selectedCount = document.getElementById('selectedCount');
+            const selectedTotal = document.getElementById('selectedTotal');
+
+            if (selectedMaterials.length > 0) {
+                selectedSummary.style.display = 'block';
+                selectedCount.textContent = selectedMaterials.length;
+
+                // Calculate quick total for summary
+                let quickTotal = 0;
+                selectedMaterials.forEach(checkbox => {
+                    const materialId = checkbox.value;
+                    const quantityInput = document.getElementById('cantidad_' + materialId);
+                    const materialCard = checkbox.closest('.material-card');
+                    const price = parseFloat(materialCard.getAttribute('data-price'));
+                    const quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
+                    quickTotal += price * quantity;
+                });
+
+                selectedTotal.textContent = quickTotal.toFixed(2);
+            } else {
+                selectedSummary.style.display = 'none';
+            }
+        }
+
+        function clearAllSelections() {
+            const checkboxes = document.querySelectorAll('.material-checkbox:checked');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.dispatchEvent(new Event('change'));
+            });
+        }
+
+        function selectAllMaterials() {
+            const checkboxes = document.querySelectorAll('.material-checkbox:not(:checked)');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                checkbox.dispatchEvent(new Event('change'));
+            });
+        }
+
+        function deselectAllMaterials() {
+            clearAllSelections();
+        }
+
+        // ========== IMPROVED MATERIALS TOTAL CALCULATION ==========
+
+        // Función mejorada para calcular total de materiales
+        async function calculateMaterialsTotal() {
+            const selectedMaterials = document.querySelectorAll('.material-checkbox:checked');
+            const materialIds = [];
+            const cantidades = [];
+
+            // Recopilar materiales seleccionados y sus cantidades
+            selectedMaterials.forEach(checkbox => {
+                const materialId = checkbox.value;
+                const quantityInput = document.getElementById('cantidad_' + materialId);
+
+                if (quantityInput && quantityInput.value && parseFloat(quantityInput.value) > 0) {
+                    materialIds.push(parseInt(materialId));
+                    cantidades.push(parseFloat(quantityInput.value));
+                }
+            });
+
+            // Si no hay materiales seleccionados, establecer total en 0
+            if (materialIds.length === 0) {
+                updateMaterialsTotal(0);
+                return;
+            }
+
+            try {
+                // Llamar al backend para calcular el total
+                const response = await fetch('/apu/calcular-total-materiales', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
+                    },
+                    body: JSON.stringify({
+                        materialIds: materialIds,
+                        cantidades: cantidades
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    updateMaterialsTotal(data.total);
+                } else {
+                    console.error('Error calculating total:', data.error);
+                    // Fallback: cálculo en frontend
+                    calculateTotalFrontend(materialIds, cantidades);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Fallback: cálculo en frontend
+                calculateTotalFrontend(materialIds, cantidades);
+            }
+        }
+
+        // Función auxiliar para cálculo en frontend (fallback)
+        function calculateTotalFrontend(materialIds, cantidades) {
+            let total = 0;
+
+            materialIds.forEach((materialId, index) => {
+                const checkbox = document.querySelector(`#material_${materialId}`);
+                if (!checkbox) return;
+
+                const materialCard = checkbox.closest('.material-card');
+                const price = parseFloat(materialCard.getAttribute('data-price'));
+                const quantity = cantidades[index];
+                total += price * quantity;
+            });
+
+            updateMaterialsTotal(total);
+        }
+
+        // Actualizar el campo de total de materiales
+        function updateMaterialsTotal(total) {
+            const materialesInput = document.getElementById('vMaterialesAPU');
+            const totalDisplay = document.getElementById('vMaterialesAPUDisplay');
+
+            if (materialesInput && totalDisplay) {
+                materialesInput.value = total.toFixed(2);
+                totalDisplay.textContent = `$${total.toFixed(2)}`;
+                updateCostSummary();
+            }
+        }
+
+        // ========== COST SUMMARY FUNCTIONALITY ==========
+
+        function updateCostSummary() {
+            const materiales = parseFloat(document.getElementById('vMaterialesAPU').value) || 0;
+            const manoObra = parseFloat(document.getElementById('vManoDeObraAPU').value) || 0;
+            const transporte = parseFloat(document.getElementById('vTransporteAPU').value) || 0;
+            const misc = parseFloat(document.getElementById('vMiscAPU').value) || 0;
+
+            const total = materiales + manoObra + transporte + misc;
+
+            // Update preview values if they exist (for edit mode)
+            const previewMateriales = document.getElementById('preview-materiales');
+            const previewManoObra = document.getElementById('preview-mano-obra');
+            const previewTransporte = document.getElementById('preview-transporte');
+            const previewMisc = document.getElementById('preview-misc');
+            const previewTotal = document.getElementById('preview-total');
+
+            if (previewMateriales) previewMateriales.textContent = materiales.toFixed(2);
+            if (previewManoObra) previewManoObra.textContent = manoObra.toFixed(2);
+            if (previewTransporte) previewTransporte.textContent = transporte.toFixed(2);
+            if (previewMisc) previewMisc.textContent = misc.toFixed(2);
+            if (previewTotal) previewTotal.textContent = total.toFixed(2);
+        }
+
+        // ========== EVENT LISTENERS ==========
+
+        // Update cost summary when other cost inputs change
+        const costInputs = ['vManoDeObraAPU', 'vTransporteAPU', 'vMiscAPU'];
+        costInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('input', updateCostSummary);
+            }
+        });
+
+        // ========== INITIALIZATION ==========
+
+        // Initialize the new materials interface
+        initializeMaterialsInterface();
+
+        console.log('APU creation functionality initialized successfully');
     });
 </script>
 </body>

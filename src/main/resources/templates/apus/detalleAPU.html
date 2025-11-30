@@ -625,14 +625,52 @@
         </div>
 
         <!-- Additional Information -->
-        <div class="detail-card">
+        <div class="detail-card" th:if="${materiales != null and !materiales.empty}">
+            <h3 class="detail-title">
+                <i class="fas fa-cubes"></i> Materiales Asociados
+            </h3>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Descripción</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="materialApu : ${materiales}">
+                        <td>
+                            <strong th:text="${materialApu.material.nombreMaterial}"></strong>
+                        </td>
+                        <td th:text="${materialApu.material.descripcionMaterial}"></td>
+                        <td th:text="${#numbers.formatDecimal(materialApu.cantidad, 1, 'COMMA', 2, 'POINT')}"></td>
+                        <td>
+                            $<span th:text="${#numbers.formatDecimal(materialApu.material.precioMaterial, 1, 'COMMA', 2, 'POINT')}"></span>
+                        </td>
+                        <td>
+                            <strong>
+                                $<span th:text="${#numbers.formatDecimal(materialApu.cantidad * materialApu.material.precioMaterial.doubleValue(), 1, 'COMMA', 2, 'POINT')}"></span>
+                            </strong>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empty State for Materials -->
+        <div class="detail-card" th:if="${materiales == null or materiales.empty}">
             <h3 class="detail-title">
                 <i class="fas fa-cubes"></i> Materiales Asociados
             </h3>
             <div style="text-align: center; padding: 2rem; color: var(--secondary);">
                 <i class="fas fa-cubes" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
                 <p>No hay materiales asociados a este APU</p>
-                <a href="#" class="btn btn-primary" style="margin-top: 1rem;">
+                <a th:href="@{/apu/editar/} + ${apu.idAPU}" class="btn btn-primary" style="margin-top: 1rem;">
                     <i class="fas fa-link"></i> Asociar Materiales
                 </a>
             </div>
