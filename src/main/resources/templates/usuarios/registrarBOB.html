@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
+<link rel="stylesheet" th:href="@{/CSS/USUARIOS/crearUsu.css}"/>
+<title>Registrar Usuario</title>
+</head>
+<body>
+<button id="menu-toggle" class="menu-toggle">
+    <i class="fas fa-bars"></i>
+</button>
+<div class="app-container" id="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img th:src="@{/IMG/imagen-bob.png}" alt="BOB Logo">
+            <h1>BOB</h1>
+        </div>
+        <ul class="nav-links">
+
+            <!-- Dashboard - Para todos los usuarios autenticados -->
+            <div sec:authorize="isAuthenticated()">
+                <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            </div>
+
+            <!-- Gestión de Usuarios - Solo con permisos de usuario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
+                <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
+            </div>
+
+            <!-- Menu items for users with inventory permissions -->
+            <!-- Inventario - Con permisos de inventario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
+                <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
+            </div>
+
+            <!-- Materiales - Con permisos de material -->
+            <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
+                <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
+            </div>
+
+            <!-- APUs - Con permisos de APU -->
+            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
+                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
+            </div>
+
+            <!-- Menu items for users with progress permissions -->
+            <!-- Avances - Con permisos de avance -->
+            <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
+                <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
+            </div>
+
+            <!-- Menu items for users with budget permissions -->
+            <!-- Obras - Con permisos de obra -->
+            <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
+                <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
+            </div>
+
+            <!-- Supervisor and Admin menu items -->
+            <!-- Contratistas - Con permisos de contratista -->
+            <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
+                <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+            </div>
+            <!-- Proveedores - Con permisos de proveedor -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
+                <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
+            </div>
+
+            <!-- Menu items for users with report permissions -->
+            <!-- Reportes - Para roles ADMIN y SUPERVISOR
+            <div sec:authorize="hasAnyRole('ADMIN', 'SUPERVISOR')">
+              <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
+            </div> -->
+
+            <!-- Fotodatos - Con permisos de fotodato
+            <div sec:authorize="hasAnyAuthority('CREAR_FOTODATO', 'EDITAR_FOTODATO')">
+              <li><a href="#"><i class="fas fa-camera"></i> <span>Fotodatos</span></a></li>
+            </div> -->
+
+            <!-- Admin-only configuration -->
+            <!-- Configuración - Solo ADMIN
+            <div sec:authorize="hasRole('ADMIN')">
+              <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
+            </div> -->
+
+            <li>
+                <form th:action="@{/logout}" method="post" id="logoutForm">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <a href="#" onclick="document.getElementById('logoutForm').submit()">
+                        <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                    </a>
+                </form>
+            </li>
+        </ul>
+    </aside>
+    <main class="main-content">
+
+        <div class="header">
+            <h2>Registrar Nuevo Usuario</h2>
+            <div class="user-menu">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i> </div>
+                <div>
+                    <div>
+                        Bienvenido <span th:text="${usuarioActual?.name}">Usuario</span>
+                        <a th:href="@{/perfil}" class="btn btn-profile">
+                            <i class="fas fa-user"></i> Perfil
+                        </a>
+                    </div>
+                    <div>
+                    <span th:if="${usuarioActual?.authorities?.contains('ROLE_ADMIN')}" class="role-badge admin-badge">
+                        <i class="fas fa-shield-alt"></i> Administrador
+                    </span>
+                        <span th:if="${usuarioActual?.authorities?.contains('ROLE_SUPERVISOR')}" class="role-badge supervisor-badge">
+                        <i class="fas fa-user-check"></i> Supervisor
+                    </span>
+                        <span th:if="${usuarioActual?.authorities?.contains('ROLE_OPERATIVO')}" class="role-badge operativo-badge">
+                        <i class="fas fa-user"></i> Operativo
+                    </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="registrar">
+            <form id="registro" method="POST" th:action="@{/usuarios/registrar}" enctype="multipart/form-data">
+                <h1>Registrar Nuevo Usuario</h1>
+
+                <!-- Mensajes de éxito/error -->
+                <div th:if="${success}" class="alert alert-success">
+                    <span th:text="${success}">Usuario registrado exitosamente</span>
+                </div>
+                <div th:if="${error}" class="alert alert-error">
+                    <span th:text="${error}">Error al registrar usuario</span>
+                </div>
+
+                <!-- Información Personal -->
+                <fieldset>
+                    <legend>Información Personal</legend>
+
+                    <label for="Nombre">Nombre:</label>
+                    <input type="text" id="Nombre" name="nombre" required placeholder="Introduce tu nombre">
+
+                    <label for="Apellido">Apellido:</label>
+                    <input type="text" id="Apellido" name="apellido" required placeholder="Introduce tu apellido">
+
+                    <label for="Telefono">Teléfono:</label>
+                    <input type="tel" id="Telefono" name="telefono" required placeholder="Introduce tu teléfono">
+
+                    <label for="Correo">Correo:</label>
+                    <input type="email" id="Correo" name="correo" required placeholder="Introduce tu correo">
+
+                </fieldset>
+
+                <!-- Información de Usuario -->
+                <fieldset>
+                    <legend>Información de Usuario</legend>
+
+                    <!-- Campo para foto de perfil -->
+                    <label for="fotoPerfil">Foto de Perfil (Opcional):</label>
+
+                    <input type="file" id="fotoPerfil" name="fotoPerfil" accept="image/*" class="form-control">
+                    <small class="file-info">Formatos aceptados: JPG, PNG, GIF. Tamaño máximo: 5MB</small>
+
+                    <!-- Vista previa de la imagen -->
+                    <div class="file-preview" id="imagePreview" style="display: none;">
+                        <img id="previewImage" src="#" alt="Vista previa">
+                        <div class="file-info" id="fileInfo"></div>
+                    </div>
+
+                    <label for="username">Nombre de Usuario:</label>
+                    <input type="text" id="username" name="nombreUsuario" required placeholder="Nombre de usuario para login">
+
+                    <label for="cargo">Cargo:</label>
+                    <input type="text" id="cargo" name="cargo" required placeholder="Cargo en la empresa">
+
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" name="password" required placeholder="Contraseña segura">
+
+                    <label for="confirmPassword">Confirmar Contraseña:</label>
+                    <input type="password" id="confirmPassword" required placeholder="Repite la contraseña">
+
+                    <label for="Rol">Rol en el Sistema:</label>
+                    <select id="Rol" name="rolSeleccionado" required>
+                        <option value="">Seleccionar Rol...</option>
+                        <option th:each="rol : ${roles}"
+                                th:value="${rol.nombreRol}"
+                                th:text="${rol.nombreRol}">
+                            Rol
+                        </option>
+                        <!-- Opciones por defecto por si no hay roles en la BD
+                        <option value="ADMIN">Administrador</option>
+                        <option value="SUPERVISOR">Supervisor</option>
+                        <option value="OPERATIVO">Operativo</option> -->
+                    </select>
+                </fieldset>
+
+                <button type="submit">Registrar Usuario</button>
+
+                <div class="enlace">
+                    <a th:href="@{/usuarios}"><span>Regresar a Gestión de Usuarios</span></a>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+      // ********* 1. LÓGICA DEL MENÚ TOGGLE (DEBE ESTAR DENTRO) *********
+      const toggleButton = document.getElementById('menu-toggle');
+      const appContainer = document.getElementById('app-container');
+      const sidebar = document.querySelector('.sidebar');
+
+      if (toggleButton && appContainer && sidebar) {
+          // Función principal: Alternar la clase
+          toggleButton.addEventListener('click', function() {
+              appContainer.classList.toggle('sidebar-active');
+          });
+
+          // Función para cerrar el menú en móvil si se hace clic fuera
+          appContainer.addEventListener('click', function(e) {
+              if (window.innerWidth <= 768 &&
+                  appContainer.classList.contains('sidebar-active')) {
+
+                  if (!toggleButton.contains(e.target) && !sidebar.contains(e.target)) {
+                      appContainer.classList.remove('sidebar-active');
+                  }
+              }
+          });
+      }
+      // ********* FIN LÓGICA DEL MENÚ *********
+
+
+      // ********* 2. TUS SCRIPTS DE VALIDACIÓN Y VISTA PREVIA (YA ESTABAN DENTRO) *********
+
+      // Validación de contraseñas coincidentes
+      document.getElementById('registro').addEventListener('submit', function(e) {
+          const password = document.getElementById('password').value;
+          const confirmPassword = document.getElementById('confirmPassword').value;
+          // ... (resto de tu lógica de validación) ...
+      });
+
+      // Vista previa de la imagen
+      document.getElementById('fotoPerfil').addEventListener('change', function(e) {
+          // ... (resto de tu lógica de vista previa) ...
+      });
+    }); // <--- Cierre correcto de DOMContentLoaded
+</script>
+</body>
+</html>
