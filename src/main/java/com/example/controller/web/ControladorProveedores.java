@@ -104,7 +104,7 @@ public class ControladorProveedores {
             p.setIdPersona(new Persona());
         }
 
-        // todo: NO inicializar idPersona aquí
+
         model.addAttribute("proveedor", p);
         model.addAttribute("Editando", false);
         model.addAttribute("informacionesComerciales",infoComServicio.comercialList());

@@ -25,6 +25,8 @@ public class MongoConfig {
     @Value("${spring.data.mongodb.database:protobob}")
     private String databaseName;
 
+
+
     @Bean
     public MongoDatabaseFactory mongoDatabaseFactory() {
         // If URI doesn't have database, append it
