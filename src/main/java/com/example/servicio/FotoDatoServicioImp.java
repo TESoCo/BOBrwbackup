@@ -10,7 +10,9 @@ import com.example.domain.Usuario;
 import com.mongodb.BasicDBObject;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -38,6 +41,12 @@ public class FotoDatoServicioImp implements FotoDatoServicio{
 
     @Autowired
     private GridFsOperations gridFsOperations;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private GridFsTemplate gridFsTemplate;
 
 
     //MÉTODOS DE SOLO LECTURA - pueden mantener @Transactional(readOnly = true)
@@ -157,19 +166,19 @@ public class FotoDatoServicioImp implements FotoDatoServicio{
             System.out.println("📝 Tipo MIME: " + archivo.getContentType());
 
             // Paso 1: Guardar en GridFS primer
-            String gridfsFileId = gridFSService.storeFile(archivo, fotoDato.getIdAvance().getIdAvance());
 
-            System.out.println("🔗 GridFS File ID generado: " + gridfsFileId);
+            if (archivo != null && !archivo.isEmpty()) {
+                String gridFsId = guardarEnGridFS(archivo);
+                fotoDato.setGridfsFileId(gridFsId);
+                fotoDato.setNombreArchivo(archivo.getOriginalFilename());
+                fotoDato.setTamanioArchivo(archivo.getSize());
+                fotoDato.setTipoMime(archivo.getContentType());
 
-            // Actualizar entidad FotoDato con referencia a GridFS
-            fotoDato.setGridfsFileId(gridfsFileId);
-            fotoDato.setNombreArchivo(archivo.getOriginalFilename());
-            fotoDato.setTamanioArchivo(archivo.getSize());
-            fotoDato.setTipoMime(archivo.getContentType());
+                System.out.println("Archivo guardado en GridFS con ID: " + gridFsId);
+            }
 
-            // Guardar en MySQL con el resto de datos del sistema
+            // 2. Guardar en MySQL con el resto de datos del sistema
             fotoDatoDao.save(fotoDato);
-
             System.out.println("FotoDato guardado en base de datos con ID: " + fotoDato.getIdFotoDato());
 
         } catch (Exception e) {
@@ -186,6 +195,21 @@ public class FotoDatoServicioImp implements FotoDatoServicio{
             e.printStackTrace();
             throw new RuntimeException("Error al guardar foto: " + e.getMessage(), e);
 
+        }
+    }
+
+    private String guardarEnGridFS(MultipartFile archivo) throws IOException {
+        try {
+            ObjectId fileId = gridFsTemplate.store(
+                    archivo.getInputStream(),
+                    archivo.getOriginalFilename(),
+                    archivo.getContentType(),
+                    new HashMap<>()
+            );
+            return fileId.toString();
+        } catch (Exception e) {
+            System.err.println("ERROR en GridFS: " + e.getMessage());
+            throw e;
         }
     }
 

@@ -25,12 +25,18 @@ public class MongoConfig {
     @Value("${spring.data.mongodb.database:protobob}")
     private String databaseName;
 
+    @Value("${spring.data.mongodb.gridfs.database:protobob}")
+    private String gridFsDatabaseName;
+
 
 
     @Bean
     public MongoDatabaseFactory mongoDatabaseFactory() {
-        // If URI doesn't have database, append it
+
+        // Para MongoDB Atlas, la URI ya incluye la base de datos
+        // Para Standalone, podemos necesitar ajustarla
         String connectionString = mongoUri;
+
         if (!mongoUri.endsWith("/" + databaseName) && !mongoUri.contains("/?")) {
             if (mongoUri.endsWith("/")) {
                 connectionString = mongoUri + databaseName;
@@ -40,13 +46,21 @@ public class MongoConfig {
         }
 
         System.out.println("Using MongoDB connection: " + connectionString);
+        System.out.println("Database: " + databaseName);
+        System.out.println("GridFS Database: " + gridFsDatabaseName);
+
         return new SimpleMongoClientDatabaseFactory(connectionString);
     }
 
+
+
     @Bean
     public MongoTemplate mongoTemplate() {
-        return new MongoTemplate(mongoDatabaseFactory());
+        MongoTemplate template = new MongoTemplate(mongoDatabaseFactory());
+        System.out.println("MongoTemplate initialized successfully");
+        return template;
     }
+
 
     @Bean
     public MappingMongoConverter mappingMongoConverter() {
@@ -63,6 +77,8 @@ public class MongoConfig {
 
     @Bean
     public GridFsTemplate gridFsTemplate() {
-        return new GridFsTemplate(mongoDatabaseFactory(), mappingMongoConverter());
+        GridFsTemplate gridFsTemplate = new GridFsTemplate(mongoDatabaseFactory(), mappingMongoConverter());
+        System.out.println("GridFsTemplate initialized successfully");
+        return gridFsTemplate;
     }
 }
