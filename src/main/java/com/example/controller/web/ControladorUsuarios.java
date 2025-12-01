@@ -48,11 +48,13 @@ public class ControladorUsuarios {
      * Mostrar la página principal de gestión de usuarios con datos reales
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('CREAR_USUARIO') or hasAuthority('EDITAR_USUARIO')")
+    @PreAuthorize("hasAuthority('CREAR_USUARIO') or hasAuthority('EDITAR_USUARIO') or hasRole('ADMIN')")
     public String mostrarGestionUsuarios(Model model) {
         try {
+            System.out.println("=== START mostrarGestionUsuarios ===");
             // Obtener lista REAL de usuarios
             List<Usuario> usuarios = usuarioServicio.listarUsuarios();
+            System.out.println("Usuarios found: " + (usuarios != null ? usuarios.size() : 0));
             List<Rol> roles = rolServicio.listarRoles();
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 

@@ -70,14 +70,11 @@ public class ProtoBOB {
                                             "/",          // raíz
                                             "/index",     // página principal
                                             "/login",
-                                            "/CSS/**",    // estilos
                                             "/js/**",     // scripts
                                             "/IMG/**",    // imágenes (ojo mayúsculas si tu carpeta es IMG)
                                             "/images/**",
                                             "/webjars/**",
-                                            "/presupuestos/**",
-                                            "/BOBWS*", "/BOBWS/*",
-                                            "/api/**"
+                                            "/presupuestos/**"
                                     ).permitAll()
 
                             // Public endpoints

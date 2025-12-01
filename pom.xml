@@ -226,6 +226,11 @@
             </plugin>
 
 		</plugins>
+
+        <resource>
+            <directory>src/main/resources</directory>
+        </resource>
+
 	</build>
 
 </project>
