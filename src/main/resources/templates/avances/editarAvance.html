@@ -180,89 +180,112 @@
                 <input type="hidden" name="idUsuario" th:value="${avance.idUsuario}">
 
                 <!-- Sección de Fotos -->
-                <div class="photo-section">
-                    <div class="fotos-header">
-                        <h3>
-                            <i class="fas fa-camera"></i>
-                            Fotos del Avance
-                            <span th:if="${fotos != null and !fotos.empty}" class="fotos-count" th:text="${fotos.size()}"></span>
-                        </h3>
-                    </div>
+                <div class="form-group">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-camera"></i> Fotos del Avance
+                        <span th:if="${fotos != null and !fotos.empty}"
+                              style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem;">
+            [[${fotos.size()}]]
+        </span>
+                    </h3>
 
-                    <!-- Sección para agregar nueva foto -->
-                    <div class="camera-section">
-                        <h4 style="margin-bottom: 1rem; color: #374151;">Agregar Nueva Foto</h4>
+                    <!-- Nueva sección para agregar foto -->
+                    <div class="new-photo-section" style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px; color: #374151; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-plus-circle"></i> Agregar Nueva Foto
+                        </h4>
 
-                        <div class="video-container">
-                            <video id="video" autoplay playsinline style="width: 100%; border: 2px solid #ddd; border-radius: 8px;"></video>
-                            <canvas id="canvas" style="display: none;"></canvas>
+                        <div class="camera-section" style="display: none;" id="cameraSection">
+                            <div class="location-info" style="margin-bottom: 15px;">
+                                <p id="locationStatus" style="margin-bottom: 10px;">Obteniendo ubicación...</p>
+                                <input type="hidden" id="currentCooN">
+                                <input type="hidden" id="currentCooE">
+                            </div>
+
+                            <div class="video-container" style="margin-bottom: 15px;">
+                                <video id="video" autoplay playsinline style="width: 100%; border: 2px solid #ddd; border-radius: 8px;"></video>
+                                <canvas id="canvas" style="display: none;"></canvas>
+                            </div>
+
+                            <div class="controls" style="display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap;">
+                                <button type="button" id="startCamera" class="btn btn-primary">
+                                    <i class="fas fa-camera"></i> Iniciar Cámara
+                                </button>
+                                <button type="button" id="capturePhoto" class="btn btn-success" disabled>
+                                    <i class="fas fa-camera"></i> Capturar Foto
+                                </button>
+                                <button type="button" id="retakePhoto" class="btn btn-secondary" disabled>
+                                    <i class="fas fa-redo"></i> Volver a Capturar
+                                </button>
+                            </div>
+
+                            <!-- Vista previa de foto capturada -->
+                            <div id="photoPreview" style="display: none; text-align: center; margin: 20px 0;">
+                                <h4>Vista Previa de la Foto</h4>
+                                <img id="capturedImage" style="max-width: 100%; max-height: 300px; border: 2px solid #10b981; border-radius: 8px;">
+                            </div>
                         </div>
 
-                        <div class="controls">
-                            <button type="button" id="startCamera" class="btn btn-primary">
-                                <i class="fas fa-camera"></i> Iniciar Cámara
-                            </button>
-                            <button type="button" id="capturePhoto" class="btn btn-success" disabled>
-                                <i class="fas fa-camera"></i> Capturar Foto
-                            </button>
-                            <button type="button" id="retakePhoto" class="btn btn-secondary" disabled>
-                                <i class="fas fa-redo"></i> Volver a Capturar
-                            </button>
+                        <!-- Input para archivo de foto -->
+                        <div class="file-upload-section" style="margin-top: 15px;">
+                            <div class="form-group">
+                                <label><i class="fas fa-upload"></i> Subir archivo de foto:</label>
+                                <input type="file" id="photoFile" name="photoFile" accept="image/*" class="form-control">
+                                <small class="text-muted">Formatos aceptados: JPG, PNG, JPEG (Máximo 8MB)</small>
+                            </div>
                         </div>
 
-                        <!-- Vista previa de foto capturada -->
-                        <div id="photoPreview" style="display: none;">
-                            <h4>Vista Previa de la Foto</h4>
-                            <img id="capturedImage">
+                        <!-- Información de foto a guardar -->
+                        <input type="hidden" id="photoBase64" name="photoBase64">
+                        <input type="hidden" id="photoCooN" name="photoCooN">
+                        <input type="hidden" id="photoCooE" name="photoCooE">
+
+                        <!-- Botones de acción -->
+                        <div class="quick-actions" style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button type="button" id="toggleCameraBtn" class="btn btn-primary">
+                                <i class="fas fa-camera"></i> Tomar Foto con Cámara
+                            </button>
+                            <button type="button" id="resetPhotoBtn" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Limpiar Foto
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Input para archivo de foto -->
-                    <div class="form-group">
-                        <label><i class="fas fa-upload"></i> O subir archivo de foto:</label>
-                        <input type="file" id="photoFile" name="photoFile" accept="image/*" class="form-control">
-                        <small class="text-muted">Formatos aceptados: JPG, PNG, JPEG (Máximo 8MB)</small>
-                    </div>
-
-                    <!-- Información de foto a guardar -->
-                    <input type="hidden" id="photoBase64" name="photoBase64">
-                    <input type="hidden" id="photoCooN" name="photoCooN">
-                    <input type="hidden" id="photoCooE" name="photoCooE">
 
                     <!-- GALERÍA DE FOTOS EXISTENTES -->
                     <div th:if="${fotos != null and !fotos.empty}" style="margin-top: 2rem;">
-                        <h4 style="color: #374151; margin-bottom: 1rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem;">
+                        <h4 style="color: #374151; margin-bottom: 1rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 10px;">
                             <i class="fas fa-images"></i> Fotos Existentes
                         </h4>
 
-                        <div class="photo-grid">
-                            <div th:each="foto : ${fotos}" class="photo-card">
-                                <div class="photo-image-container">
+                        <div class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+                            <div th:each="foto : ${fotos}" class="photo-card" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="width: 100%; height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
                                     <img th:src="@{'/fotodatos/imagen/' + ${foto.idFotoDato}}"
-                                         class="photo-image"
+                                         style="max-width: 100%; max-height: 100%; object-fit: cover;"
                                          alt="Foto del avance"
                                          onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2YzY1NzkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIwLjM1ZW0iPkltYWdlbiBubyBkaXNwb25pYmxlPC90ZXh0Pjwvc3ZnPg=='">
                                 </div>
 
-                                <div class="photo-info">
-                                    <div class="photo-date">
+                                <div style="padding: 15px;">
+                                    <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
                                         <i class="fas fa-calendar"></i>
                                         <span th:text="${#dates.format(foto.fechaFoto, 'dd/MM/yyyy HH:mm')}"></span>
                                     </div>
 
-                                    <div th:if="${foto.cooNFoto != null and foto.cooEFoto != null}" class="photo-coordinates">
+                                    <div th:if="${foto.cooNFoto != null and foto.cooEFoto != null}"
+                                         style="font-size: 0.8rem; color: #6b7280; margin-bottom: 12px; display: flex; align-items: center; gap: 5px;">
                                         <i class="fas fa-map-marker-alt"></i>
-                                        <span>N: <span th:text="${foto.cooNFoto}"></span>, E: <span th:text="${foto.cooEFoto}"></span></span>
+                                        <span>N: [[${foto.cooNFoto.toFixed(6)}]], E: [[${foto.cooEFoto.toFixed(6)}]]</span>
                                     </div>
 
-                                    <div class="photo-actions">
+                                    <div class="photo-actions" style="display: flex; gap: 8px;">
                                         <a th:href="@{'/fotodatos/imagen/' + ${foto.idFotoDato}}"
                                            target="_blank"
-                                           class="btn btn-sm btn-secondary">
+                                           class="btn btn-sm btn-secondary" style="flex: 1; text-align: center;">
                                             <i class="fas fa-eye"></i> Ver
                                         </a>
                                         <a th:href="@{/fotodatos/eliminar/} + ${foto.idFotoDato}"
-                                           class="btn btn-sm btn-danger"
+                                           class="btn btn-sm btn-danger" style="flex: 1; text-align: center;"
                                            onclick="return confirm('¿Está seguro de eliminar esta foto?')">
                                             <i class="fas fa-trash"></i> Eliminar
                                         </a>
@@ -273,11 +296,12 @@
                     </div>
 
                     <!-- MENSAJE SI NO HAY FOTOS -->
-                    <div th:if="${fotos == null or fotos.empty}" style="text-align: center; padding: 2rem; color: var(--secondary); background: #f8fafc; border-radius: var(--border-radius); border: 1px dashed #cbd5e1;">
-                        <i class="fas fa-camera" style="font-size: 3rem; margin-bottom: 1rem; color: #cbd5e1;"></i>
-                        <p>No hay fotos registradas para este avance</p>
-                        <p style="font-size: 0.9rem; color: #94a3b8; margin-top: 0.5rem;">
-                            Haz clic en "Tomar Nueva Foto" para agregar la primera foto
+                    <div th:if="${fotos == null or fotos.empty}"
+                         style="text-align: center; padding: 2rem; color: #6c757d; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6; margin-top: 20px;">
+                        <i class="fas fa-camera" style="font-size: 3rem; margin-bottom: 1rem; color: #adb5bd;"></i>
+                        <p style="margin-bottom: 10px;">No hay fotos registradas para este avance</p>
+                        <p style="font-size: 0.9rem; color: #94a3b8;">
+                            Utiliza la sección de arriba para agregar una nueva foto
                         </p>
                     </div>
                 </div>
@@ -325,7 +349,193 @@
                 }
             });
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+        // Elementos de la cámara
+        const cameraSection = document.getElementById('cameraSection');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const capturedImage = document.getElementById('capturedImage');
+        const startCameraBtn = document.getElementById('startCamera');
+        const capturePhotoBtn = document.getElementById('capturePhoto');
+        const retakePhotoBtn = document.getElementById('retakePhoto');
+        const photoPreview = document.getElementById('photoPreview');
+        const photoBase64 = document.getElementById('photoBase64');
+        const photoCooN = document.getElementById('photoCooN');
+        const photoCooE = document.getElementById('photoCooE');
+        const locationStatus = document.getElementById('locationStatus');
+        const currentCooN = document.getElementById('currentCooN');
+        const currentCooE = document.getElementById('currentCooE');
+        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+        const resetPhotoBtn = document.getElementById('resetPhotoBtn');
+        const photoFile = document.getElementById('photoFile');
+
+        let stream = null;
+        let currentLocation = null;
+        let isCameraActive = false;
+
+        // Función para obtener ubicación
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        currentLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        };
+
+                        locationStatus.innerHTML =
+                            `<strong>📍 Ubicación obtenida:</strong><br>
+                             Latitud: ${currentLocation.latitude.toFixed(6)}<br>
+                             Longitud: ${currentLocation.longitude.toFixed(6)}`;
+
+                        currentCooN.value = currentLocation.latitude;
+                        currentCooE.value = currentLocation.longitude;
+                        photoCooN.value = currentLocation.latitude;
+                        photoCooE.value = currentLocation.longitude;
+                    },
+                    error => {
+                        console.error('Error obteniendo ubicación:', error);
+                        locationStatus.innerHTML =
+                            '<strong>⚠️ No se pudo obtener la ubicación</strong><br>' +
+                            'La foto se guardará sin coordenadas GPS';
+                    }
+                );
+            } else {
+                locationStatus.innerHTML =
+                    '<strong>❌ Geolocalización no soportada</strong><br>' +
+                    'Su navegador no soporta geolocalización';
+            }
+        }
+
+        // Iniciar cámara
+        async function startCamera() {
+            try {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                video.srcObject = stream;
+                capturePhotoBtn.disabled = false;
+                startCameraBtn.disabled = true;
+                isCameraActive = true;
+            } catch (err) {
+                console.error('Error al acceder a la cámara:', err);
+                alert('No se pudo acceder a la cámara: ' + err.message);
+                isCameraActive = false;
+            }
+        }
+
+        // Capturar foto
+        function capturePhoto() {
+            if (!isCameraActive) return;
+
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convertir a Base64
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            capturedImage.src = imageData;
+            photoBase64.value = imageData;
+            photoPreview.style.display = 'block';
+
+            // Detener cámara
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.style.display = 'none';
+            }
+
+            capturePhotoBtn.disabled = true;
+            retakePhotoBtn.disabled = false;
+            isCameraActive = false;
+        }
+
+        // Volver a capturar
+        function retakePhoto() {
+            photoPreview.style.display = 'none';
+            photoBase64.value = '';
+            capturedImage.src = '';
+            video.style.display = 'block';
+            startCamera();
+            retakePhotoBtn.disabled = true;
+        }
+
+        // Resetear foto
+        function resetPhoto() {
+            photoBase64.value = '';
+            photoCooN.value = '';
+            photoCooE.value = '';
+            photoFile.value = '';
+            photoPreview.style.display = 'none';
+            cameraSection.style.display = 'none';
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.style.display = 'none';
+            }
+
+            // Resetear botones
+            capturePhotoBtn.disabled = true;
+            retakePhotoBtn.disabled = true;
+            startCameraBtn.disabled = false;
+            isCameraActive = false;
+        }
+
+        // Event listeners
+        startCameraBtn.addEventListener('click', startCamera);
+        capturePhotoBtn.addEventListener('click', capturePhoto);
+        retakePhotoBtn.addEventListener('click', retakePhoto);
+        resetPhotoBtn.addEventListener('click', resetPhoto);
+
+        // Toggle cámara
+        toggleCameraBtn.addEventListener('click', function() {
+            if (cameraSection.style.display === 'none') {
+                cameraSection.style.display = 'block';
+                getLocation();
+                startCamera();
+            } else {
+                cameraSection.style.display = 'none';
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+            }
+        });
+
+        // Manejar archivo subido
+        photoFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validar tamaño (8MB máximo)
+                if (file.size > 8 * 1024 * 1024) {
+                    alert('La imagen es demasiado grande. Máximo 8MB.');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    photoBase64.value = e.target.result;
+                    capturedImage.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+
+                // Obtener ubicación si no está disponible
+                if (!currentCooN.value || !currentCooE.value) {
+                    getLocation();
+                }
+            }
+        });
+
+        // Inicializar obtención de ubicación
+        getLocation();
     });
+
 </script>
 </body>
 </html>
