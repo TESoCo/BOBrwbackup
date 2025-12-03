@@ -33,32 +33,37 @@ public class MongoConfig {
     @Bean
     public MongoDatabaseFactory mongoDatabaseFactory() {
 
-        // Para MongoDB Atlas, la URI ya incluye la base de datos
-        // Para Standalone, podemos necesitar ajustarla
-        String connectionString = mongoUri;
 
-        if (!mongoUri.endsWith("/" + databaseName) && !mongoUri.contains("/?")) {
-            if (mongoUri.endsWith("/")) {
-                connectionString = mongoUri + databaseName;
-            } else {
-                connectionString = mongoUri + "/" + databaseName;
-            }
+        System.out.println("Using MongoDB connection: " + mongoUri.replaceFirst("//.*@", "//***:***@"));
+
+
+        try {
+            MongoDatabaseFactory factory = new SimpleMongoClientDatabaseFactory(mongoUri);
+            System.out.println("MongoDatabaseFactory created successfully");
+            return factory;
+        } catch (Exception e) {
+            System.err.println("Failed to create MongoDatabaseFactory: " + e.getMessage());
+            throw e;
         }
-
-        System.out.println("Using MongoDB connection: " + connectionString);
-        System.out.println("Database: " + databaseName);
-        System.out.println("GridFS Database: " + gridFsDatabaseName);
-
-        return new SimpleMongoClientDatabaseFactory(connectionString);
     }
 
 
 
     @Bean
     public MongoTemplate mongoTemplate() {
-        MongoTemplate template = new MongoTemplate(mongoDatabaseFactory());
-        System.out.println("MongoTemplate initialized successfully");
-        return template;
+        try {
+            MongoTemplate template = new MongoTemplate(mongoDatabaseFactory(), mappingMongoConverter());
+            System.out.println("MongoTemplate initialized successfully");
+
+            // Test connection
+            template.executeCommand("{ ping: 1 }");
+            System.out.println("MongoDB connection test successful");
+
+            return template;
+        } catch (Exception e) {
+            System.err.println("Failed to initialize MongoTemplate: " + e.getMessage());
+            throw new RuntimeException("MongoDB initialization failed", e);
+        }
     }
 
 
@@ -77,8 +82,13 @@ public class MongoConfig {
 
     @Bean
     public GridFsTemplate gridFsTemplate() {
-        GridFsTemplate gridFsTemplate = new GridFsTemplate(mongoDatabaseFactory(), mappingMongoConverter());
-        System.out.println("GridFsTemplate initialized successfully");
-        return gridFsTemplate;
+        try {
+            GridFsTemplate gridFsTemplate = new GridFsTemplate(mongoDatabaseFactory(), mappingMongoConverter());
+            System.out.println("GridFsTemplate initialized successfully");
+            return gridFsTemplate;
+        } catch (Exception e) {
+            System.err.println("Failed to initialize GridFsTemplate: " + e.getMessage());
+            throw new RuntimeException("GridFsTemplate initialization failed", e);
+        }
     }
 }
