@@ -603,7 +603,7 @@
           </div>
           <div class="activity-content">
             <div class="activity-title"
-                 th:text="'Avance: ' + ${avance.cantEjec} + ' ' + (${avance.idApu} != null ? ${avance.idApu.unidadesAPU} : 'unidades') + ' - ' + (${avance.idApu} != null ? ${avance.idApu.nombreAPU} : 'Actividad')">
+                 th:text="'Avance: ' + ${avance.cantEjec} + ' ' + (${avance.idAPU} != null ? ${avance.idAPU.unidadesAPU} : 'unidades') + ' - ' + (${avance.idAPU} != null ? ${avance.idApu.nombreAPU} : 'Actividad')">
               Avance registrado
             </div>
             <div class="activity-time" th:text="${#temporals.format(avance.fechaAvance, 'dd/MM/yyyy')}">Fecha</div>

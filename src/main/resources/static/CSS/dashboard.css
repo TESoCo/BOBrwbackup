@@ -372,7 +372,7 @@ body {
     transition: transform 0.3s ease;
   }
 
-  .app-container.sidebar-collapsed .sidebar {
+  .app-container.sidebar-active .sidebar {
       transform: translateX(0); /* Lo devuelve a su posición original (visible) */
     }
 
@@ -448,6 +448,9 @@ body {
   box-shadow: var(--shadow);
 }
 
+.app-container.sidebar-active .sidebar {
+    transform: translateX(0) !important;
+}
 /* 1. Muestra el Sidebar: Se activa con JS */
 .app-container.sidebar-active .sidebar {
     transform: translateX(0) !important;

@@ -202,7 +202,6 @@
         }
 
         // --- Lógica del Menú Toggle ---
-        // ¡USANDO SELECTORES DE CLASE CORRECTOS!
         const menuToggle = document.querySelector('.menu-toggle');
         const appContainer = document.querySelector('.app-container');
         const sidebar = document.querySelector('.sidebar'); // También lo necesitamos para cerrar al hacer clic fuera
@@ -210,17 +209,14 @@
         if (menuToggle && appContainer) {
             // El evento de clic en el botón de hamburguesa
             menuToggle.addEventListener('click', function() {
-                // Añade o quita la clase 'sidebar-collapsed'
-                appContainer.classList.toggle('sidebar-collapsed');
+                appContainer.classList.toggle('sidebar-active');
             });
 
             // Opcional: Cerrar el menú al hacer clic fuera del sidebar (solo en móvil)
             document.addEventListener('click', (e) => {
-                // Si estamos en modo móvil y el sidebar está abierto
-                if (window.innerWidth <= 768 && appContainer.classList.contains('sidebar-collapsed')) {
-                    // Verificar si el clic no fue dentro del sidebar ni en el botón de toggle
+                if (window.innerWidth <= 768 && appContainer.classList.contains('sidebar-active')) {
                     if (sidebar && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-                        appContainer.classList.remove('sidebar-collapsed');
+                        appContainer.classList.remove('sidebar-active');
                     }
                 }
             });
