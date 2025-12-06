@@ -197,6 +197,11 @@
                     <span th:text="${'N: ' + avance.idObra.cooNObra + ', E: ' + avance.idObra.cooEObra}"></span>
                 </div>
             </div>
+            <!-- Botón para descargar PDF de toda la obra -->
+            <a href="/fotodatos/pdf/obra/${avance.idObra.idObra}"
+               class="btn btn-success" target="_blank">
+                📋 Reporte PDF de toda la obra
+            </a>
         </div>
 
         <!-- Información de la Actividad -->

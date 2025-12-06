@@ -79,9 +79,11 @@ public class ControladorInv {
         model.addAttribute("obras", obraServicio.listaObra());
         model.addAttribute("materiales", materialServicio.listarTodos());
 
+
+
         if (errores.hasErrors()) {
             // Determinar a qué vista regresar según si es nuevo registro o edición
-            return (inventario.getIdInventario() == null) ? "crearInv" : "cambiarInv";
+            return (inventario.getIdInventario() == null) ? "inventarios/crearInv" : "inventarios/cambiarInv";
         }
 
         // Handle materiales relationship
@@ -103,7 +105,7 @@ public class ControladorInv {
         // The inventario object already has the usuario set from the form
         inventarioServicio.guardarInv(inventario);
 
-        return "redirect:/inventario/inventario";
+        return "inventarios/verInv";
     }
 
     @GetMapping("/verInv")
