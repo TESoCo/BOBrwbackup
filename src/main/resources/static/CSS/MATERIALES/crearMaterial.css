@@ -1,0 +1,222 @@
+/* * ESTILOS ESPECÍFICOS PARA CREAR MATERIALES
+ * Estos estilos se centran en los componentes internos: Tabs, Contenedores de Formulario y Tablas.
+ * Se asume que las variables CSS (--primary, --shadow, --border-radius, etc.)
+ * y los estilos base de botones (.btn) están definidos en dashboard.css.
+ */
+
+/* --- Tabs Navigation --- */
+.tabs {
+    display: flex;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--gray); /* CORREGIDO: Usando --gray */
+}
+
+.tab {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--secondary);
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-bottom-color 0.2s;
+    user-select: none;
+}
+
+.tab:hover {
+    color: var(--dark);
+    border-bottom-color: var(--gray);
+}
+
+.tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+}
+
+/* --- Tab Content Display --- */
+.tab-content {
+    display: none;
+    padding-top: 1rem;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* --- Form Container (Card Style) --- */
+.form-container {
+    background-color: white; /* CORREGIDO: Usando white (en lugar de --bg-card) */
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    border-left: 5px solid var(--primary);
+}
+
+.form-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--gray); /* CORREGIDO: Usando --gray */
+}
+
+/* --- Form Elements Overrides/Specifics --- */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: 500;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+}
+
+.form-label.required::after {
+    content: '*';
+    color: var(--danger);
+    margin-left: 0.25rem;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--gray);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-color: white;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+    background-color: white;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.error-message {
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+/* Botones y Acciones (Se asume que .btn está en dashboard.css) */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--gray);
+}
+
+.form-actions .btn {
+    min-width: 150px;
+    justify-content: center;
+}
+
+/* --- Estilos para la tabla de Materiales Generados (Import Tab) --- */
+
+.table-container {
+    overflow-x: auto;
+    background-color: white; /* CORREGIDO: Usando white (en lugar de --bg-card) */
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray);
+    margin-top: 1.5rem; /* Asegurar espacio si se muestra dinámicamente */
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+.data-table thead tr {
+    background-color: var(--primary-dark);
+    color: white;
+    text-align: left;
+}
+
+.data-table th, .data-table td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+}
+
+.data-table th {
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--primary);
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--gray);
+}
+
+.data-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--light); /* Fondo claro para hover */
+}
+
+.data-table td .form-input,
+.data-table td .form-select {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    border: 1px solid var(--gray);
+    background-color: white;
+}
+
+/* Estilo para inputs readonly en la tabla */
+.data-table td input[readonly] {
+    background-color: var(--light);
+    color: var(--dark);
+    cursor: default;
+}
+
+.data-table td input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    vertical-align: middle;
+    margin: 0;
+}
+
+/* Adaptación responsiva para la tabla */
+@media (max-width: 768px) {
+    .data-table th, .data-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .form-actions {
+            flex-direction: column; /* Apila los botones verticalmente */
+            align-items: stretch; /* Estira los botones al 100% del ancho */
+        }
+
+    .form-actions .btn {
+        min-width: 100%; /* Asegura que el botón ocupe todo el ancho */
+        margin-top: 0.5rem; /* Agrega un pequeño margen entre ellos */
+    }
+}

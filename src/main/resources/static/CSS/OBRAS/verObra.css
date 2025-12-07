@@ -1,0 +1,147 @@
+/* -------------------------------------------------------------------------
+   Estilos específicos para la vista de Detalle/Edición de Obra (verObra.html)
+------------------------------------------------------------------------- */
+
+/* Estilo para los inputs y selects dentro del modo Edición */
+.form-grid {
+    /* Usar la misma rejilla que en detalleMaterial.css */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Asegurar que los inputs y selects dentro del formulario usen estilos de tarjeta */
+.form-input, .form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1; /* slate-300 */
+    border-radius: var(--border-radius);
+    background-color: white;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-input:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    outline: none;
+}
+
+/* -------------------
+   Estilos de la Tabla (Vista Detalle)
+------------------- */
+
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 0.5rem;
+    background: white;
+    border-radius: var(--border-radius);
+    overflow: hidden; /* Para que los bordes redondeados funcionen */
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.data-table th, .data-table td {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0; /* slate-200 */
+}
+
+.data-table th {
+    background-color: #f8fafc; /* slate-50 */
+    color: var(--secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.data-table tbody tr:hover {
+    background-color: #f1f5f9; /* slate-100 */
+}
+
+/* Estilo para valores totales */
+.total-value {
+    font-weight: 700;
+    color: var(--success);
+    font-size: 1.25rem;
+}
+
+/* Mensaje de no actividades */
+.no-activities {
+    color: var(--secondary);
+    font-style: italic;
+    padding: 1rem;
+    text-align: center;
+    border: 1px dashed #e2e8f0;
+    border-radius: var(--border-radius);
+    background-color: white;
+}
+
+/* -------------------
+   Estilos de Fila de Edición de Actividad
+------------------- */
+
+.activity-edit-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9; /* slate-100 */
+}
+
+.activity-edit-row:last-of-type {
+    border-bottom: none;
+}
+
+.activity-edit-row .activity-select {
+    flex: 3; /* Más espacio para el nombre del APU */
+}
+
+.activity-edit-row .activity-quantity {
+    flex: 1; /* Espacio fijo para la cantidad */
+    min-width: 80px;
+}
+
+.activity-edit-row .btn-remove {
+    flex: 0 0 auto;
+    color: var(--danger);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+    white-space: nowrap;
+}
+
+.activity-edit-row .btn-remove:hover {
+    color: #dc2626;
+}
+
+/* Media query para móviles en edición de actividades */
+@media (max-width: 640px) {
+    .activity-edit-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 1rem 0;
+    }
+
+    .activity-edit-row .activity-select,
+    .activity-edit-row .activity-quantity {
+        width: 100%;
+        flex: none;
+    }
+
+    .activity-edit-row .btn-remove {
+        align-self: flex-end;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}

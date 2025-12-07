@@ -1,0 +1,59 @@
+/* Estilos específicos para la sección de Actividades */
+
+.selected-activity {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius);
+    background-color: var(--light); /* Fondo claro de la base APU/Dashboard */
+    border: 1px solid #e2e8f0;
+    margin-bottom: 0.5rem;
+    transition: background-color 0.3s;
+}
+
+.selected-activity:hover {
+    background-color: #f1f5f9; /* Ligeramente más oscuro al pasar el ratón */
+}
+
+.activity-info {
+    font-size: 1rem;
+    color: var(--dark);
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-units-qty {
+    font-size: 0.875rem;
+    color: var(--secondary);
+    margin-top: 0.1rem;
+}
+
+.activity-units-qty strong {
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.btn-remove {
+    cursor: pointer;
+    color: var(--danger);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.3s;
+    font-size: 0.9rem;
+    white-space: nowrap; /* Evita que el texto se rompa */
+}
+
+.btn-remove:hover {
+    color: #dc2626;
+}
+
+.no-activities {
+    color: var(--secondary);
+    font-style: italic;
+    padding: 1rem;
+    text-align: center;
+    border: 1px dashed #e2e8f0;
+    border-radius: var(--border-radius);
+    background-color: white;
+}
