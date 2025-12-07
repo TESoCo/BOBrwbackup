@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
+import lombok.ToString;
 
 
 import java.io.Serializable;
@@ -40,7 +41,7 @@ public class Inventario implements Serializable {
     @JoinColumn(name = "id_Obra")
     private Obra idObra;
 
-    @NotEmpty
+
     @Column(name = "tipo_inv", unique = true)
     private String tipoInv;
 
@@ -59,6 +60,7 @@ public class Inventario implements Serializable {
 
     // Many-to-many relationship for materiales (separate table)
     @OneToMany(mappedBy = "inventario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<MaterialesInventario> materialesInventarios = new ArrayList<>();
 
 

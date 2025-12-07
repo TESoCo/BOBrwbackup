@@ -115,19 +115,47 @@
             <a class="back-link" th:href="@{/inventarios}">
                 <i class='bx bx-arrow-back'></i> Regresar al inicio</a>
 
+
             <div class="search-container">
                 <h2><i class='bx bx-search-alt'></i> Buscar Inventarios</h2>
-                <form class="search-form" th:action="@{/verInv}" method="get">
+
+                <div class="error-message" th:if="${error}" style="color: red; margin-bottom: 10px; padding: 10px; background-color: #ffe6e6; border-radius: 5px;">
+                    <i class='bx bx-error'></i> <span th:text="${error}"></span>
+                </div>
+
+                <form class="search-form" th:action="@{/inventarios/verInv}" method="get">
                     <label for="tipoBusqueda"><i class='bx bx-filter'></i> Buscar por:</label>
                     <select name="tipoBusqueda" id="tipoBusqueda">
-                        <option value="gestor">Nombre Gestor</option>
-                        <option value="obra">Nombre Obra</option>
-                        <option value="fecha">Fecha</option>
+                        <option value="inventarios.idUsuario.nombreUsuario">Nombre Gestor</option>
+                        <option value="inventarios.idObra.nombreObra">Nombre Obra</option>
+                        <option value="inventarios.fechaIngreso">Fecha</option>
                     </select>
 
                     <input type="text" name="valorBusqueda" placeholder="Ingrese término de búsqueda...">
                     <input type="submit" value="Buscar">
+
+                    <!-- Botón para limpiar búsqueda (solo mostrar si hay búsqueda activa) -->
+                    <a th:if="${tipoBusquedaSeleccionado != null and valorBusquedaActual != null}"
+                       th:href="@{/inventarios/verInv}"
+                       class="clear-search">
+                        <i class='bx bx-x'></i> Limpiar
+                    </a>
+
                 </form>
+
+                <div th:if="${errorBusqueda}" class="alert alert-warning">
+                    <p th:text="${errorBusqueda}"></p>
+                </div>
+
+                <div class="table-container" th:if="${errorBusqueda == null}">
+                    <table>
+                    </table>
+                </div>
+
+                <div class="no-records" th:if="${inventarios == null or inventarios.empty and errorBusqueda == null}">
+                    <p>No hay registros de inventario para mostrar.</p>
+                </div>
+
             </div>
 
             <div class="table-container">
@@ -148,27 +176,45 @@
                     </thead>
                     <tbody>
                     <tr th:each="inv : ${inventarios}">
-                        <td th:text="${inv.id_Inventario}"></td>
-                        <td th:text="${inv.nombreGestor}"></td>
-                        <td th:text="${inv.nombreobra}"></td>
-                        <td th:text="${inv.tipoRegistro}"></td>
-                        <td th:text="${inv.fecha}"></td>
-                        <td th:text="${inv.unidadMedida}"></td>
-                        <td th:text="${inv.cantidad}"></td>
-                        <td th:text="${inv.material}"></td>
-                        <td th:text="${inv.precioUnidad}"></td>
+                        <td th:text="${inv.idInventario}"></td>
+                        <td th:text="${inv.idUsuario.nombreUsuario}"></td>
+                        <td th:text="${inv.idObra.nombreObra}"></td>
+                        <td th:text="${inv.tipoInv}"></td>
+                        <td th:text="${inv.fechaIngreso}"></td>
+                        <td th:text="${inv.unidadInv}"></td>
 
+                        <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].cantidad}"></td>
+                        <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].material.nombreMaterial}"></td>
+                        <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].material.precioMaterial}"></td>
+
+                        <td th:unless="${!inv.materialesInventarios.empty}">-</td>
+                        <td th:unless="${!inv.materialesInventarios.empty}">-</td>
+                        <td th:unless="${!inv.materialesInventarios.empty}">-</td>
+
+                        <td >
+                            <a th:href="@{/inventarios/cambiarInv/} + ${inv.idInventario}"
+                               class="btn btn-warning btn-sm"
+                               sec:authorize="hasAuthority('EDITAR_MATERIAL')">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                        </td>
+
+                        <!--
                         <td>
-                            <a th:href="@{'/exportarExcelInv/' + ${inv.id_Inventario}}">
+
+                            <a th:href="@{'/exportarExcelInv/' + ${inv.idInventario}}">
                                 <i class='bx bx-export'></i> Exportar
                             </a>
-                            <form th:action="@{'/api/reportes/email/inventario/' + ${inv.id_Inventario}}" method="post">
+
+                            <form th:action="@{'/api/reportes/email/inventario/' + ${inv.idInventario}}" method="post">
                                 <input type="email" name="destinatario" placeholder="Correo destinatario" required>
                                 <button type="submit">
                                     <i class='bx bx-envelope'></i> Enviar por correo
                                 </button>
                             </form>
+
                         </td>
+                        -->
                     </tr>
                     </tbody>
                 </table>

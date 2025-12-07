@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import lombok.ToString;
+
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -67,6 +69,7 @@ public class Obra implements Serializable {
     // Many-to-many relationship for APUS/cantidades (separate table)
     @OneToMany(mappedBy = "obra", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("apusobra-obra")
+    @ToString.Exclude
     private List<ApusObra> apusObraList = new ArrayList<>();
 
 }

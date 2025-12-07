@@ -2,6 +2,7 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
+    <!--TODO cambiar todos los estilos-->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion de Contratistas - Building Optimization Baseline</title>
@@ -193,9 +194,9 @@
                     <td th:text="${c.informacionComercial.direccion}">Dirección</td>
                     <td>
                         <div class="actions">
-                            <!-- EDITAR -->
+                            <!-- EDITAR - CORREGIR LA SINTAXIS DE DATA-ID -->
                             <button class="btn btn-sm btn-primary edit"
-                                    data-id="${c.idContratista}"
+                                    th:data-id="${c.idContratista}"
                                     title="Editar"><i class="fas fa-edit"></i></button>
 
                             <!-- ELIMINAR -->
@@ -217,7 +218,7 @@
                 <button class="btn btn-secondary" disabled>
                     <i class="fas fa-chevron-left"></i> Anterior
                 </button>
-                <span style="margin: 0 1rem;">Página 1 de 3</span>
+                <span style="margin: 0 1rem;">ProtoBOB</span>
                 <button class="btn btn-secondary">
                     Siguiente <i class="fas fa-chevron-right"></i>
                 </button>
@@ -235,11 +236,13 @@
         </div>
         <div class="modal-body">
             <form id="contractorForm" th:action="@{/contratistas/guardar}" th:object="${contratista}" method="post">
+
                 <!-- hidden id fields -->
                 <input type="hidden" id="contractorId" name="idContratista"/>
-                <input type="hidden" id="personaId" name="idPersona"/>
+                <input type="hidden" id="personaId" name="idPersona.idPersona"/>
                 <input type="hidden" id="infoId" name="idInfoComerc"/>
                 <input type="hidden" id="originalNitRut" name="originalNitRut"/>
+                <input type="hidden" id="existingCommercialInfoId" name="existingCommercialInfoId" value=""/>
 
                 <!-- Sección: Información Comercial -->
                 <div class="form-section">
@@ -290,8 +293,7 @@
 
                     <div class="form-group">
                         <label for="contractorAddress">Dirección *</label>
-                        <input type="text" id="contractorAddress" required name="direccion" class="form-control"
-                               placeholder="Ej: Calle 123 # 45-67">
+                        <input type="text" id="contractorAddress" required name="direccion" class="form-control" placeholder="Ej: Calle 123 # 45-67">
                         <small style="color: var(--secondary);">Formato: Calle/Carrera/Avenida + Número + # + Número-Número</small>
                     </div>
 
@@ -410,155 +412,238 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        /* ===========  ADD / EDIT (TU LÓGICA EXISTENTE)  ================== */
-        const addBtn   = document.getElementById('addContractorBtn');
-        const modal    = document.getElementById('contractorModal');
-        const form     = document.getElementById('contractorForm');
-        const btnSave  = document.getElementById('btnGuardarContratista');
-        const spanClose= modal.querySelector('.close-modal');
-        const btnCancel= modal.querySelector('.btn-cancel');
+        /* ===========  ADD / EDIT  ================== */
+        const addBtn = document.getElementById('addContractorBtn');
+        const modal = document.getElementById('contractorModal');
+        const form = document.getElementById('contractorForm');
+        const btnSave = document.getElementById('btnGuardarContratista');
+        const spanClose = modal.querySelector('.close-modal');
+        const btnCancel = modal.querySelector('.btn-cancel');
         const existingCommercialInfoGroup = document.getElementById('existingCommercialInfoGroup');
         const existingCommercialInfoSelect = document.getElementById('existingCommercialInfo');
 
         /* open empty modal */
-        addBtn.addEventListener('click', () => openModal(false));
+        addBtn.addEventListener('click', function() {
+            openModal(false);
+        });
 
         /* open filled modal */
         document.querySelectorAll('.btn.edit').forEach(b =>
-          b.addEventListener('click', () => {
-            const id = b.getAttribute('data-id');
-            fetch(`/contratistas/api/${id}`)
-              .then(r => r.json())
-              .then(c => fillModal(c));
-          })
+            b.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                console.log('Editando contratista ID:', id);
+
+                if (!id || id === "undefined" || id === "${c.idContratista}") {
+                    console.error('ID inválido:', id);
+                    alert('Error: ID de contratista inválido');
+                    return;
+                }
+
+                fetch(`/contratistas/api/${id}`)
+                    .then(r => {
+                        if (!r.ok) {
+                            throw new Error(`Error ${r.status}: ${r.statusText}`);
+                        }
+                        return r.json();
+                    })
+                    .then(c => {
+                        if (c && c.idContratista) {
+                            fillModal(c);
+                        } else {
+                            throw new Error('Contratista no encontrado');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error al cargar contratista:', err);
+                        alert('Error al cargar los datos del contratista: ' + err.message);
+                    });
+            })
         );
 
-        function openModal(isEdit){
-          modal.style.display = 'block';
-          document.getElementById('modalTitle').innerText =
+        function openModal(isEdit) {
+            modal.style.display = 'block';
+            document.getElementById('modalTitle').innerText =
                 isEdit ? 'Editar Contratista' : 'Nuevo Contratista';
-          btnSave.innerText = isEdit ? 'Actualizar' : 'Guardar';
+            btnSave.innerText = isEdit ? 'Actualizar' : 'Guardar';
+            btnSave.disabled = false;
 
-          // Mostrar selector de info comercial solo en modo creación
-          existingCommercialInfoGroup.style.display = isEdit ? 'none' : 'block';
+            // Ocultar selector de info comercial existente en edición
+            if (existingCommercialInfoGroup) {
+                existingCommercialInfoGroup.style.display = isEdit ? 'none' : 'block';
+            }
 
-          if(!isEdit) {
-            form.reset();
-            // Cargar informaciones comerciales existentes
-            loadExistingCommercialInfo();
-          }
-        }
+            if (!isEdit) {
+                form.reset();
+                // Establecer valores por defecto - IMPORTANTE: 0 en lugar de vacío
+                document.getElementById('contractorId').value = "0";
+                document.getElementById('originalNitRut').value = "";
 
-        function loadExistingCommercialInfo() {
-          fetch('/contratistas/informaciones-comerciales')
-            .then(r => r.json())
-            .then(data => {
-              const select = existingCommercialInfoSelect;
-              select.innerHTML = '<option value="">-- Crear nueva información comercial --</option>';
-              data.forEach(info => {
-                const option = document.createElement('option');
-                option.value = info.idInfoComerc;
-                option.textContent = `${info.nitRut} - ${info.correoElectronico}`;
-                select.appendChild(option);
-              });
-            });
+                // Habilitar campos NIT y email
+                const nitField = document.getElementById('contractorNIT');
+                const emailField = document.getElementById('contactEmail');
+                if (nitField) nitField.disabled = false;
+                if (emailField) emailField.disabled = false;
+
+                // Resetear selector de info comercial existente
+                if (existingCommercialInfoSelect) {
+                    existingCommercialInfoSelect.value = "";
+                }
+            }
         }
 
         // Cuando se selecciona una info comercial existente, llenar los campos
-        existingCommercialInfoSelect.addEventListener('change', function() {
-          if (this.value) {
-            fetch(`/contratistas/informacion-comercial/${this.value}`)
-              .then(r => r.json())
-              .then(info => {
-                document.getElementById('contractorNIT').value = info.nitRut;
-                document.getElementById('contactEmail').value = info.correoElectronico;
-                document.getElementById('contractorAddress').value = info.direccion;
-                document.getElementById('paymentMethod').value = info.formaPago;
-                document.getElementById('bank').value = info.banco;
-                document.getElementById('accountNumber').value = info.numCuenta;
-                document.getElementById('contractorSpecialty').value = info.producto;
-
-                // Deshabilitar campos para evitar modificación
-                document.getElementById('contractorNIT').disabled = true;
-                document.getElementById('contactEmail').disabled = true;
-              });
-          } else {
-            // Habilitar campos si se selecciona "Crear nueva"
-            document.getElementById('contractorNIT').disabled = false;
-            document.getElementById('contactEmail').disabled = false;
-          }
-        });
-
-        function fillModal(c){
-          openModal(true);
-
-          // IDs
-          document.getElementById('contractorId').value = c.idContratista;
-          document.getElementById('personaId').value = c.idPersona.idPersona;
-          document.getElementById('infoId').value = c.informacionComercial.idInfoComerc;
-          document.getElementById('originalNitRut').value = c.informacionComercial.nitRut;
-
-          // Información de la empresa
-          document.getElementById('contractorName').value = c.nombreContratista;
-          document.getElementById('contractorNIT').value = c.informacionComercial.nitRut;
-          document.getElementById('contractorSpecialty').value = c.informacionComercial.producto;
-          document.getElementById('contactEmail').value = c.informacionComercial.correoElectronico;
-          document.getElementById('contractorAddress').value = c.informacionComercial.direccion;
-
-          // Información de pago
-          document.getElementById('paymentMethod').value = c.informacionComercial.formaPago;
-          document.getElementById('bank').value = c.informacionComercial.banco;
-          document.getElementById('accountNumber').value = c.informacionComercial.numCuenta;
-
-          // Persona de contacto
-          document.getElementById('contactName').value = c.idPersona.nombre;
-          document.getElementById('contactLastName').value = c.idPersona.apellido;
-          document.getElementById('contactPhone').value = c.idPersona.telefono;
-          document.getElementById('contactEmailPersonal').value = c.idPersona.correo;
-
-          // Re-habilitar campos si estamos editando (para que los datos puedan ser enviados)
-          document.getElementById('contractorNIT').disabled = false;
-          document.getElementById('contactEmail').disabled = false;
+        if (existingCommercialInfoSelect) {
+            existingCommercialInfoSelect.addEventListener('change', function() {
+                if (this.value) {
+                    // Aquí deberías cargar los datos de la info comercial seleccionada
+                    console.log('Info comercial seleccionada:', this.value);
+                    // Deshabilitar campos para evitar modificación
+                    const nitField = document.getElementById('contractorNIT');
+                    const emailField = document.getElementById('contactEmail');
+                    if (nitField) nitField.disabled = true;
+                    if (emailField) emailField.disabled = true;
+                } else {
+                    // Habilitar campos si se selecciona "Crear nueva"
+                    const nitField = document.getElementById('contractorNIT');
+                    const emailField = document.getElementById('contactEmail');
+                    if (nitField) nitField.disabled = false;
+                    if (emailField) emailField.disabled = false;
+                }
+            });
         }
 
-        // Email report modal
-        const sendReportBtn = document.getElementById('sendReportBtn');
-        const emailReportModal = document.getElementById('emailReportModal');
-        const emailReportForm = document.getElementById('emailReportForm');
-        const closeEmailModalBtn = emailReportModal.querySelector('.close-modal');
-        const cancelEmailBtn = emailReportModal.querySelector('.btn-cancel');
+function fillModal(c) {
+    console.log('Datos del contratista recibidos:', c);
 
-        sendReportBtn.addEventListener('click', function() {
-            emailReportModal.style.display = 'block';
+    if (!c) {
+        console.error('Contratista no encontrado');
+        alert('No se pudieron cargar los datos del contratista');
+        return;
+    }
+
+    openModal(true);
+
+    // ID del contratista
+    document.getElementById('contractorId').value = c.idContratista || "0";
+
+    // Campos de ID
+    document.getElementById('personaId').value = c.idPersona ? c.idPersona.idPersona || "" : "";
+    document.getElementById('infoId').value = c.informacionComercial ? c.informacionComercial.idInfoComerc || "" : "";
+    document.getElementById('originalNitRut').value = c.informacionComercial ? c.informacionComercial.nitRut || "" : "";
+
+    // Información de la empresa - usar nombres simples que coincidan con @RequestParam
+    document.getElementById('contractorName').value = c.nombreContratista || "";
+    document.getElementById('contractorNIT').value = c.informacionComercial ? c.informacionComercial.nitRut || "" : "";
+    document.getElementById('contractorSpecialty').value = c.informacionComercial ? c.informacionComercial.producto || "" : "";
+    document.getElementById('contactEmail').value = c.informacionComercial ? c.informacionComercial.correoElectronico || "" : "";
+    document.getElementById('contractorAddress').value = c.informacionComercial ? c.informacionComercial.direccion || "" : "";
+
+    // Información de pago
+    document.getElementById('paymentMethod').value = c.informacionComercial ? c.informacionComercial.formaPago || "" : "";
+    document.getElementById('bank').value = c.informacionComercial ? c.informacionComercial.banco || "" : "";
+    document.getElementById('accountNumber').value = c.informacionComercial ? c.informacionComercial.numCuenta || "" : "";
+
+    // Persona de contacto - usar nombres simples
+    document.getElementById('contactName').value = c.idPersona ? c.idPersona.nombre || "" : "";
+    document.getElementById('contactLastName').value = c.idPersona ? c.idPersona.apellido || "" : "";
+    document.getElementById('contactPhone').value = c.idPersona ? c.idPersona.telefono || "" : "";
+    document.getElementById('contactEmailPersonal').value = c.idPersona ? c.idPersona.correo || "" : "";
+
+    // Asegurar que los campos estén habilitados para edición
+    const nitField = document.getElementById('contractorNIT');
+    const emailField = document.getElementById('contactEmail');
+    if (nitField) nitField.disabled = false;
+    if (emailField) emailField.disabled = false;
+}
+
+
+        /* =========== CORRECCIÓN CRÍTICA: VALIDACIÓN DEL FORMULARIO =========== */
+
+        // Interceptar el envío del formulario para ajustar los nombres
+        form.addEventListener('submit', function(e) {
+            // Asegurar que idContratista tenga un valor válido
+            const contractorIdInput = document.getElementById('contractorId');
+            if (!contractorIdInput.value || contractorIdInput.value === "undefined") {
+                contractorIdInput.value = "0";
+            }
+
+            console.log('Enviando formulario con ID:', contractorIdInput.value);
+
+            // Deshabilitar botón para evitar múltiples envíos
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+            // Validar campos requeridos
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.style.borderColor = 'red';
+                } else {
+                    field.style.borderColor = '';
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Por favor complete todos los campos requeridos (marcados con *)');
+                btnSave.disabled = false;
+                btnSave.innerHTML = contractorIdInput.value === "0" ? 'Guardar Contratista' : 'Actualizar';
+                return;
+            }
+
+            // Si todo está bien, permitir el envío
+            console.log('Formulario válido, enviando...');
         });
 
-        function closeEmailModal() {
-            emailReportModal.style.display = 'none';
-        }
+        /* =========== CERRAR MODALES =========== */
 
-        closeEmailModalBtn.addEventListener('click', closeEmailModal);
-        cancelEmailBtn.addEventListener('click', closeEmailModal);
+        // Cerrar modales con botones de cerrar
+        document.querySelectorAll('.close-modal, .btn-cancel').forEach(btn => {
+            btn.addEventListener('click', function() {
+                modal.style.display = 'none';
+                // También cerrar el modal de email si está abierto
+                const emailModal = document.getElementById('emailReportModal');
+                if (emailModal) emailModal.style.display = 'none';
+                // Restaurar botón guardar
+                btnSave.disabled = false;
+                btnSave.innerHTML = 'Guardar Contratista';
+            });
+        });
 
-        // Close modals when clicking outside
+        // Cerrar al hacer clic fuera del modal
         window.addEventListener('click', function(event) {
             if (event.target === modal) {
                 modal.style.display = 'none';
+                // Restaurar botón guardar
+                btnSave.disabled = false;
+                btnSave.innerHTML = 'Guardar Contratista';
             }
-            if (event.target === emailReportModal) {
-                emailReportModal.style.display = 'none';
+            const emailModal = document.getElementById('emailReportModal');
+            if (emailModal && event.target === emailModal) {
+                emailModal.style.display = 'none';
             }
         });
 
-        // Close modals with cancel buttons
-        document.querySelectorAll('.btn-cancel').forEach(btn => {
-            // Asegurarse de que solo afecta a los modales de la página principal
-            if (btn.id !== 'btnCancelEmail') {
+        /* =========== MODAL DE ENVIAR REPORTE =========== */
+        const sendReportBtn = document.getElementById('sendReportBtn');
+        const emailReportModal = document.getElementById('emailReportModal');
+
+        if (sendReportBtn && emailReportModal) {
+            sendReportBtn.addEventListener('click', function() {
+                emailReportModal.style.display = 'block';
+            });
+
+            // Cerrar modal de email
+            emailReportModal.querySelectorAll('.close-modal, .btn-cancel').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    modal.style.display = 'none';
                     emailReportModal.style.display = 'none';
                 });
-            }
-        });
+            });
+        }
+
 
         /* ======================================================================================= */
         /* =========== LÓGICA DE CONTROL DEL MENÚ MÓVIL (AÑADIDA Y CORREGIDA) ==================== */

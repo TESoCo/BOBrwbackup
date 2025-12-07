@@ -94,7 +94,7 @@
                 <td th:text="${inv.unidadMedida}"></td>
                 <td th:text="${inv.cantidad}"></td>
                 <td th:text="${inv.material}"></td>
-                <td th:text="${inv.precioUnidad}"></td>
+                <td th:text="${inv.precioMaterial}"></td>
                 <td>
                     <a th:href="@{/borrarInv/{id}(id=${inv.id_Inventario})}"
                        onclick="return confirm('¿Estás seguro de que quieres eliminar este registro?');">Eliminar</a>

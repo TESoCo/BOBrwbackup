@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 import java.io.Serializable;
 
@@ -19,12 +20,14 @@ public class ApusObra implements Serializable {
     @ManyToOne
     @JoinColumn(name = "id_Obra")
     @JsonBackReference("apusobra-obra")
+    @ToString.Exclude
     private Obra obra;
 
     @Id
     @ManyToOne
     @JoinColumn(name = "id_APU")
     @JsonBackReference("apusobra-apu")
+    @ToString.Exclude
     private Apu apu;
 
     @Column(name = "cantidad", nullable = false)

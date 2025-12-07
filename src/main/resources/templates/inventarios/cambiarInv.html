@@ -113,70 +113,6 @@
                 </a>
             </div>
 
-            <!-- Buscar inventario -->
-            <div class="search-container">
-                <h2><i class='bx bx-search-alt'></i> Buscar Inventarios</h2>
-                <form class="search-form" th:action="@{/cambiarInv}" method="get">
-                    <label for="tipoBusqueda"><i class='bx bx-filter'></i> Buscar por:</label>
-                    <select name="tipoBusqueda" id="tipoBusqueda">
-                        <option value="gestor">Nombre Gestor</option>
-                        <option value="obra">Nombre Obra</option>
-                        <option value="fecha">Fecha</option>
-                    </select>
-
-                    <input type="text" name="valorBusqueda" placeholder="Término de búsqueda">
-                    <input type="submit" value="Buscar">
-                </form>
-            </div>
-
-            <!-- Tabla de resultados -->
-            <div class="table-container">
-                <table border="1">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre Gestor</th>
-                        <th>Nombre Obra</th>
-                        <th>Tipo Registro</th>
-                        <th>Fecha</th>
-                        <th>Unidad de Medida</th>
-                        <th>Cantidad</th>
-                        <th>Material</th>
-                        <th>Precio por Unidad</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="inv : ${inventarios}">
-                        <td th:text="${inv.idInventario}"></td>
-                        <td th:text="${inv.idUsuario.nombreUsuario}"></td>
-                        <td th:text="${inv.idObra.nombreObra}"></td>
-                        <td th:text="${inv.tipoInv}"></td>
-                        <td th:text="${inv.fechaIngreso}"></td>
-                        <td th:text="${inv.unidadInv}"></td>
-                        <td>
-                            <span th:each="mat : ${inv.materialesInventarios}" th:text="${mat.cantidad}"></span>
-                        </td>
-                        <td>
-                            <span th:each="mat : ${inv.materialesInventarios}" th:text="${mat.material.nombreMaterial}"></span>
-                        </td>
-                        <td>
-                            <span th:each="mat : ${inv.materialesInventarios}" th:text="${mat.material.precioUnidad}"></span>
-                        </td>
-                        <td>
-                            <a class="action-link" th:href="|@{/cambiarInv/{id}(id=${inv.idInventario})}#formulario|">
-                                <i class='bx bx-edit'></i> Modificar
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="no-records" th:if="${inventarios == null or inventarios.empty}">
-                <p>No hay registros de inventario para mostrar.</p>
-            </div>
-
             <!-- Formulario de actualización -->
             <div class="form-container" id="formulario">
                 <div class="form-header">
@@ -188,8 +124,18 @@
                     </h2>
                 </div>
 
-                <form th:action="@{/guardarInv}" method="post" th:object="${inventario}">
-                    <input type="hidden" th:field="*{idInventario}">
+                <form th:action="@{/inventarios/guardarInv}" method="post" th:object="${inventario}">
+                    <!-- Campos del inventario -->
+                    <input type="hidden" th:field="*{idInventario}" />
+
+                    <!-- Para cada material existente, incluir como campos ocultos -->
+                    <div th:each="materialInv, iStat : *{materialesInventarios}">
+                        <input type="hidden" name="materialIds" th:value="${materialInv.material.idMaterial}" />
+                        <input type="hidden" name="materialCantidades" th:value="${materialInv.cantidad}" />
+                    </div>
+
+
+
 
                     <div class="form-grid">
                         <div class="form-group">
@@ -200,10 +146,14 @@
                         </div>
 
                         <div class="form-group">
-                            <label><i class='bx bx-buildings'></i> Nombre Obra:</label>
-                            <input type="text" th:field="*{idObra.nombreObra}">
-                            <span class="error-message" th:if="${#fields.hasErrors('idObra.nombreObra')}"
-                                  th:errors="*{idObra.nombreObra}"></span>
+                            <label>Nombre Obra:</label>
+                            <select th:field="*{idObra}" class="form-select" required>
+                                <option value="">Seleccione una obra...</option>
+                                <option th:each="obra : ${obras}"
+                                        th:value="${obra.idObra}"
+                                        th:text="${obra.nombreObra}"></option>
+                            </select>
+                            <span class="error-message" th:if="${#fields.hasErrors('idObra')}" th:errors="*{idObra}"></span>
                         </div>
 
                         <div class="form-group">
@@ -240,15 +190,40 @@
                         </div>
 
                         <!-- Iteración sobre materiales -->
-                        <div class="form-group" th:each="mat, iterStat : ${inventario.materialesInventarios}">
-                            <label><i class='bx bx-layer'></i> Cantidad:</label>
-                            <input type="number" th:field="*{materialesInventarios[__${iterStat.index}__].cantidad}" min="0">
+                        <div class="materiales-container" th:if="${inventario.materialesInventarios != null}">
+                            <div th:each="mat, iterStat : ${inventario.materialesInventarios}" class="material-item">
+                                <div class="form-group">
+                                    <label><i class='bx bx-layer'></i> Cantidad:</label>
+                                    <input type="number"
+                                           th:field="*{materialesInventarios[__${iterStat.index}__].cantidad}"
+                                           min="0"
+                                           th:name="materialesInventarios[__${iterStat.index}__].cantidad"
+                                           step="0.01">
+                                </div>
 
-                            <label><i class='bx bx-cube'></i> Material:</label>
-                            <input type="text" th:field="*{materialesInventarios[__${iterStat.index}__].material.nombreMaterial}">
+                                <div class="form-group">
+                                    <label><i class='bx bx-cube'></i> Material:</label>
+                                    <input type="text"
+                                           th:field="*{materialesInventarios[__${iterStat.index}__].material.nombreMaterial}"
+                                           th:name="materialesInventarios[__${iterStat.index}__].material.nombreMaterial"
+                                           readonly>
+                                </div>
 
-                            <label><i class='bx bx-dollar'></i> Precio por Unidad:</label>
-                            <input type="number" th:field="*{materialesInventarios[__${iterStat.index}__].material.precioUnidad}" step="0.01" min="0">
+                                <div class="form-group">
+                                    <label><i class='bx bx-dollar'></i> Precio por Unidad:</label>
+                                    <input type="number"
+                                           th:field="*{materialesInventarios[__${iterStat.index}__].material.precioMaterial}"
+                                           th:name="materialesInventarios[__${iterStat.index}__].material.precioMaterial"
+                                           step="0.01"
+                                           min="0"
+                                           readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Si no hay materiales -->
+                        <div class="no-materials" th:if="${inventario.materialesInventarios == null or inventario.materialesInventarios.empty}">
+                            <p>No hay materiales asociados a este inventario.</p>
                         </div>
 
                         <div class="form-buttons">

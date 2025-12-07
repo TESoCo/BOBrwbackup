@@ -115,6 +115,7 @@
                 <div class="form-content">
                     <form th:action="@{/inventarios/guardarInv}" method="post" th:object="${inventario}">
                         <input type="hidden" th:field="*{idUsuario.idUsuario}" />
+                        <input type="hidden" th:field="*{tipoInv}" value="INGRESO"/>
 
                         <div class="form-group">
                             <label>Usuario Actual:</label>
@@ -138,8 +139,8 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Observaciones:</label>
-                            <input type="text" th:field="*{unidadInv}">
+                            <label>Unidad de inventario (unidad de medida general:</label>
+                            <input type="text" th:field="*{unidadInv}" required>
                         </div>
 
                         <!-- 📌 Materiales -->

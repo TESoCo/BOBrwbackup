@@ -59,8 +59,19 @@ public class InventarioServicioImp implements InventarioServicio {
     @Override
     @Transactional(readOnly = true)
     public List<Inventario> buscarPorNombreGestor(String nombreGestor) {
-        return inventarioDao.findByIdUsuario_idUsuario(usuarioDao.findBynombreUsuario(nombreGestor).getIdUsuario() );
+        try {
+            Usuario usuario = usuarioDao.findBynombreUsuario(nombreGestor);
+            // Verificar si el usuario existe
+            if (usuario == null || usuario.getIdUsuario() == null) {
+                return Collections.emptyList(); // Retorna lista vacía si no existe
+            }
+            return inventarioDao.findByIdUsuario_idUsuario (usuario.getIdUsuario());
+        } catch (Exception e) {
+
+            return Collections.emptyList();
+        }
     }
+
 
     @Override
     @Transactional(readOnly = true)

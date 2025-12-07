@@ -283,7 +283,10 @@ public class ControladorContratistas {
     @GetMapping("/api/{id}")
     @ResponseBody
     public Contratista apiGet(@PathVariable Long id){
-        return contratistaServicio.encontrarPorId(id);
+        System.out.println("API llamada para ID: " + id); // ← AÑADE LOG
+        Contratista c = contratistaServicio.encontrarPorId(id);
+        System.out.println("Contratista encontrado: " + (c != null ? c.getIdContratista() : "null"));
+        return c;
     }
 
 

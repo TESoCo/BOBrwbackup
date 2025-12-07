@@ -6,6 +6,7 @@ import com.example.servicio.MaterialServicio;
 import com.example.servicio.ObraServicio;
 import com.example.servicio.UsuarioServicio;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -20,6 +21,7 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -69,25 +71,56 @@ public class ControladorInv {
         return "inventarios/crearInv";
     }
 
+    @Transactional
     @PostMapping("/guardarInv")
     public String guardarInv(@Valid Inventario inventario,
                              Errors errores,
                              Model model,
-                             @RequestParam("materialIds") List<Long> materialIds,
-                             @RequestParam("materialCantidades") List<Double> materialCantidades)
+                             @RequestParam(value = "idObra", required = false) Long obra, // ¡NUEVO PARÁMETRO!
+                             @RequestParam(value = "materialIds", required = false) List<Long> materialIds,
+                             @RequestParam(value = "materialCantidades", required = false) List<Double> materialCantidades)
     {
+
+
+// Obtener el usuario actualmente autenticado
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        Usuario usuarioLogeado = usuarioServicio.encontrarPorNombreUsuario(username);
+
+        model.addAttribute("usuario", usuarioLogeado); // ¡IMPORTANTE! Agregar el usuario
         model.addAttribute("obras", obraServicio.listaObra());
         model.addAttribute("materiales", materialServicio.listarTodos());
-
-
+        model.addAttribute("inventario", inventario);
 
         if (errores.hasErrors()) {
             // Determinar a qué vista regresar según si es nuevo registro o edición
             return (inventario.getIdInventario() == null) ? "inventarios/crearInv" : "inventarios/cambiarInv";
         }
 
-        // Handle materiales relationship
-        if (materialIds != null && materialCantidades != null) {
+        // Cargar la obra persistente desde la base de datos
+        if (obra != null) {
+            Obra obraPersistente = obraServicio.localizarObra(obra);
+            inventario.setIdObra(obraPersistente);
+        } else {
+            // Si no hay obra seleccionada, establecer como null
+            inventario.setIdObra(null);
+        }
+
+        // También asegurar que el usuario sea persistente
+        inventario.setIdUsuario(usuarioLogeado);
+
+
+        // Solo procesar nuevos materiales si se envían en el formulario
+        // Esto ocurre normalmente cuando se crea un nuevo inventario o se editan materiales existentes
+        if (materialIds != null && materialCantidades != null &&
+                materialIds.size() == materialCantidades.size()) {
+
+            // Si es una edición y se envían nuevos materiales, limpiar los existentes
+            if (inventario.getIdInventario() != null) {
+                inventario.getMaterialesInventarios().clear();
+            }
+
+            // Agregar los nuevos materiales
             for (int i = 0; i < materialIds.size(); i++) {
                 if (materialIds.get(i) != null) {
                     Material material = materialServicio.obtenerPorId(materialIds.get(i));
@@ -101,17 +134,71 @@ public class ControladorInv {
                 }
             }
         }
+        // Si no se envían materiales (edición sin cambiar materiales),
+        // se mantienen los materiales existentes automáticamente
 
-        // The inventario object already has the usuario set from the form
-        inventarioServicio.guardarInv(inventario);
+            // The inventario object already has the usuario set from the form
+            inventarioServicio.guardarInv(inventario);
 
-        return "inventarios/verInv";
+            return "redirect:/inventarios";
     }
 
+
+
+
+
     @GetMapping("/verInv")
-    public String verInventario(Model model) {
+    public String verInventario(@RequestParam(value = "tipoBusqueda", required = false) String tipoBusqueda,
+                                @RequestParam(value = "valorBusqueda", required = false) String valorBusqueda,
+                                Model model) {
+
+
         List<Inventario> inventarios = inventarioServicio.listaInventarios();
+
+        String error = null;
+
+        // Verificar si hay parámetros de búsqueda
+        if (tipoBusqueda != null && valorBusqueda != null && !valorBusqueda.trim().isEmpty()) {
+            // Realizar búsqueda según el tipo
+            switch (tipoBusqueda) {
+                case "inventarios.idUsuario.nombreUsuario":
+
+                    inventarios = inventarioServicio.buscarPorNombreGestor(valorBusqueda);
+
+                    break;
+                case "inventarios.idObra.nombreObra":
+                    inventarios = inventarioServicio.buscarPorNombreObra(valorBusqueda);
+
+                    break;
+                case "inventarios.fechaIngreso":
+                    inventarios = inventarioServicio.buscarPorFecha(valorBusqueda);
+
+                    break;
+                default:
+                    inventarios = inventarioServicio.listaInventarios();
+            }
+
+            if (inventarios.isEmpty()) {
+                error = "No se encontraron registros para el criterio de búsqueda '" + valorBusqueda + "'.";
+            }
+
+        } else {
+            // Si no hay búsqueda, mostrar todos
+            inventarios = inventarioServicio.listaInventarios();
+        }
+
+
+        // Pasar datos a la vista
         model.addAttribute("inventarios", inventarios);
+        if (error != null) {
+            model.addAttribute("error", error);
+        }
+
+        // Mantener los valores en el formulario para que se muestren
+        model.addAttribute("tipoBusquedaSeleccionado", tipoBusqueda);
+        model.addAttribute("valorBusquedaActual", valorBusqueda);
+
+
         return "inventarios/verInv";
     }
 
@@ -119,6 +206,7 @@ public class ControladorInv {
     public String cambiarInv(
             @RequestParam(value = "tipoBusqueda", required = false) String tipoBusqueda,
             @RequestParam(value = "valorBusqueda", required = false) String valorBusqueda,
+            @RequestParam(value = "id", required = false) Long id, // Nuevo parámetro
             Model model) {
 
         List<Inventario> inventarios;
@@ -126,27 +214,46 @@ public class ControladorInv {
 
         if (tipoBusqueda != null && valorBusqueda != null && !valorBusqueda.isEmpty()) {
             switch (tipoBusqueda) {
-                case "gestor":
+                case "inventarios.idUsuario.nombreUsuario":
+
                     inventarios = inventarioServicio.buscarPorNombreGestor(valorBusqueda);
+
                     break;
-                case "obra":
+                case "inventarios.idObra.nombreObra":
                     inventarios = inventarioServicio.buscarPorNombreObra(valorBusqueda);
+
                     break;
-                case "fecha":
+                case "inventarios.fechaIngreso":
                     inventarios = inventarioServicio.buscarPorFecha(valorBusqueda);
-                    if (inventarios.isEmpty()) {
-                        error = "No se encontraron resultados o formato de fecha inválido (Use YYYY-MM-DD)";
-                    }
+
                     break;
                 default:
                     inventarios = inventarioServicio.listaInventarios();
             }
+            if (inventarios.isEmpty()) {
+                error = "No se encontraron registros para el criterio de búsqueda '" + valorBusqueda + "'.";
+            }
+
         } else {
+            // Si no hay búsqueda, mostrar todos
             inventarios = inventarioServicio.listaInventarios();
         }
 
+        // Si hay un ID específico, cargar ese inventario para editar
+        Inventario inventarioParaEditar;
+        if (id != null) {
+            inventarioParaEditar = inventarioServicio.localizarInventarioPorId(id);
+        } else {
+            inventarioParaEditar = new Inventario();
+        }
+
         model.addAttribute("inventarios", inventarios);
-        model.addAttribute("inventario", new Inventario());
+        model.addAttribute("inventario", inventarioParaEditar);
+        // Mantener los valores en el formulario para que se muestren
+        model.addAttribute("tipoBusquedaSeleccionado", tipoBusqueda);
+        model.addAttribute("valorBusquedaActual", valorBusqueda);
+
+
         if (error != null) {
             model.addAttribute("error", error);
         }
@@ -154,15 +261,18 @@ public class ControladorInv {
         return "inventarios/cambiarInv";
     }
 
-    @GetMapping("/cambiarInv/{id_Inventario}")
+    @GetMapping("/cambiarInv/{idInventario}")
     public String editarInventario(
-            @PathVariable("id_Inventario") Long id,
+            @PathVariable("idInventario") Long id,
             Model model) {
+
         Inventario inventario = inventarioServicio.localizarInventarioPorId(id);
         model.addAttribute("inventario", inventario);
 
         List<Inventario> inventarios = inventarioServicio.listaInventarios();
         model.addAttribute("inventarios", inventarios);
+
+        model.addAttribute("obras", obraServicio.listaObra());
 
         return "inventarios/cambiarInv";
     }
