@@ -499,4 +499,22 @@ public class ControladorFotoDato {
         return fotoInfo;
     }
 
+
+    @GetMapping("/debug/mongo")
+    @ResponseBody
+    public Map<String, Object> debugMongo() {
+        Map<String, Object> info = new HashMap<>();
+        info.put("timestamp", new Date());
+
+        // Contar fotos en MySQL
+        long mysqlCount = fotoDatoServicio.cantidad();
+        info.put("mysql_fotos_count", mysqlCount);
+
+
+
+        return info;
+    }
+
+
+
 }

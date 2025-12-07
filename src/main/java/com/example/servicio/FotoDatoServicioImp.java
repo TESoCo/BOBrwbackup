@@ -52,6 +52,12 @@ public class FotoDatoServicioImp implements FotoDatoServicio{
     //MÉTODOS DE SOLO LECTURA - pueden mantener @Transactional(readOnly = true)
     @Override
     @Transactional(readOnly = true)
+    public int cantidad (){
+       return fotoDatoDao.findAll().size();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<FotoDato> listaFotoDatoAv (Avance avance) {
         return (List<FotoDato>) fotoDatoDao.findByIdAvance(avance);
     }

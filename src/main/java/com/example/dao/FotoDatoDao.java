@@ -4,12 +4,13 @@ import com.example.domain.Apu;
 import com.example.domain.Avance;
 import com.example.domain.FotoDato;
 import com.example.domain.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
 
 import java.time.LocalDate;
 import java.util.List;
 
-public interface FotoDatoDao extends CrudRepository<FotoDato, Long> {
+public interface FotoDatoDao extends JpaRepository<FotoDato, Long> {
 
     // Find by exact ID matches
     List<FotoDato> findByIdAvance(Avance idAvance);

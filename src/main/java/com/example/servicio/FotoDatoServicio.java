@@ -11,6 +11,8 @@ import java.util.List;
 
 public interface FotoDatoServicio {
 
+    public int cantidad ();
+
     public List<FotoDato> listaFotoDatoAv (Avance avance);
 
     void salvar(FotoDato fotoDato, MultipartFile archivo) throws IOException;
