@@ -4,434 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Material - Building Optimization Baseline</title>
+    <title>Gestión de Materiales - Building Optimization Baseline</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --secondary: #64748b;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --light: #f8fafc;
-            --dark: #1e293b;
-            --gray: #94a3b8;
-            --sidebar-width: 260px;
-            --header-height: 70px;
-            --border-radius: 8px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f1f5f9;
-            color: var(--dark);
-            line-height: 1.6;
-        }
-
-        /* Layout */
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--dark);
-            color: white;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .sidebar-header {
-            padding: 1.5rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-        }
-
-        .sidebar-header img {
-            height: 40px;
-            margin-right: 10px;
-        }
-
-        .sidebar-header h1 {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .nav-links {
-            list-style: none;
-            padding: 1rem 0;
-        }
-
-        .nav-links li {
-            margin-bottom: 0.2rem;
-        }
-
-        .nav-links a {
-            display: flex;
-            align-items: center;
-            padding: 0.8rem 1.5rem;
-            color: var(--gray);
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .nav-links a:hover, .nav-links a.active {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .nav-links i {
-            margin-right: 0.75rem;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Main content */
-        .main-content {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            padding: 2rem;
-        }
-
-        /* Header */
-        .header {
-            background: white;
-            box-shadow: var(--shadow);
-            padding: 1rem 2rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .user-menu {
-            display: flex;
-            align-items: center;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 0.75rem;
-            font-weight: bold;
-        }
-
-        /* Form Styles */
-        .form-container {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .form-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .form-title i {
-            color: var(--primary);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: var(--dark);
-        }
-
-        .form-input, .form-textarea, .form-select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .form-input:focus, .form-textarea:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .required::after {
-            content: " *";
-            color: var(--danger);
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--border-radius);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            text-decoration: none;
-            font-size: 1rem;
-        }
-
-        .btn i {
-            margin-right: 0.5rem;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-
-        .btn-secondary {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #475569;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #0da271;
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background: #e69008;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        /* Import Section */
-        .import-section {
-            border: 2px dashed #d1d5db;
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            text-align: center;
-            margin-bottom: 2rem;
-            transition: all 0.3s;
-        }
-
-        .import-section:hover {
-            border-color: var(--primary);
-        }
-
-        .import-section.dragover {
-            background-color: rgba(37, 99, 235, 0.05);
-            border-color: var(--primary);
-        }
-
-        .import-icon {
-            font-size: 3rem;
-            color: var(--primary);
-            margin-bottom: 1rem;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .file-label {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            background: var(--primary);
-            color: white;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .file-label:hover {
-            background: var(--primary-dark);
-        }
-
-        .file-name {
-            margin-top: 1rem;
-            color: var(--secondary);
-        }
-
-        .preview-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1.5rem;
-            display: none;
-        }
-
-        .preview-table th, .preview-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .preview-table th {
-            background-color: #f8fafc;
-            font-weight: 600;
-        }
-
-        .preview-table tr:hover {
-            background-color: #f8fafc;
-        }
-
-        .import-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-            margin-top: 1.5rem;
-            display: none;
-        }
-
-        /* Responsive */
-        @media (max-width: 992px) {
-            .sidebar {
-                width: 70px;
-                overflow: visible;
-            }
-
-            .sidebar-header h1, .nav-links span {
-                display: none;
-            }
-
-            .nav-links a {
-                justify-content: center;
-                padding: 1rem;
-            }
-
-            .nav-links i {
-                margin-right: 0;
-            }
-
-            .main-content {
-                margin-left: 70px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 1rem;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-
-            .import-actions {
-                flex-direction: column;
-            }
-        }
-
-        /* Validation styles */
-        .error-message {
-            color: var(--danger);
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-        }
-
-        .form-input.error, .form-textarea.error, .form-select.error {
-            border-color: var(--danger);
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .tab {
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            border-bottom-color: var(--primary);
-            color: var(--primary);
-            font-weight: 500;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/CSS/MATERIALES/crearMaterial.css}">
 </head>
 <body>
-<div class="app-container">
+<button id="menu-toggle" class="menu-toggle">
+    <i class="fas fa-bars"></i>
+</button>
+<div class="app-container" id="app-container">
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
@@ -439,47 +22,71 @@
             <h1>BOB</h1>
         </div>
         <ul class="nav-links">
-            <!-- Admin-only menu items -->
-            <div sec:authorize="hasRole('ADMIN')">
-                <li><a th:href="@{/dashboard}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+
+            <!-- Dashboard - Para todos los usuarios autenticados -->
+            <div sec:authorize="isAuthenticated()">
+                <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            </div>
+
+            <!-- Gestión de Usuarios - Solo con permisos de usuario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
                 <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
             </div>
 
-            <!-- Menu items for users with APU permissions -->
-            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU', 'VER_APU')">
-                <li><a th:href="@{/apu/inicioAPU}" class="active"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
+            <!-- Menu items for users with inventory permissions -->
+            <!-- Inventario - Con permisos de inventario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
+                <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
             </div>
 
-            <!-- Menu items for users with inventory permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_INVENTARIO', 'CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
-                <li><a th:href="@{/inventario}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
+            <!-- Materiales - Con permisos de material -->
+            <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
+                <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
+            </div>
+
+            <!-- APUs - Con permisos de APU -->
+            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
+                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
             </div>
 
             <!-- Menu items for users with progress permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_AVANCES', 'REGISTRAR_AVANCES')">
+            <!-- Avances - Con permisos de avance -->
+            <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
                 <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
             </div>
 
             <!-- Menu items for users with budget permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_OBRAS', 'GESTIONAR_OBRAS','LEER_OBRAS')">
-                <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-building"></i> <span>Obras</span></a></li>
+            <!-- Obras - Con permisos de obra -->
+            <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
+                <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
             </div>
 
             <!-- Supervisor and Admin menu items -->
-            <div sec:authorize="hasAnyRole('SUPERVISOR', 'ADMIN')">
-                <li><a th:href="@{/contratista}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+            <!-- Contratistas - Con permisos de contratista -->
+            <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
+                <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+            </div>
+            <!-- Proveedores - Con permisos de proveedor -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
                 <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
             </div>
 
             <!-- Menu items for users with report permissions -->
-            <div sec:authorize="hasAnyAuthority('VER_REPORTES', 'GENERAR_REPORTES')">
-                <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
-            </div>
+            <!-- Reportes - Para roles ADMIN y SUPERVISOR
+            <div sec:authorize="hasAnyRole('ADMIN', 'SUPERVISOR')">
+              <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
+            </div> -->
+
+            <!-- Fotodatos - Con permisos de fotodato
+            <div sec:authorize="hasAnyAuthority('CREAR_FOTODATO', 'EDITAR_FOTODATO')">
+              <li><a href="#"><i class="fas fa-camera"></i> <span>Fotodatos</span></a></li>
+            </div> -->
 
             <!-- Admin-only configuration -->
+            <!-- Configuración - Solo ADMIN
             <div sec:authorize="hasRole('ADMIN')">
-                <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
-            </div>
+              <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
+            </div> -->
 
             <li>
                 <form th:action="@{/logout}" method="post" id="logoutForm">
@@ -759,217 +366,239 @@
     </main>
 </div>
 
-<script>
-    // Funcionalidad de las tabs
-function cambiarTab(tabName) {
-    // Ocultar todos los contenidos de tabs
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
 
-    // Mostrar el tab seleccionado
-    document.getElementById(tabName + '-tab').classList.add('active');
+        // ==========================================================
+        // 1. INICIALIZACIÓN Y LÓGICA DEL MENÚ (COPIADO DEL BLOQUE ORIGINAL)
+        // ==========================================================
+        const toggleButton = document.getElementById('menu-toggle');
+        const appContainer = document.getElementById('app-container');
+        const sidebar = document.querySelector('.sidebar');
 
-    // Actualizar tabs activos
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-
-    document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
-}
-
-// Funcionalidad para la generación de materiales
-function resetGeneracion() {
-    document.getElementById('apuId').value = '';
-    document.getElementById('buscarApu').value = '';
-    // No recargar la página, solo limpiar los campos
-    const materialesGenerados = document.querySelector('#import-tab .table-container');
-    if (materialesGenerados) {
-        materialesGenerados.style.display = 'none';
-    }
-}
-
-// Búsqueda en tiempo real de APUs
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('JavaScript cargado correctamente');
-
-    const buscarApuInput = document.getElementById('buscarApu');
-    const apuSelect = document.getElementById('apuId');
-
-    if (buscarApuInput && apuSelect) {
-        let timeoutId;
-
-        buscarApuInput.addEventListener('input', function() {
-            clearTimeout(timeoutId);
-            const termino = this.value.trim();
-
-            if (termino.length >= 3) {
-                timeoutId = setTimeout(() => {
-                    buscarAPUs(termino);
-                }, 500);
-            } else if (termino.length === 0) {
-                // Resetear a lista completa
-                cargarAPUsCompletos();
-            }
-        });
-    }
-
-    // Inicializar la tab activa basada en el hash de la URL
-    const hash = window.location.hash.replace('#', '');
-    if (hash) {
-        cambiarTab(hash);
-    }
-});
-
-function buscarAPUs(termino) {
-    console.log('Buscando APUs con término:', termino);
-
-    fetch(`/material/buscarApu?termino=${encodeURIComponent(termino)}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
-            }
-            return response.json();
-        })
-        .then(apus => {
-            console.log('APUs encontrados:', apus);
-            const apuSelect = document.getElementById('apuId');
-            // Guardar selección actual
-            const valorActual = apuSelect.value;
-
-            // Limpiar opciones excepto la primera
-            while (apuSelect.options.length > 1) {
-                apuSelect.remove(1);
-            }
-
-            // Agregar nuevos resultados
-            apus.forEach(apu => {
-                const option = document.createElement('option');
-                option.value = apu.idAPU;
-                option.textContent = apu.nombreAPU;
-                apuSelect.appendChild(option);
+        if (toggleButton && appContainer && sidebar) {
+            // Función principal: Alternar la clase
+            toggleButton.addEventListener('click', function() {
+                appContainer.classList.toggle('sidebar-active');
             });
 
-            // Restaurar selección si existe en nuevos resultados
-            if (valorActual && apuSelect.querySelector(`option[value="${valorActual}"]`)) {
-                apuSelect.value = valorActual;
-            }
-        })
-        .catch(error => {
-            console.error('Error buscando APUs:', error);
-            alert('Error al buscar APUs. Por favor, recargue la página.');
-        });
-}
-
-function cargarAPUsCompletos() {
-    // Recargar solo si es necesario, pero mejor no recargar la página completa
-    console.log('Cargando lista completa de APUs');
-    // En una implementación real, harías otra llamada al servidor
-    // Por ahora, simplemente limpiaremos el campo de búsqueda
-    document.getElementById('buscarApu').value = '';
-}
-
-// Selección/deselección masiva
-function toggleAllCheckboxes(selectAll) {
-    const checkboxes = document.querySelectorAll('#guardarMaterialesForm input[name="seleccionados"]');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = selectAll;
-    });
-    console.log(`${selectAll ? 'Seleccionados' : 'Deseleccionados'} ${checkboxes.length} materiales`);
-}
-
-// Manejar el envío del formulario de guardado
-document.addEventListener('DOMContentLoaded', function() {
-    const guardarForm = document.getElementById('guardarMaterialesForm');
-
-    if (guardarForm) {
-        guardarForm.addEventListener('submit', function(e) {
-            console.log('📤 Enviando formulario de guardado...');
-
-            // Contar checkboxes seleccionados
-            const checkboxes = document.querySelectorAll('input[name="seleccionados"]:checked');
-            console.log('✅ Materiales seleccionados para guardar: ' + checkboxes.length);
-
-            if (checkboxes.length === 0) {
-                e.preventDefault();
-                alert('⚠️ Por favor selecciona al menos un material para guardar');
-                return;
-            }
-
-            // Validar precios
-            let preciosValidos = true;
-            const precios = document.querySelectorAll('input[name="precios"]');
-
-            precios.forEach((input, index) => {
-                const checkbox = input.closest('tr').querySelector('input[name="seleccionados"]');
-                if (checkbox.checked) {
-                    const precio = parseFloat(input.value);
-                    if (isNaN(precio) || precio < 0) {
-                        preciosValidos = false;
-                        input.style.borderColor = 'var(--danger)';
-                    } else {
-                        input.style.borderColor = '';
+            // Función para cerrar el menú si se hace clic fuera del mismo
+            appContainer.addEventListener('click', function(e) {
+                // Se verifica si la ventana es pequeña y si el menú está activo
+                if (window.innerWidth <= 768 &&
+                    appContainer.classList.contains('sidebar-active')) {
+                    // Si el clic NO fue en el botón de toggle Y NO fue dentro del sidebar
+                    if (!toggleButton.contains(e.target) && !sidebar.contains(e.target)) {
+                        appContainer.classList.remove('sidebar-active');
                     }
                 }
             });
+        }
 
-            if (!preciosValidos) {
+        // ==========================================================
+        // 2. LÓGICA DE BÚSQUEDA Y MANEJO DE APUs (MOVIDO DE BLOQUES DUPLICADOS)
+        // ==========================================================
+
+        console.log('JavaScript cargado correctamente'); // Mensaje de carga
+
+        const buscarApuInput = document.getElementById('buscarApu');
+        const apuSelect = document.getElementById('apuId');
+
+        if (buscarApuInput && apuSelect) {
+            let timeoutId;
+
+            buscarApuInput.addEventListener('input', function() {
+                clearTimeout(timeoutId);
+                const termino = this.value.trim();
+
+                if (termino.length >= 3) {
+                    timeoutId = setTimeout(() => {
+                        buscarAPUs(termino); // Llama a la función definida abajo
+                    }, 500);
+                } else if (termino.length === 0) {
+                    // Resetear a lista completa
+                    cargarAPUsCompletos(); // Llama a la función definida abajo
+                }
+            });
+        }
+
+        // ==========================================================
+        // 3. MANEJO DEL FORMULARIO DE GUARDADO (MOVIDO DE BLOQUES DUPLICADOS)
+        // ==========================================================
+
+        const guardarForm = document.getElementById('guardarMaterialesForm');
+
+        if (guardarForm) {
+            guardarForm.addEventListener('submit', function(e) {
+                console.log('📤 Enviando formulario de guardado...');
+
+                // Contar checkboxes seleccionados
+                const checkboxes = document.querySelectorAll('input[name="seleccionados"]:checked');
+                console.log('✅ Materiales seleccionados para guardar: ' + checkboxes.length);
+
+                if (checkboxes.length === 0) {
+                    e.preventDefault();
+                    alert('⚠️ Por favor selecciona al menos un material para guardar');
+                    return;
+                }
+
+                // Validar precios
+                let preciosValidos = true;
+                const precios = document.querySelectorAll('input[name="precios"]');
+
+                precios.forEach((input, index) => {
+                    const checkbox = input.closest('tr').querySelector('input[name="seleccionados"]');
+                    if (checkbox.checked) {
+                        const precio = parseFloat(input.value);
+                        if (isNaN(precio) || precio < 0) {
+                            preciosValidos = false;
+                            input.style.borderColor = 'var(--danger)';
+                        } else {
+                            input.style.borderColor = '';
+                        }
+                    }
+                });
+
+                if (!preciosValidos) {
+                    e.preventDefault();
+                    alert('❌ Por favor ingresa valores válidos para todos los precios seleccionados');
+                    return;
+                }
+
+                console.log('🚀 Formulario válido, enviando...');
+            });
+        }
+
+        // ==========================================================
+        // 4. LÓGICA DE TABS Y VERIFICACIÓN DE RECARGA
+        // ==========================================================
+
+        // Inicializar la tab activa basada en el hash de la URL
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+            cambiarTab(hash);
+        }
+
+        // Verificar si hay materiales generados (después de recarga)
+        const materialesGenerados = document.querySelector('#import-tab .table-container');
+        const tieneMaterialesGenerados = materialesGenerados && materialesGenerados.querySelector('tbody tr');
+
+        if (tieneMaterialesGenerados) {
+            console.log('✅ Materiales generados detectados, mostrando pestaña de importación');
+            cambiarTab('import');
+        } else {
+            // Usar la pestaña del servidor si está definida
+            const serverTab = '[[${tabActiva}]]';
+            if (serverTab && serverTab !== 'single') {
+                cambiarTab(serverTab);
+            }
+        }
+
+    }); // FIN del ÚNICO document.addEventListener('DOMContentLoaded')
+
+
+    // ==========================================================
+    // 5. FUNCIONES GLOBALES (Deben estar fuera del DOMContentLoaded)
+    // ==========================================================
+
+    // Funcionalidad de las tabs (DEJALA FUERA, YA QUE ES LLAMADA DESDE EL HTML 'onclick')
+    function cambiarTab(tabName) {
+        // Ocultar todos los contenidos de tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Mostrar el tab seleccionado
+        document.getElementById(tabName + '-tab').classList.add('active');
+
+        // Actualizar tabs activos
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+    }
+
+    // Funcionalidad para la generación de materiales (DEJALA FUERA)
+    function resetGeneracion() {
+        document.getElementById('apuId').value = '';
+        document.getElementById('buscarApu').value = '';
+        // No recargar la página, solo limpiar los campos
+        const materialesGenerados = document.querySelector('#import-tab .table-container');
+        if (materialesGenerados) {
+            materialesGenerados.style.display = 'none';
+        }
+    }
+
+    // Búsqueda de APUs (DEJALA FUERA, ya que es llamada en el input event)
+    function buscarAPUs(termino) {
+        console.log('Buscando APUs con término:', termino);
+        // ... (resto de la lógica fetch) ...
+        fetch(`/material/buscarApu?termino=${encodeURIComponent(termino)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(apus => {
+                console.log('APUs encontrados:', apus);
+                const apuSelect = document.getElementById('apuId');
+                // Guardar selección actual
+                const valorActual = apuSelect.value;
+
+                // Limpiar opciones excepto la primera
+                while (apuSelect.options.length > 1) {
+                    apuSelect.remove(1);
+                }
+
+                // Agregar nuevos resultados
+                apus.forEach(apu => {
+                    const option = document.createElement('option');
+                    option.value = apu.idAPU;
+                    option.textContent = apu.nombreAPU;
+                    apuSelect.appendChild(option);
+                });
+
+                // Restaurar selección si existe en nuevos resultados
+                if (valorActual && apuSelect.querySelector(`option[value="${valorActual}"]`)) {
+                    apuSelect.value = valorActual;
+                }
+            })
+            .catch(error => {
+                console.error('Error buscando APUs:', error);
+                alert('Error al buscar APUs. Por favor, recargue la página.');
+            });
+    }
+
+    function cargarAPUsCompletos() {
+        // Recargar solo si es necesario, pero mejor no recargar la página completa
+        console.log('Cargando lista completa de APUs');
+        document.getElementById('buscarApu').value = '';
+    }
+
+    // Selección/deselección masiva (DEJALA FUERA)
+    function toggleAllCheckboxes(selectAll) {
+        const checkboxes = document.querySelectorAll('#guardarMaterialesForm input[name="seleccionados"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll;
+        });
+        console.log(`${selectAll ? 'Seleccionados' : 'Deseleccionados'} ${checkboxes.length} materiales`);
+    }
+
+    // Validación del formulario de generación (DEJALA FUERA)
+    const generarMaterialesForm = document.getElementById('generarMaterialesForm');
+    if (generarMaterialesForm) {
+        generarMaterialesForm.addEventListener('submit', function(e) {
+            const apuId = document.getElementById('apuId').value;
+            if (!apuId) {
                 e.preventDefault();
-                alert('❌ Por favor ingresa valores válidos para todos los precios seleccionados');
+                alert('Por favor seleccione un APU para generar materiales');
                 return;
             }
-
-            console.log('🚀 Formulario válido, enviando...');
+            console.log('Generando materiales para APU ID:', apuId);
         });
     }
-});
-
-// Selección/deselección masiva
-function toggleAllCheckboxes(selectAll) {
-    const checkboxes = document.querySelectorAll('input[name="seleccionados"]');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = selectAll;
-    });
-    console.log((selectAll ? '✅ Seleccionados' : '❌ Deseleccionados') + ' todos los materiales');
-}
-
-// Validación del formulario de generación
-const generarMaterialesForm = document.getElementById('generarMaterialesForm');
-if (generarMaterialesForm) {
-    generarMaterialesForm.addEventListener('submit', function(e) {
-        const apuId = document.getElementById('apuId').value;
-        if (!apuId) {
-            e.preventDefault();
-            alert('Por favor seleccione un APU para generar materiales');
-            return;
-        }
-        console.log('Generando materiales para APU ID:', apuId);
-    });
-}
-
-// Función para probar que las tabs funcionan
-function probarTabs() {
-    console.log('Función probarTabs ejecutada');
-    console.log('Tabs encontrados:', document.querySelectorAll('.tab').length);
-    console.log('Contenidos de tabs encontrados:', document.querySelectorAll('.tab-content').length);
-}
-    // ✅ SOLUCIÓN SIMPLE: Verificar si hay materiales generados y mostrar esa pestaña
-document.addEventListener('DOMContentLoaded', function() {
-    // Verificar si hay materiales generados (después de recarga)
-    const materialesGenerados = document.querySelector('#import-tab .table-container');
-    const tieneMaterialesGenerados = materialesGenerados && materialesGenerados.querySelector('tbody tr');
-
-    if (tieneMaterialesGenerados) {
-        console.log('✅ Materiales generados detectados, mostrando pestaña de importación');
-        cambiarTab('import');
-    } else {
-        // Usar la pestaña del servidor si está definida
-        const serverTab = '[[${tabActiva}]]';
-        if (serverTab && serverTab !== 'single') {
-            cambiarTab(serverTab);
-        }
-    }
-});
 </script>
 </body>
 </html>

@@ -175,38 +175,64 @@ public class ControladorFotoDato {
 
     // ============ NUEVOS MÉTODOS PARA PDF ============
 
-    // 1. PDF de una sola foto
+    // 1. PDF de una sola foto CON INFORMACIÓN
     @GetMapping("/pdf/foto/{idFotoDato}")
     @ResponseBody
     public ResponseEntity<byte[]> generarPDFFoto(@PathVariable Long idFotoDato) {
         try {
-            // Obtener FotoDato con toda su información
+            // Obtener FotoDato
             FotoDato fotoDato = fotoDatoServicio.localizarFotoDato(idFotoDato);
-            if (fotoDato == null) {
+            if (fotoDato == null || fotoDato.getGridfsFileId() == null) {
                 return ResponseEntity.notFound().build();
             }
 
-            // Preparar datos para enviar a FastAPI
-            Map<String, Object> datosPDF = prepararDatosFotoParaPDF(fotoDato);
+            // Preparar información de la foto
+            Map<String, Object> fotoInfo = prepararInfoFotoParaFastAPI(fotoDato);
 
-            // Enviar a FastAPI y obtener PDF
-            byte[] pdfBytes = enviarAFastAPI("/pdf/foto-completa", datosPDF);
+            // Crear lista con una sola foto
+            List<Map<String, Object>> fotosList = new ArrayList<>();
+            fotosList.add(fotoInfo);
 
-            // Devolver PDF
+            // Crear request body
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("fotos", fotosList);
+
+            // Enviar a FastAPI
+            RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("filename",
-                    "fotodato_" + idFotoDato + ".pdf");
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
+            String fastApiUrl = "http://localhost:8000/pdf/fotos-con-info";
+            ResponseEntity<byte[]> response = restTemplate.postForEntity(fastApiUrl, request, byte[].class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                byte[] pdfBytes = response.getBody();
+
+                HttpHeaders responseHeaders = new HttpHeaders();
+                responseHeaders.setContentType(MediaType.APPLICATION_PDF);
+
+                String nombreArchivo = "foto_" + idFotoDato;
+                if (fotoDato.getNombreArchivo() != null) {
+                    nombreArchivo = fotoDato.getNombreArchivo().replaceAll("[^a-zA-Z0-9.]", "_");
+                }
+
+                responseHeaders.setContentDispositionFormData("filename",
+                        nombreArchivo + ".pdf");
+
+                return new ResponseEntity<>(pdfBytes, responseHeaders, HttpStatus.OK);
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(("Error generando PDF desde FastAPI").getBytes());
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error generando PDF: " + e.getMessage()).getBytes());
         }
     }
 
-    // 2. PDF de todas las fotos de una obra
+    // 2. PDF de todas las fotos de una obra CON INFORMACIÓN
     @GetMapping("/pdf/obra/{idObra}")
     @ResponseBody
     public ResponseEntity<byte[]> generarPDFObra(@PathVariable Long idObra) {
@@ -219,30 +245,59 @@ public class ControladorFotoDato {
                         .body("No se encontraron fotos para esta obra".getBytes());
             }
 
-            // Preparar datos para enviar a FastAPI
-            Map<String, Object> datosPDF = prepararDatosObraParaPDF(idObra, fotos);
+            // Preparar la lista de fotos con toda la información
+            List<Map<String, Object>> fotosConInfo = new ArrayList<>();
 
-            // Enviar a FastAPI y obtener PDF
-            byte[] pdfBytes = enviarAFastAPI("/pdf/obra-completa", datosPDF);
-
-            // Devolver PDF
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-
-            // Nombre del archivo con el nombre de la obra (si está disponible)
-            String nombreObra = "obra_" + idObra;
-            if (!fotos.isEmpty() && fotos.get(0).getIdAvance() != null
-                    && fotos.get(0).getIdAvance().getIdObra() != null) {
-                nombreObra = fotos.get(0).getIdAvance().getIdObra().getNombreObra()
-                        .replace(" ", "_");
+            for (FotoDato foto : fotos) {
+                if (foto.getGridfsFileId() != null) {
+                    Map<String, Object> fotoInfo = prepararInfoFotoParaFastAPI(foto);
+                    fotosConInfo.add(fotoInfo);
+                }
             }
 
-            headers.setContentDispositionFormData("filename",
-                    "reporte_" + nombreObra + ".pdf");
+            if (fotosConInfo.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("No hay fotos con IDs de GridFS válidos".getBytes());
+            }
 
-            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            // Crear el request body para FastAPI
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("fotos", fotosConInfo);
 
+            // Enviar a FastAPI
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+
+            String fastApiUrl = "http://localhost:8000/pdf/fotos-con-info";
+            ResponseEntity<byte[]> response = restTemplate.postForEntity(fastApiUrl, request, byte[].class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                byte[] pdfBytes = response.getBody();
+
+                HttpHeaders responseHeaders = new HttpHeaders();
+                responseHeaders.setContentType(MediaType.APPLICATION_PDF);
+
+                // Nombre del archivo
+                String nombreObra = "obra_" + idObra;
+                if (!fotos.isEmpty() && fotos.get(0).getIdAvance() != null
+                        && fotos.get(0).getIdAvance().getIdObra() != null) {
+                    nombreObra = fotos.get(0).getIdAvance().getIdObra().getNombreObra()
+                            .replaceAll("[^a-zA-Z0-9]", "_");
+                }
+
+                responseHeaders.setContentDispositionFormData("filename",
+                        "reporte_completo_" + nombreObra + ".pdf");
+
+                return new ResponseEntity<>(pdfBytes, responseHeaders, HttpStatus.OK);
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(("Error generando PDF desde FastAPI").getBytes());
+            }
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(("Error generando PDF: " + e.getMessage()).getBytes());
         }
@@ -352,14 +407,17 @@ public class ControladorFotoDato {
     private byte[] enviarAFastAPI(String endpoint, Map<String, Object> datos) {
         try {
             RestTemplate restTemplate = new RestTemplate();
-
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(datos, headers);
 
-            // URL de tu servicio FastAPI (ajusta según tu configuración)
+            // Reemplazar placeholders en la URL
             String fastApiUrl = "http://localhost:8000" + endpoint;
+
+            // Si la URL contiene {file_id}, reemplazarlo con el valor de datos
+            if (fastApiUrl.contains("{file_id}") && datos.containsKey("gridfsFileId")) {
+                fastApiUrl = fastApiUrl.replace("{file_id}", datos.get("gridfsFileId").toString());
+            }
 
             ResponseEntity<byte[]> response = restTemplate.postForEntity(
                     fastApiUrl,
@@ -372,10 +430,66 @@ public class ControladorFotoDato {
             } else {
                 throw new RuntimeException("Error en FastAPI: " + response.getStatusCode());
             }
-
         } catch (Exception e) {
             throw new RuntimeException("Error comunicándose con FastAPI: " + e.getMessage(), e);
         }
+    }
+
+    private Map<String, Object> prepararInfoFotoParaFastAPI(FotoDato foto) {
+        Map<String, Object> fotoInfo = new HashMap<>();
+
+        // Información básica
+        fotoInfo.put("gridfs_id", foto.getGridfsFileId());
+        fotoInfo.put("nombre_archivo", foto.getNombreArchivo());
+
+        // Fecha
+        if (foto.getFechaFoto() != null) {
+            fotoInfo.put("fecha_foto", foto.getFechaFoto().toString());
+        }
+
+        // Coordenadas
+        if (foto.getCooNFoto() != null) {
+            fotoInfo.put("coordenadas_n", foto.getCooNFoto());
+        }
+        if (foto.getCooEFoto() != null) {
+            fotoInfo.put("coordenadas_e", foto.getCooEFoto());
+        }
+
+        // Información del avance (si existe)
+        if (foto.getIdAvance() != null) {
+            Avance avance = foto.getIdAvance();
+
+            // Información de la obra
+            if (avance.getIdObra() != null) {
+                fotoInfo.put("nombre_obra", avance.getIdObra().getNombreObra());
+            }
+
+            // Información del usuario
+            if (avance.getIdUsuario() != null) {
+                fotoInfo.put("nombre_usuario", avance.getIdUsuario().getNombreUsuario());
+            }
+
+            // Información de la actividad (APU)
+            if (avance.getIdApu() != null) {
+                fotoInfo.put("descripcion_actividad", avance.getIdApu().getNombreAPU());
+            }
+
+            // Información adicional del avance
+            fotoInfo.put("id_avance", avance.getIdAvance());
+            if (avance.getFechaAvance() != null) {
+                fotoInfo.put("fecha_avance", avance.getFechaAvance().toString());
+            }
+            if (avance.getCantEjec() != null) {
+                fotoInfo.put("cantidad_ejecutada", avance.getCantEjec());
+            }
+        }
+
+        // Información adicional del FotoDato
+        fotoInfo.put("id_fotodato", foto.getIdFotoDato());
+        fotoInfo.put("tamanio_archivo", foto.getTamanioArchivo());
+        fotoInfo.put("tipo_mime", foto.getTipoMime());
+
+        return fotoInfo;
     }
 
 }

@@ -197,11 +197,18 @@
                     <span th:text="${'N: ' + avance.idObra.cooNObra + ', E: ' + avance.idObra.cooEObra}"></span>
                 </div>
             </div>
-            <!-- Botón para descargar PDF de toda la obra -->
-            <a href="/fotodatos/pdf/obra/${avance.idObra.idObra}"
-               class="btn btn-success" target="_blank">
-                📋 Reporte PDF de toda la obra
-            </a>
+
+            <!-- BOTÓN PARA DESCARGAR PDF - AGREGAR AQUÍ -->
+            <div style="margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+                <a th:href="@{/fotodatos/pdf/obra/{idObra}(idObra=${avance.idObra.idObra})}"
+                   class="btn btn-success" target="_blank">
+                    <i class="fas fa-file-pdf"></i> Descargar PDF con todas las fotos de esta obra
+                </a>
+                <small style="display: block; color: #6b7280; margin-top: 5px;">
+                    Genera un PDF con todas las fotos asociadas a esta obra
+                </small>
+            </div>
+
         </div>
 
         <!-- Información de la Actividad -->
@@ -444,6 +451,14 @@
                                        class="btn btn-sm btn-secondary" style="flex: 1; text-align: center;">
                                         <i class="fas fa-eye"></i> Ver
                                     </a>
+
+                                    <!-- Botón para PDF de esta foto -->
+                                    <a th:href="@{/fotodatos/pdf/foto/{idFotoDato}(idFotoDato=${foto.idFotoDato})}"
+                                       class="btn btn-sm btn-primary"
+                                       style="flex: 1; text-align: center;" target="_blank">
+                                        <i class="fas fa-file-pdf"></i> PDF
+                                    </a>
+
                                     <a th:href="@{/fotodatos/eliminar/} + ${foto.idFotoDato}"
                                        class="btn btn-sm btn-danger" style="flex: 1; text-align: center;"
                                        onclick="return confirm('¿Está seguro de eliminar esta foto? Esta acción no se puede deshacer.')">

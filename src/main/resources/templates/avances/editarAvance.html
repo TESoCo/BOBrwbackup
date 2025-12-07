@@ -180,16 +180,18 @@
                 <input type="hidden" name="idUsuario" th:value="${avance.idUsuario}">
 
                 <!-- Sección de Fotos -->
+                <!--
                 <div class="form-group">
                     <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
                         <i class="fas fa-camera"></i> Fotos del Avance
                         <span th:if="${fotos != null and !fotos.empty}"
                               style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem;">
-            [[${fotos.size()}]]
-        </span>
+                                [[${fotos.size()}]]
+                        </span>
                     </h3>
-
+                    -->
                     <!-- Nueva sección para agregar foto -->
+                    <!--
                     <div class="new-photo-section" style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
                         <h4 style="margin-bottom: 15px; color: #374151; display: flex; align-items: center; gap: 10px;">
                             <i class="fas fa-plus-circle"></i> Agregar Nueva Foto
@@ -218,15 +220,19 @@
                                     <i class="fas fa-redo"></i> Volver a Capturar
                                 </button>
                             </div>
+                            -->
 
                             <!-- Vista previa de foto capturada -->
+                    <!--
                             <div id="photoPreview" style="display: none; text-align: center; margin: 20px 0;">
                                 <h4>Vista Previa de la Foto</h4>
                                 <img id="capturedImage" style="max-width: 100%; max-height: 300px; border: 2px solid #10b981; border-radius: 8px;">
                             </div>
                         </div>
+                        -->
 
                         <!-- Input para archivo de foto -->
+                    <!--
                         <div class="file-upload-section" style="margin-top: 15px;">
                             <div class="form-group">
                                 <label><i class="fas fa-upload"></i> Subir archivo de foto:</label>
@@ -234,13 +240,16 @@
                                 <small class="text-muted">Formatos aceptados: JPG, PNG, JPEG (Máximo 8MB)</small>
                             </div>
                         </div>
-
+-->
                         <!-- Información de foto a guardar -->
+                    <!--
                         <input type="hidden" id="photoBase64" name="photoBase64">
                         <input type="hidden" id="photoCooN" name="photoCooN">
                         <input type="hidden" id="photoCooE" name="photoCooE">
-
+ -->
                         <!-- Botones de acción -->
+
+                    <!--
                         <div class="quick-actions" style="display: flex; gap: 10px; margin-top: 15px;">
                             <button type="button" id="toggleCameraBtn" class="btn btn-primary">
                                 <i class="fas fa-camera"></i> Tomar Foto con Cámara
@@ -250,8 +259,11 @@
                             </button>
                         </div>
                     </div>
+                -->
+
 
                     <!-- GALERÍA DE FOTOS EXISTENTES -->
+                <!--
                     <div th:if="${fotos != null and !fotos.empty}" style="margin-top: 2rem;">
                         <h4 style="color: #374151; margin-bottom: 1rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 10px;">
                             <i class="fas fa-images"></i> Fotos Existentes
@@ -294,8 +306,9 @@
                             </div>
                         </div>
                     </div>
-
+                -->
                     <!-- MENSAJE SI NO HAY FOTOS -->
+                <!--
                     <div th:if="${fotos == null or fotos.empty}"
                          style="text-align: center; padding: 2rem; color: #6c757d; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6; margin-top: 20px;">
                         <i class="fas fa-camera" style="font-size: 3rem; margin-bottom: 1rem; color: #adb5bd;"></i>
@@ -305,6 +318,8 @@
                         </p>
                     </div>
                 </div>
+-->
+
 
                 <!-- Submit Button -->
                 <button type="submit" class="btn btn-primary">

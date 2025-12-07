@@ -273,4 +273,28 @@
     .detail-grid {
         grid-template-columns: 1fr;
     }
+
+    /* Estilo para botones PDF */
+    .btn-pdf {
+        background: #dc3545;
+        color: white;
+        border: none;
+    }
+
+    .btn-pdf:hover {
+        background: #c82333;
+        color: white;
+    }
+
+    .btn-pdf-obra {
+        background: #28a745;
+        color: white;
+        border: none;
+    }
+
+    .btn-pdf-obra:hover {
+        background: #218838;
+        color: white;
+    }
+
 }
