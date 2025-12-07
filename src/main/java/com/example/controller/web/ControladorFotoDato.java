@@ -5,6 +5,7 @@ import com.example.domain.FotoDato;
 import com.example.servicio.AvanceServicio;
 import com.example.servicio.FotoDatoServicio;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,6 +27,10 @@ public class ControladorFotoDato {
 
     @Autowired
     private AvanceServicio avanceServicio;
+
+    // Variable de entorno para la URL del servicio FastAPI
+    @Value("${fastapi.url:http://localhost:8000}")
+    private String fastApiUrl;
 
     // Mostrar formulario para capturar foto
     @GetMapping("/capturar/{idAvance}")
@@ -204,8 +209,10 @@ public class ControladorFotoDato {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
-            String fastApiUrl = "http://localhost:8000/pdf/fotos-con-info";
-            ResponseEntity<byte[]> response = restTemplate.postForEntity(fastApiUrl, request, byte[].class);
+            // Usar la variable de entorno para construir la URL
+            String pdfEndpoint = fastApiUrl + "/pdf/fotos-con-info";
+
+            ResponseEntity<byte[]> response = restTemplate.postForEntity(pdfEndpoint, request, byte[].class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 byte[] pdfBytes = response.getBody();
@@ -271,8 +278,8 @@ public class ControladorFotoDato {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
-            String fastApiUrl = "http://localhost:8000/pdf/fotos-con-info";
-            ResponseEntity<byte[]> response = restTemplate.postForEntity(fastApiUrl, request, byte[].class);
+            String pdfEndpoint = fastApiUrl + "/pdf/fotos-con-info";
+            ResponseEntity<byte[]> response = restTemplate.postForEntity(pdfEndpoint, request, byte[].class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 byte[] pdfBytes = response.getBody();
@@ -411,8 +418,8 @@ public class ControladorFotoDato {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(datos, headers);
 
-            // Reemplazar placeholders en la URL
-            String fastApiUrl = "http://localhost:8000" + endpoint;
+            // Construir URL completa usando la variable de entorno
+            String fullUrl = fastApiUrl + endpoint;
 
             // Si la URL contiene {file_id}, reemplazarlo con el valor de datos
             if (fastApiUrl.contains("{file_id}") && datos.containsKey("gridfsFileId")) {
