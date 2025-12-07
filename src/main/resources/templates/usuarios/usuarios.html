@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Usuarios - BOB</title>
-    <link rel="stylesheet" th:href="@{/CSS/USUARIOS/usuarios.css}"/>
+    <link rel="stylesheet" th:href="@{CSS/USUARIOS/usuarios.css}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
@@ -40,7 +40,7 @@
 
             <!-- Materiales - Con permisos de material -->
             <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
-                <li><a th:href="@{/material/inicioMAterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
+                <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
             </div>
 
             <!-- APUs - Con permisos de APU -->
@@ -63,11 +63,11 @@
             <!-- Supervisor and Admin menu items -->
             <!-- Contratistas - Con permisos de contratista -->
             <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
-                <li><a th:href="@{/contratista}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+                <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
             </div>
             <!-- Proveedores - Con permisos de proveedor -->
             <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
-                <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
+                <li><a href="/proveedores"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
             </div>
 
             <!-- Menu items for users with report permissions -->

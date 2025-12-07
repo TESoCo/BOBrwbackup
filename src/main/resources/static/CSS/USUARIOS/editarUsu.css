@@ -398,3 +398,11 @@
 .app-container.sidebar-active .sidebar {
     transform: translateX(0) !important; /* Trae el sidebar de -100% a 0 */
 }
+
+.sidebar {
+  overflow-y: hidden;
+}
+
+.nav-links {
+  overflow-y: visible;
+}

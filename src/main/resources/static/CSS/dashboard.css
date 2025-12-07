@@ -461,3 +461,11 @@ body {
   filter: blur(2px);
   pointer-events: none;
 }
+
+.sidebar {
+  overflow-y: hidden;
+}
+
+.nav-links {
+  overflow-y: visible;
+}

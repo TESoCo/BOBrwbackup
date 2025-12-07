@@ -317,7 +317,7 @@ img {
     }
 
     /* 3. MOSTRAR EL SIDEBAR AL APLICAR CLASE JS */
-    .app-container.sidebar-collapsed .sidebar {
+    .app-container.sidebar-active .sidebar {
         left: 0;
     }
 
@@ -367,7 +367,7 @@ img {
         align-items: center;
     }
 
-    .app-container.sidebar-collapsed .main-content {
+    .app-container.sidebar-active .main-content {
         /* Aplicar desenfoque al contenido principal */
         filter: blur(3px);
         /* Asegurar que la transición sea suave */
