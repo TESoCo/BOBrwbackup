@@ -31,6 +31,8 @@ public class AIService {
             System.out.println("❌ OpenRouter falló: " + e.getMessage());
         }
 
+
+
         // 2° Intento: Gemini (nueva opción)
         try {
             System.out.println("🔄 2° Intentando Gemini...");
