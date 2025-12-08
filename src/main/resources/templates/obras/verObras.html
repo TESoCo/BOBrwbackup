@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="${Editando ? 'Editar Obra: ' + obra.NombreObra : 'Detalle de Obra: ' + obra.NombreObra}"></title>
+  <title th:text="${Editando ? 'Editar Obra: ' + obra.nombreObra : 'Detalle de Obra: ' + obra.nombreObra}"></title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -68,7 +68,7 @@
     <div class="header">
       <div>
         <h2 th:text="${Editando ? 'Editar Obra' : 'Detalle de Obra'}"><i class="fas fa-building"></i> Detalle de Obra</h2>
-        <p th:text="${Editando ? 'Modificando proyecto ID: ' + obra.idObra : 'Información completa del proyecto ' + obra.NombreObra}"></p>
+        <p th:text="${Editando ? 'Modificando proyecto ID: ' + obra.idObra : 'Información completa del proyecto ' + obra.nombreObra}"></p>
       </div>
       <div class="user-menu">
         <div class="user-avatar">
@@ -98,7 +98,7 @@
       </a>
 
       <div th:unless="${Editando}">
-        <a th:href="@{/obras/editar/} + ${obra.idObra}"
+        <a th:href="@{/obras/cambiar/} + ${obra.idObra}"
            class="btn btn-warning"
            sec:authorize="hasAuthority('EDITAR_OBRA')">
           <i class="fas fa-edit"></i> Editar Obra
@@ -109,9 +109,9 @@
     <!-- Detail Card / Edit Form -->
     <div class="detail-card">
       <div class="detail-header">
-        <h2 th:text="${obra.NombreObra}">Nombre de la Obra</h2>
-        <div th:classappend="${obra.Etapa == 'PRESU'} ? 'badge-warning' : (${obra.Etapa == 'EJECU'} ? 'badge-primary' : 'badge-secondary')"
-             class="status-badge" th:text="${obra.Etapa}">Etapa</div>
+        <h2 th:text="${obra.nombreObra}">Nombre de la Obra</h2>
+        <div th:classappend="${obra.etapa == 'PRESU'} ? 'badge-warning' : (${obra.etapa == 'EJECU'} ? 'badge-primary' : 'badge-secondary')"
+             class="status-badge" th:text="${obra.etapa}">Etapa</div>
       </div>
 
       <div class="detail-body">
@@ -128,32 +128,32 @@
             <h3><i class="fas fa-info-circle"></i> Información General</h3>
             <div class="form-grid">
               <div class="form-group">
-                <label for="NombreObra" class="detail-label required">Nombre de la obra</label>
-                <input type="text" id="NombreObra" th:field="*{NombreObra}" class="form-input" required maxlength="255">
+                <label for="nombreObra" class="detail-label required">Nombre de la obra</label>
+                <input type="text" id="nombreObra" th:field="*{nombreObra}" class="form-input" required maxlength="255">
               </div>
               <div class="form-group">
-                <label for="Etapa" class="detail-label required">Etapa</label>
-                <select id="Etapa" th:field="*{Etapa}" class="form-select" required>
-                  <option value="PRESU" th:selected="${obra.Etapa == 'PRESU'}">Presupuesto</option>
-                  <option value="EJECU" th:selected="${obra.Etapa == 'EJECU'}">Ejecución</option>
-                  <option value="LIQUI" th:selected="${obra.Etapa == 'LIQUI'}">Liquidación</option>
+                <label for="etapa" class="detail-label required">Etapa</label>
+                <select id="etapa" th:field="*{etapa}" class="form-select" required>
+                  <option value="PRESU" th:selected="${obra.etapa == 'PRESU'}">Presupuesto</option>
+                  <option value="EJECU" th:selected="${obra.etapa == 'EJECU'}">Ejecución</option>
+                  <option value="LIQUI" th:selected="${obra.etapa == 'LIQUI'}">Liquidación</option>
                 </select>
               </div>
               <div class="form-group">
                 <label for="fechaIni" class="detail-label required">Fecha de inicio</label>
-                <input type="date" id="fechaIni" th:field="*{FechaIni}" class="form-input" required>
+                <input type="date" id="fechaIni" th:field="*{fechaIni}" class="form-input" required>
               </div>
               <div class="form-group">
                 <label for="fechaFin" class="detail-label required">Fecha de fin</label>
-                <input type="date" id="fechaFin" th:field="*{FechaFin}" class="form-input" required>
+                <input type="date" id="fechaFin" th:field="*{fechaFin}" class="form-input" required>
               </div>
               <div class="form-group">
                 <label for="cooNObra" class="detail-label required">Coordenada N</label>
-                <input type="number" id="cooNObra" th:field="*{CooNObra}" step="0.000001" class="form-input" required>
+                <input type="number" id="cooNObra" th:field="*{cooNObra}" step="0.000001" class="form-input" required>
               </div>
               <div class="form-group">
                 <label for="cooEObra" class="detail-label required">Coordenada E</label>
-                <input type="number" id="cooEObra" th:field="*{CooEObra}" step="0.000001" class="form-input" required>
+                <input type="number" id="cooEObra" th:field="*{cooEObra}" step="0.000001" class="form-input" required>
               </div>
             </div>
           </div>
@@ -211,19 +211,19 @@
               </div>
               <div class="detail-item">
                 <span class="detail-label">Fecha de Inicio</span>
-                <div class="detail-value" th:text="${#dates.format(obra.FechaIni, 'dd-MM-yyyy')}">Fecha Ini</div>
+                  <div class="detail-value" th:text="${#temporals.format(obra.fechaIni, 'dd-MM-yyyy')}">Fecha Ini</div>
               </div>
               <div class="detail-item">
                 <span class="detail-label">Fecha de Fin</span>
-                <div class="detail-value" th:text="${#dates.format(obra.FechaFin, 'dd-MM-yyyy')}">Fecha Fin</div>
+                  <div class="detail-value" th:text="${#temporals.format(obra.fechaFin, 'dd-MM-yyyy')}">Fecha Fin</div>
               </div>
               <div class="detail-item">
                 <span class="detail-label">Coordenada N</span>
-                <div class="detail-value" th:text="${obra.CooNObra}">Coo N</div>
+                <div class="detail-value" th:text="${obra.cooNObra}">Coo N</div>
               </div>
               <div class="detail-item">
                 <span class="detail-label">Coordenada E</span>
-                <div class="detail-value" th:text="${obra.CooEObra}">Coo E</div>
+                <div class="detail-value" th:text="${obra.cooEObra}">Coo E</div>
               </div>
               <div class="detail-item">
                 <span class="detail-label">Valor Total Estimado (APUs)</span>
@@ -249,17 +249,17 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="apuo : ${obra.apusObraList}">
-                  <td th:text="${apuo.apu.idAPU}"></td>
-                  <td th:text="${apuo.apu.nombreAPU}"></td>
-                  <td th:text="${apuo.apu.unidadesAPU}"></td>
-                  <td th:text="${apuo.cantidad}"></td>
-                  <!-- Asumo que el APU tiene un precio unitario para cálculo -->
-                  <td th:text="${apuo.apu.precioAPU != null ? '₡' + #numbers.formatDecimal(apuo.apu.precioAPU, 1, 2) : 'N/A'}"></td>
-                  <!-- Subtotal = Cantidad * Precio Unitario -->
-                  <td th:with="subtotal=${apuo.cantidad * apuo.apu.precioAPU}"
-                      th:text="${'₡' + #numbers.formatDecimal(subtotal, 1, 2)}">
-                  </td>
+                <tr th:each="apuo, iterStat : ${obra.apusObraList}">
+                    <td th:text="${apuo.apu.idAPU}"></td>
+                    <td th:text="${apuo.apu.nombreAPU}"></td>
+                    <td th:text="${apuo.apu.unidadesAPU}"></td>
+                    <td th:text="${apuo.cantidad}"></td>
+                    <!-- Use valApusObra list that contains pre-calculated APU prices -->
+                    <td th:text="${valApusObra != null ? '₡' + #numbers.formatDecimal(valApusObra[iterStat.index], 1, 2) : 'N/A'}"></td>
+                    <!-- Calculate subtotal: cantidad * precio unitario from valApusObra -->
+                    <td th:with="subtotal=${apuo.cantidad * (valApusObra != null ? valApusObra[iterStat.index] : 0)}"
+                        th:text="${'₡' + #numbers.formatDecimal(subtotal, 1, 2)}">
+                    </td>
                 </tr>
                 </tbody>
               </table>
@@ -278,7 +278,7 @@
       <a th:href="@{/obras/inicioObra}" class="btn btn-secondary">
         <i class="fas fa-arrow-left"></i> Volver a Obras
       </a>
-      <a th:href="@{/obras/editar/} + ${obra.idObra}"
+      <a th:href="@{/obras/cambiar/} + ${obra.idObra}"
          class="btn btn-warning"
          sec:authorize="hasAuthority('EDITAR_OBRA')">
         <i class="fas fa-edit"></i> Editar Obra

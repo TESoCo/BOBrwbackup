@@ -200,10 +200,26 @@ public class APUServicioImp implements APUServicio {
         APUDao.saveAll(apus);
     }
 
+    //calcular valor de APU
     @Override
-    @Transactional
-    public Double vTotalAPU (Apu apu){
-        return doubleValue(apu.getVMaterialesAPU())+doubleValue(apu.getVMiscAPU())+doubleValue(apu.getVTransporteAPU())+doubleValue(apu.getVManoDeObraAPU());
+    @Transactional(readOnly = true)
+    public BigDecimal getPrecioTotalAPU(Apu apu) {
+        BigDecimal total = BigDecimal.ZERO;
+
+        if (apu.getVMaterialesAPU() != null) {
+            total = total.add(apu.getVMaterialesAPU());
+        }
+        if (apu.getVManoDeObraAPU() != null) {
+            total = total.add(apu.getVManoDeObraAPU());
+        }
+        if (apu.getVMiscAPU() != null) {
+            total = total.add(apu.getVMiscAPU());
+        }
+        if (apu.getVTransporteAPU() != null) {
+            total = total.add(apu.getVTransporteAPU());
+        }
+
+        return total;
     }
 
 

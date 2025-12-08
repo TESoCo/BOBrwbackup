@@ -229,22 +229,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="detail-section">
-                <h4 class="section-title">
-                    <i class="fas fa-history"></i> Información de Auditoría
-                </h4>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-label">Fecha de Creación</div>
-                        <div class="info-value" th:text="${#temporals.format(apu.fechaCreacion, 'dd/MM/yyyy HH:mm')}">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Última Modificación</div>
-                        <div class="info-value" th:text="${#temporals.format(apu.fechaModificacion, 'dd/MM/yyyy HH:mm')}">-</div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Additional Information -->

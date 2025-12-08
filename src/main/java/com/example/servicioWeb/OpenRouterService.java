@@ -30,7 +30,6 @@ public class OpenRouterService {
             "mistralai/mistral-7b-instruct:free",      // 4to intento
             "openai/gpt-4o-mini",                       // 5to
             "microsoft/phi-3-medium-128k-instruct:free"  // <-- NUEVO
-
     };
 
     private final RestTemplate restTemplate;

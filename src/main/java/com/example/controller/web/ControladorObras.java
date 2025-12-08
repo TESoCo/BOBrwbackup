@@ -257,12 +257,12 @@ public class ControladorObras
         Obra obra = obraServicio.localizarObra(idObra);
         List<Apu> apusObra = obraServicio.obtenerApusEntidadesPorObra(idObra);
 
-        List<Double> valApusObra = new ArrayList<>();
+        List<BigDecimal> valApusObra = new ArrayList<>();
         if(apusObra!=null&& !apusObra.isEmpty())
         {
             for(Apu apu : apusObra)
             {
-                valApusObra.add(apuServicio.vTotalAPU(apu));
+                valApusObra.add(apuServicio.getPrecioTotalAPU(apu));
             }
         }
 
@@ -275,6 +275,19 @@ public class ControladorObras
         }
         */
 
+        // Calculate total value
+        BigDecimal valorTotalEstimado = BigDecimal.ZERO;
+        if (obra.getApusObraList() != null) {
+            for (ApusObra apusObraItem : obra.getApusObraList()) {
+                if (apusObraItem.getApu() != null && apusObraItem.getCantidad() != null) {
+                    BigDecimal precioAPU = apuServicio.getPrecioTotalAPU(apusObraItem.getApu());
+                    BigDecimal subtotal = precioAPU.multiply(BigDecimal.valueOf(apusObraItem.getCantidad()));
+                    valorTotalEstimado = valorTotalEstimado.add(subtotal);
+                }
+            }
+        }
+
+        model.addAttribute("valorTotalEstimado", valorTotalEstimado);
         model.addAttribute("obra", obra);
         model.addAttribute("valApus",valApusObra);
         model.addAttribute("apusObra",apusObra);
@@ -328,5 +341,7 @@ public class ControladorObras
 
         return "obras/inicioObra";
     }
+
+
 
 }

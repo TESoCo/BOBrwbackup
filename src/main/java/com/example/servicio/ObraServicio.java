@@ -30,4 +30,7 @@ public interface ObraServicio {
     Map<Long, Double> obtenerApusPorObra(Long idObra);
     List<Apu> obtenerApusEntidadesPorObra(Long idObra);
 
+   //
+
+
 }

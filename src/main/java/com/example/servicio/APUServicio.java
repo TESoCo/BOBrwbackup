@@ -5,6 +5,7 @@ import com.example.domain.Usuario;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface APUServicio {
@@ -28,7 +29,7 @@ public interface APUServicio {
 
     public void guardarTodos(List<Apu> apus);
 
-    public Double vTotalAPU (Apu apu);
+    public BigDecimal getPrecioTotalAPU(Apu apu);
 
 
 }
