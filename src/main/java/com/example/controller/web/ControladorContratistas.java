@@ -2,6 +2,7 @@ package com.example.controller.web;
 
 import com.example.domain.*;
 import com.example.servicio.*;
+import com.example.servicioWeb.EmailService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -19,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -46,6 +48,9 @@ public class ControladorContratistas {
     @Autowired
     private InfoComServicio infoComServicio;
 
+    @Autowired
+    private EmailService emailService;
+
     @GetMapping
     public String inicioContrat(Model model){
         List<Contratista> contratistas = contratistaServicio.listarContratistas();
@@ -56,75 +61,7 @@ public class ControladorContratistas {
     }
 
 
-    // Reporte de contratistas
-    @GetMapping("/contratistas/excel")
-    public void exportarContratistasExcel(HttpServletResponse response) throws IOException {
-        List<Contratista> contratistas = contratistaServicio.listarContratistas();
-        String nombreArchivo = "reporte_contratistas.xlsx";
 
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setHeader("Content-Disposition", "attachment; filename=" + nombreArchivo);
-
-        Workbook libro = new XSSFWorkbook();
-        Sheet hoja = libro.createSheet("Contratistas");
-
-        // Crear encabezados
-        Row header = hoja.createRow(0);
-        header.createCell(0).setCellValue("Contratista");
-        header.createCell(1).setCellValue("Contacto");
-        header.createCell(2).setCellValue("Telefono");
-        header.createCell(3).setCellValue("Correo");
-        header.createCell(4).setCellValue("Dirección");
-
-        // Llenar datos
-        int fila = 1;
-        for (Contratista contratista : contratistas) {
-            Row row = hoja.createRow(fila++);
-            row.createCell(0).setCellValue(contratista.getNombreContratista());
-            row.createCell(1).setCellValue(contratista.getIdPersona().getNombre());
-            row.createCell(2).setCellValue(contratista.getIdPersona().getTelefono());
-            row.createCell(3).setCellValue(contratista.getIdPersona().getCorreo());
-            row.createCell(4).setCellValue(contratista.getInformacionComercial().getDireccion());
-        }
-
-        libro.write(response.getOutputStream());
-        libro.close();
-    }
-
-    @GetMapping("/contratistas/excelCorreo")
-    public byte[] generarReporteContratistasExcel() throws IOException {
-        List<Contratista> contratistas = contratistaServicio.listarContratistas();
-
-        Workbook libro = new XSSFWorkbook();
-        Sheet hoja = libro.createSheet("Contratistas");
-
-        // Crear encabezados
-        Row header = hoja.createRow(0);
-        header.createCell(0).setCellValue("ID");
-        header.createCell(1).setCellValue("Nombre Empresa");
-        header.createCell(2).setCellValue("Contacto");
-        header.createCell(3).setCellValue("Teléfono");
-        header.createCell(4).setCellValue("Email");
-        header.createCell(5).setCellValue("Dirección");
-
-        // Llenar datos
-        int fila = 1;
-        for (Contratista contratista : contratistas) {
-            Row row = hoja.createRow(fila++);
-            row.createCell(0).setCellValue(contratista.getIdContratista());
-            row.createCell(1).setCellValue(contratista.getNombreContratista());
-            row.createCell(2).setCellValue(contratista.getIdPersona().getNombre() + " " + contratista.getIdPersona().getApellido());
-            row.createCell(3).setCellValue(contratista.getIdPersona().getTelefono());
-            row.createCell(4).setCellValue(contratista.getIdPersona().getCorreo());
-            row.createCell(5).setCellValue(contratista.getInformacionComercial().getDireccion());
-        }
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        libro.write(outputStream);
-        libro.close();
-
-        return outputStream.toByteArray();
-    }
 
     /**
      * Mostrar formulario de registro de contratista
@@ -287,6 +224,154 @@ public class ControladorContratistas {
         Contratista c = contratistaServicio.encontrarPorId(id);
         System.out.println("Contratista encontrado: " + (c != null ? c.getIdContratista() : "null"));
         return c;
+    }
+
+    // Reporte de contratistas
+    @GetMapping("/excel")
+    public void exportarContratistasExcel(HttpServletResponse response) throws IOException {
+        List<Contratista> contratistas = contratistaServicio.listarContratistas();
+        String nombreArchivo = "reporte_contratistas.xlsx";
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=" + nombreArchivo);
+
+        Workbook libro = new XSSFWorkbook();
+        Sheet hoja = libro.createSheet("Contratistas");
+
+        // Crear encabezados
+        Row header = hoja.createRow(0);
+        header.createCell(0).setCellValue("Contratista");
+        header.createCell(1).setCellValue("Contacto");
+        header.createCell(2).setCellValue("Telefono");
+        header.createCell(3).setCellValue("Correo");
+        header.createCell(4).setCellValue("Dirección");
+
+        // Llenar datos
+        int fila = 1;
+        for (Contratista contratista : contratistas) {
+            Row row = hoja.createRow(fila++);
+            row.createCell(0).setCellValue(contratista.getNombreContratista());
+            row.createCell(1).setCellValue(contratista.getIdPersona().getNombre());
+            row.createCell(2).setCellValue(contratista.getIdPersona().getTelefono());
+            row.createCell(3).setCellValue(contratista.getIdPersona().getCorreo());
+            row.createCell(4).setCellValue(contratista.getInformacionComercial().getDireccion());
+        }
+
+        libro.write(response.getOutputStream());
+        libro.close();
+    }
+
+    @GetMapping("/excelCorreo")
+    public byte[] generarReporteContratistasExcel() throws IOException {
+        List<Contratista> contratistas = contratistaServicio.listarContratistas();
+
+        Workbook libro = new XSSFWorkbook();
+        Sheet hoja = libro.createSheet("Contratistas");
+
+        // Crear encabezados
+        Row header = hoja.createRow(0);
+        header.createCell(0).setCellValue("ID");
+        header.createCell(1).setCellValue("Nombre Empresa");
+        header.createCell(2).setCellValue("Contacto");
+        header.createCell(3).setCellValue("Teléfono");
+        header.createCell(4).setCellValue("Email");
+        header.createCell(5).setCellValue("Dirección");
+
+        // Llenar datos
+        int fila = 1;
+        for (Contratista contratista : contratistas) {
+            Row row = hoja.createRow(fila++);
+            row.createCell(0).setCellValue(contratista.getIdContratista());
+            row.createCell(1).setCellValue(contratista.getNombreContratista());
+            row.createCell(2).setCellValue(contratista.getIdPersona().getNombre() + " " + contratista.getIdPersona().getApellido());
+            row.createCell(3).setCellValue(contratista.getIdPersona().getTelefono());
+            row.createCell(4).setCellValue(contratista.getIdPersona().getCorreo());
+            row.createCell(5).setCellValue(contratista.getInformacionComercial().getDireccion());
+        }
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        libro.write(outputStream);
+        libro.close();
+
+        return outputStream.toByteArray();
+    }
+
+    @PostMapping("/enviarReporteCorreo")
+    @PreAuthorize("hasAuthority('ENVIAR_REPORTE')")
+    public String enviarReporteContratistasCorreo(
+            @RequestParam List<String> recipients,
+            @RequestParam(required = false) String customEmail,
+            @RequestParam String subject,
+            @RequestParam String message,
+            RedirectAttributes ra) {
+
+        try {
+            // Procesar correos personalizados
+            List<String> allRecipients = new ArrayList<>(recipients);
+            if (customEmail != null && !customEmail.trim().isEmpty()) {
+                // Separar por comas y limpiar
+                String[] customEmails = customEmail.split(",");
+                for (String email : customEmails) {
+                    String trimmed = email.trim();
+                    if (!trimmed.isEmpty() && !allRecipients.contains(trimmed)) {
+                        allRecipients.add(trimmed);
+                    }
+                }
+            }
+
+            // Validar que haya destinatarios
+            if (allRecipients.isEmpty()) {
+                ra.addFlashAttribute("error", "Debe seleccionar al menos un destinatario");
+                return "redirect:/contratistas";
+            }
+
+            // 1. Generar el Excel
+            byte[] excelBytes = generarReporteContratistasExcel();
+
+            // 2. Enviar por correo (enviar masivamente)
+            EmailService.EmailResult result = emailService.sendMassEmailWithAttachment(
+                    allRecipients,
+                    subject,
+                    message,
+                    excelBytes,
+                    "reporte_contratistas.xlsx"
+            );
+
+            if (result.getSuccessCount() > 0) {
+                String successMsg = String.format(
+                        "Reporte enviado exitosamente a %d destinatario(s)",
+                        result.getSuccessCount()
+                );
+                ra.addFlashAttribute("success", successMsg);
+
+                if (result.getFailedCount() > 0) {
+                    ra.addFlashAttribute("warning",
+                            String.format("%d correo(s) no pudieron ser enviados", result.getFailedCount()));
+                }
+            } else {
+                ra.addFlashAttribute("error", "No se pudo enviar el correo a ningún destinatario");
+            }
+
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Error al enviar el reporte: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return "redirect:/contratistas";
+    }
+
+
+    // Métodos para cargar informaciones comerciales (los utiliza javascript para envío de correo)
+    @GetMapping("/informaciones-comerciales")
+    @ResponseBody
+    public List<InformacionComercial> getInformacionesComerciales() {
+        return infoComServicio.comercialList();
+    }
+
+    @GetMapping("/informacion-comercial/{id}")
+    @ResponseBody
+    public InformacionComercial getInformacionComercial(@PathVariable Long id) {
+        return infoComServicio.localizarPorId(id);
     }
 
 

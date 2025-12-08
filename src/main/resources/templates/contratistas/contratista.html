@@ -362,7 +362,7 @@
             <button class="close-modal">&times;</button>
         </div>
         <div class="modal-body">
-            <form id="emailReportForm">
+            <form id="emailReportForm" th:action="@{/contratistas/enviarReporteCorreo}" method="post">
                 <div class="form-group">
                     <label>Destinatarios:</label>
                     <div class="recipients-list">
@@ -378,7 +378,8 @@
                 <div class="form-group">
                     <label for="customEmail">Correo personalizado:</label>
                     <input type="email" id="customEmail" name="customEmail" class="form-control"
-                           placeholder="Ingrese correo manualmente">
+                           placeholder="correo1@ejemplo.com, correo2@ejemplo.com">
+                    <small>Puede ingresar múltiples correos separados por comas</small>
                 </div>
 
                 <div class="form-group">
@@ -403,6 +404,9 @@
                     <button type="button" class="btn btn-secondary btn-cancel">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Enviar Reporte</button>
                 </div>
+
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
             </form>
         </div>
     </div>
@@ -521,47 +525,80 @@
           document.getElementById('contactEmail').disabled = false;
         }
 
-        // Email report modal
+        // Email report modal - ¡SOLO UNA VEZ!
         const sendReportBtn = document.getElementById('sendReportBtn');
         const emailReportModal = document.getElementById('emailReportModal');
         const emailReportForm = document.getElementById('emailReportForm');
         const closeEmailModalBtn = emailReportModal.querySelector('.close-modal');
         const cancelEmailBtn = emailReportModal.querySelector('.btn-cancel');
 
-        sendReportBtn.addEventListener('click', function() {
-            emailReportModal.style.display = 'block';
-        });
+        // Verificar que los elementos existen
+        console.log('sendReportBtn:', sendReportBtn);
+        console.log('emailReportModal:', emailReportModal);
+        console.log('emailReportForm:', emailReportForm);
 
-        function closeEmailModal() {
-            emailReportModal.style.display = 'none';
+        // Abrir modal al hacer clic en el botón
+        if (sendReportBtn && emailReportModal) {
+            sendReportBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Botón "Enviar Reporte" clickeado');
+                emailReportModal.style.display = 'block';
+            });
         }
 
-        closeEmailModalBtn.addEventListener('click', closeEmailModal);
-        cancelEmailBtn.addEventListener('click', closeEmailModal);
-
-        // Close modals when clicking outside
-        window.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
-            if (event.target === emailReportModal) {
+        function closeEmailModal() {
+            if (emailReportModal) {
                 emailReportModal.style.display = 'none';
+            }
+        }
+
+        // Cerrar modal con botones
+        if (closeEmailModalBtn) {
+            closeEmailModalBtn.addEventListener('click', closeEmailModal);
+        }
+
+        if (cancelEmailBtn) {
+            cancelEmailBtn.addEventListener('click', closeEmailModal);
+        }
+
+        // Manejar envío del formulario
+        if (emailReportForm) {
+            emailReportForm.addEventListener('submit', function(e) {
+                // Validar que haya al menos un destinatario seleccionado
+                const checkboxes = document.querySelectorAll('input[name="recipients"]:checked');
+                const customEmail = document.getElementById('customEmail').value.trim();
+
+                console.log('Checkboxes seleccionados:', checkboxes.length);
+                console.log('Correo personalizado:', customEmail);
+
+                if (checkboxes.length === 0 && !customEmail) {
+                    e.preventDefault();
+                    alert('Debe seleccionar al menos un destinatario o ingresar un correo personalizado');
+                    return;
+                }
+
+                // Si pasa la validación, el formulario se enviará normalmente
+                console.log('Formulario enviándose...');
+            });
+        }
+
+        // Cerrar modal al hacer clic fuera
+        window.addEventListener('click', function(event) {
+            if (event.target === emailReportModal) {
+                closeEmailModal();
             }
         });
 
-        // Close modals with cancel buttons
+        // Cerrar modales con botones cancel (todos)
         document.querySelectorAll('.btn-cancel').forEach(btn => {
-            // Asegurarse de que solo afecta a los modales de la página principal
-            if (btn.id !== 'btnCancelEmail') {
-                btn.addEventListener('click', function() {
-                    modal.style.display = 'none';
-                    emailReportModal.style.display = 'none';
-                });
-            }
+            btn.addEventListener('click', function() {
+                if (modal) modal.style.display = 'none';
+                if (emailReportModal) emailReportModal.style.display = 'none';
+            });
         });
 
         /* ======================================================================================= */
-        /* =========== LÓGICA DE CONTROL DEL MENÚ MÓVIL (AÑADIDA Y CORREGIDA) ==================== */
+        /* =========== LÓGICA DE CONTROL DEL MENÚ MÓVIL ========================================== */
         /* ======================================================================================= */
 
         const menuToggle = document.getElementById('menu-toggle');
@@ -570,23 +607,19 @@
         const menuIcon = menuToggle ? menuToggle.querySelector('i') : null;
 
         if (menuToggle && appContainer && sidebar && menuIcon) {
-            // 1. Alternar la clase y el ícono al hacer clic
             menuToggle.addEventListener('click', function() {
                 appContainer.classList.toggle('sidebar-active');
 
-                // Cambiar el ícono (fa-bars <-> fa-times)
                 if (appContainer.classList.contains('sidebar-active')) {
                     menuIcon.classList.remove('fa-bars');
-                    menuIcon.classList.add('fa-times'); // Ícono de cerrar
+                    menuIcon.classList.add('fa-times');
                 } else {
                     menuIcon.classList.remove('fa-times');
-                    menuIcon.classList.add('fa-bars'); // Ícono de menú
+                    menuIcon.classList.add('fa-bars');
                 }
             });
 
-            // 2. Cerrar el menú al hacer clic fuera (incluye restaurar el ícono)
             document.addEventListener('click', (e) => {
-                // Solo para pantallas pequeñas
                 if (window.innerWidth <= 768 && appContainer.classList.contains('sidebar-active')) {
                     if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
                         appContainer.classList.remove('sidebar-active');
