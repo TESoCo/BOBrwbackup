@@ -26,7 +26,7 @@ public class OpenRouterService {
     private final String[] modelos = {
             "google/gemini-2.0-flash-exp:free",        // 1er intento
             "meta-llama/llama-3.2-3b-instruct:free",   // 2do intento
-            "qwen/qwen-2.5-7b-instruct:free",  // 3er intento
+            "huggingfaceh4/zephyr-7b-beta:free",  // 3er intento
             "mistralai/mistral-7b-instruct:free",      // 4to intento
             "openai/gpt-4o-mini",                       // 5to
             "microsoft/phi-3-medium-128k-instruct:free"  // <-- NUEVO
