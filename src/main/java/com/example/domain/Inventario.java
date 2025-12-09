@@ -42,12 +42,12 @@ public class Inventario implements Serializable {
     private Obra idObra;
 
 
-    @Column(name = "tipo_inv", unique = true)
-    private String tipoInv;
+    @Column(name = "tipo_inv")
+    private String tipoInv = "INGRESO";
 
 
-    @Column(name = "anular", unique = true)
-    private boolean anular;
+    @Column(name = "anular")
+    private boolean anular = false;
 
 
     // From FECHA_INVENTARIO
