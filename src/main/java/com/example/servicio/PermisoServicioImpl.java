@@ -28,4 +28,7 @@ public class PermisoServicioImpl implements PermisoServicio {
     public List<Permiso> buscarPorNombre(String nombre) {
         return permisoDao.findByNombrePermiso(nombre);
     }
+
+    @Override
+    public List<Permiso> buscarPorIds(List<Long> permisosIds) { return permisoDao.findAllById(permisosIds);}
 }

@@ -1,6 +1,7 @@
 // CombinedObraEntity.java
 package com.example.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
@@ -65,6 +66,7 @@ public class Obra implements Serializable {
     @Column(name = "Nombre_Obra", table = "nombre_obra", unique = true)
     private String nombreObra;
 
+
     // From apus_obra table
     // Many-to-many relationship for APUS/cantidades (separate table)
     @OneToMany(mappedBy = "obra", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -72,6 +74,12 @@ public class Obra implements Serializable {
     @ToString.Exclude
     private List<ApusObra> apusObraList = new ArrayList<>();
 
+
+    //Relacion muchos a uno con proyecto, un proyecto puede ser asignado a varios obras
+    @ManyToOne
+    @JoinColumn(name = "id_Proyecto", referencedColumnName = "id_Proyecto")
+    @JsonBackReference("obra-proyecto")
+    private Proyecto proyecto;
 }
 
 

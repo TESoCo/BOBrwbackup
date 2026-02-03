@@ -8,7 +8,7 @@
 
 <h2 th:text="'Asignar permisos a ' + ${rol.descripcion_perfil}"></h2>
 
-<form th:action="@{'/perfiles/' + ${rol.id_perfil} + '/permisos'}" method="post">
+<form th:action="@{'/roles/' + ${rol.id_perfil} + '/permisos'}" method="post">
   <ul>
     <li th:each="permiso : ${todosPermisos}">
       <input type="checkbox"

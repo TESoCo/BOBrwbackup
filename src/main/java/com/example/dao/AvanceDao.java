@@ -3,12 +3,13 @@ package com.example.dao;
 import com.example.domain.Avance;
 import com.example.domain.Obra;
 import com.example.domain.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
 
 import java.time.LocalDate;
 import java.util.List;
 
-public interface AvanceDao extends CrudRepository<Avance, Long> {
+public interface AvanceDao extends JpaRepository<Avance, Long> {
 
     // Find by exact ID matches
     List<Avance> findByIdAvance(Long idAvance);

@@ -10,4 +10,5 @@ public interface RolDao extends JpaRepository<Rol, Long> {
 
     List<Rol> findByNombreRolIgnoreCase(String nombreRol);
 
+    List<Rol> nombreRol(String nombreRol);
 }

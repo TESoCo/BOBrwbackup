@@ -31,9 +31,23 @@
         <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
       </div>
 
+      <!-- Gestión de Equipos -->
+      <div sec:authorize="hasAnyAuthority('CREAR_EQUIPO', 'EDITAR_EQUIPO')">
+        <li><a th:href="@{/equipos}"><i class="fas fa-users"></i> <span>Gestión de Equipos</span></a></li>
+      </div>
+
+      <!-- Gestión de Proyectos -->
+      <div sec:authorize="hasAnyAuthority('CREAR_PROYECTO', 'EDITAR_PROYECTO')">
+        <li><a th:href="@{/proyectos}"><i class="fas fa-project-diagram"></i> <span>Gestión de Proyectos</span></a></li>
+      </div>
+
       <!-- Gestión de Usuarios - Solo con permisos de usuario -->
       <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
         <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
+      </div>
+
+      <div sec:authorize="hasAnyAuthority('CREAR_ROL', 'EDITAR_ROL', 'LEER_ROL')">
+        <li><a th:href="@{/roles}"><i class="fas fa-user-shield"></i> <span>Gestión de Roles</span></a></li>
       </div>
 
       <!-- Menu items for users with inventory permissions -->
@@ -212,7 +226,7 @@
     </div>
 
     <!-- Progress Section -->
-    <div class="recent-activities" sec:authorize="hasAnyAuthority('VER_AVANCES', 'REGISTRAR_AVANCES')">
+    <div class="recent-activities" sec:authorize="hasAnyAuthority('EDITAR_AVANCE', 'CREAR_AVANCE')">
       <h3 class="section-title">Avance por Obra</h3>
       <div th:each="estadistica : ${estadisticasAvance}" class="progress-container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -233,7 +247,7 @@
       <h3 class="section-title">Actividades Recientes</h3>
       <ul class="activity-list">
         <!-- Avances recientes -->
-        <li class="activity-item" sec:authorize="hasAnyAuthority('VER_AVANCES', 'REGISTRAR_AVANCES')"
+        <li class="activity-item" sec:authorize="hasAnyAuthority('EDITAR_AVANCE', 'CREAR_AVANCE')"
             th:each="avance : ${avancesRecientes}">
           <div class="activity-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
             <i class="fas fa-hard-hat"></i>
@@ -248,7 +262,7 @@
         </li>
 
         <!-- Inventarios recientes -->
-        <li class="activity-item" sec:authorize="hasAnyAuthority('VER_INVENTARIO', 'CREAR_INVENTARIO', 'EDITAR_INVENTARIO')"
+        <li class="activity-item" sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')"
             th:each="inventario : ${inventariosRecientes}">
           <div class="activity-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
             <i class="fas fa-box"></i>

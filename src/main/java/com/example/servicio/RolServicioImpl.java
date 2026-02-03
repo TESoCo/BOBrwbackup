@@ -27,4 +27,13 @@ public class RolServicioImpl implements RolServicio {
     public List<Rol> listarRoles() {
         return rolDao.findAll();
     }
+
+    @Override
+    public List<Rol> buscarPorNombre(String nombreRol) { return rolDao.findByNombreRolIgnoreCase(nombreRol); }
+
+    @Override
+    public void eliminar(Rol rol) {
+        rolDao.delete(rol);
+    }
+
 }
