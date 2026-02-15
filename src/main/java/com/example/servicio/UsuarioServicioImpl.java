@@ -8,6 +8,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -43,13 +44,6 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     @Override
     @Transactional(readOnly = true)
     public Usuario encontrarPorNombreUsuario(String nombreUsuario) {
-        return usuarioDao.findBynombreUsuario(nombreUsuario);
-    }
-
-    @Override
-    @Transactional
-    public List <Usuario> buscarPorNombreList(String nombreUsuario)
-    {
         return usuarioDao.findByNombreUsuario(nombreUsuario);
     }
 
@@ -91,7 +85,18 @@ public class UsuarioServicioImpl implements UsuarioServicio {
         return usuario != null && usuario.getFotoPerfil() != null && usuario.getFotoPerfil().length > 0;
     }
 
-
+    @Override
+    @Transactional
+    public List <Usuario> listarUsuariosSinEquipo(){
+        List <Usuario> usuarioList = usuarioDao.findAll();
+        List <Usuario> sinEquipo = new ArrayList<>();
+        for (Usuario usuario : usuarioList){
+            if (usuario.getEquipo()==null){
+                sinEquipo.add(usuario);
+            }
+        }
+        return sinEquipo;
+    }
 
 
 

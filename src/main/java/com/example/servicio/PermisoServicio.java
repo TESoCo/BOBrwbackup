@@ -8,4 +8,5 @@ public interface PermisoServicio {
     List<Permiso> listarPermisos();
     void guardar(Permiso permiso);
     List<Permiso> buscarPorNombre(String nombre);
+    List<Permiso> buscarPorIds(List<Long> permisosIds);
 }

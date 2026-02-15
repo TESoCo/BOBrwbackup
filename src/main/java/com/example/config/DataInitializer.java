@@ -90,6 +90,10 @@ public class DataInitializer implements CommandLineRunner {
         Permiso editarRol = createAndSavePermisoIfNotExists("EDITAR_ROL");
         Permiso crearUsuario = createAndSavePermisoIfNotExists("CREAR_USUARIO");
         Permiso editarUsuario = createAndSavePermisoIfNotExists("EDITAR_USUARIO");
+        Permiso crearEquipo = createAndSavePermisoIfNotExists("CREAR_EQUIPO");
+        Permiso editarEquipo = createAndSavePermisoIfNotExists("EDITAR_EQUIPO");
+        Permiso crearProyecto= createAndSavePermisoIfNotExists("CREAR_PROYECTO");
+        Permiso editarProyecto = createAndSavePermisoIfNotExists("EDITAR_PROYECTO");
     }
 
     private void crearRolesConPermisos() {
@@ -128,8 +132,7 @@ public class DataInitializer implements CommandLineRunner {
             String nombrePermiso = permiso.getNombrePermiso();
             if (nombrePermiso.contains("FOTODATO") ||
                     nombrePermiso.contains("AVANCE") ||
-                    nombrePermiso.contains("INVENTARIO") ||
-                    nombrePermiso.equals("LEER_OBRA")) {
+                    nombrePermiso.contains("INVENTARIO")) {
                 permisosOperativo.add(permiso);
             }
         }

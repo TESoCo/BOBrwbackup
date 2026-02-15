@@ -74,19 +74,33 @@ public class ProtoBOB {
                                             "/IMG/**",    // imágenes (ojo mayúsculas si tu carpeta es IMG)
                                             "/images/**",
                                             "/webjars/**",
-                                            "/presupuestos/**"
+                                            "/presupuestos/**",
+                                            "/CSS/**",
+                                            "/BOBWS/*",
+                                            "/BOBWS*",
+                                            "/api/**",// Allow API access with no auth
+                                            "/usuarios/foto/**"// Permitir acceso a fotos de perfil
                                     ).permitAll()
 
-                            // Public endpoints
-                            .requestMatchers("/CSS/**", "/js/**", "/login", "/presupuestos/**").permitAll()
-                            .requestMatchers("/BOBWS*", "/BOBWS/*").permitAll()
-                            .requestMatchers("/api/**").permitAll() // Allow API access with no auth
-                            .requestMatchers("/usuarios/foto/**").permitAll() // Permitir acceso a fotos de perfil
+
+                            // Usuarios endpoints - permission based
+                            .requestMatchers("/usuarios/registrar").hasAnyAuthority("CREAR_USUARIO")
+                            .requestMatchers("/usuarios/editar/**").hasAnyAuthority("EDITAR_USUARIO")
+                            .requestMatchers("/usuarios/eliminar/**").hasAnyAuthority("EDITAR_USUARIO")
+                            .requestMatchers("/usuarios").hasAnyAuthority("CREAR_USUARIO", "EDITAR_USUARIO")
+
+                            // 📊 DASHBOARD - Todos los usuarios autenticados
+                            .requestMatchers("/dashboard", "/redirigir").authenticated()
+
+                            // 👤 PERFIL - Todos los usuarios autenticados
+                            .requestMatchers("/perfil/**").authenticated()
 
                             // Role-based access control
+                            /*
                             .requestMatchers("/admin/**").hasRole("ADMIN")
                             .requestMatchers("/supervisor/**").hasRole("SUPERVISOR")
                             .requestMatchers("/operativo/**").hasRole("OPERATIVO")
+                            */
 
                             // Permission-based access control (more granular)
                             .requestMatchers("/apu/crear").hasAuthority("CREAR_APU")
@@ -97,7 +111,7 @@ public class ProtoBOB {
                             .requestMatchers("/contratista/editar").hasAuthority("EDITAR_CONTRATISTA")
                             .requestMatchers("/fotodato/crear").hasAuthority("CREAR_FOTODATO")
                             .requestMatchers("/fotodato/editar").hasAuthority("EDITAR_FOTODATO")
-                            .requestMatchers("/infoComarecial/crear").hasAuthority("CREAR_INFOCOMERCIAL")
+                            .requestMatchers("/infoComercial/crear").hasAuthority("CREAR_INFOCOMERCIAL")
                             .requestMatchers("/infoComercial/editar").hasAuthority("EDITAR_INFOCOMERCIAL")
                             .requestMatchers("/inventario/crear").hasAuthority("CREAR_INVENTARIO")
                             .requestMatchers("/inventario/editar").hasAuthority("EDITAR_INVENTARIO")
@@ -114,17 +128,12 @@ public class ProtoBOB {
                             .requestMatchers("/usuario/registrar").hasAuthority("CREAR_USUARIO")
                             .requestMatchers("/usuario/editar").hasAuthority("EDITAR_USUARIO")
 
-                            // Usuarios endpoints - permission based
-                            .requestMatchers("/usuarios/registrar").hasAnyAuthority("CREAR_USUARIO", "ROLE_ADMIN")
-                            .requestMatchers("/usuarios/editar/**").hasAnyAuthority("EDITAR_USUARIO", "ROLE_ADMIN")
-                            .requestMatchers("/usuarios/eliminar/**").hasAnyAuthority("EDITAR_USUARIO", "ROLE_ADMIN")
-                            .requestMatchers("/usuarios").hasAnyAuthority("CREAR_USUARIO", "EDITAR_USUARIO", "ROLE_ADMIN")
 
                             // Combined role and permission access
                             .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "SUPERVISOR")
                             .requestMatchers("/reportes/**").hasAnyRole("ADMIN", "SUPERVISOR")
 
-
+                            // 🔒 Cualquier otra solicitud requiere autenticación
                             .anyRequest().authenticated()
                     )
                     .formLogin(form -> form

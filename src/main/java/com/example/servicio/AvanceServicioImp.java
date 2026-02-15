@@ -1,7 +1,7 @@
 package com.example.servicio;
 
 import com.example.dao.AvanceDao;
-import com.example.dao.APUDao;
+import com.example.dao.ApuDao;
 import com.example.domain.Apu;
 import com.example.domain.Avance;
 import com.example.domain.Usuario;
@@ -19,7 +19,7 @@ public class AvanceServicioImp implements AvanceServicio{
     private AvanceDao avanceDao;
 
     @Autowired
-    private APUDao mateDao;
+    private ApuDao mateDao;
 
     @Override
     @Transactional(readOnly = true)

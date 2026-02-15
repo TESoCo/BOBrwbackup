@@ -1,7 +1,7 @@
 package com.example.servicio;
 
-import com.example.dao.APUDao;
-import com.example.dao.MaterialesAPUDao;
+import com.example.dao.ApuDao;
+import com.example.dao.MaterialesApuDao;
 import com.example.domain.Apu;
 import com.example.domain.MaterialesApu;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +14,10 @@ import java.util.List;
 public class MaterialesAPUServicioImp implements MaterialesAPUServicio {
 
     @Autowired
-    private MaterialesAPUDao materialesAPUDao;
+    private MaterialesApuDao materialesAPUDao;
 
     @Autowired
-    private APUDao apuDao;
+    private ApuDao apuDao;
 
 
 

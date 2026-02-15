@@ -48,10 +48,17 @@ public class Usuario implements Serializable {
     @JsonBackReference("usuario-rol")
     private Rol rol;
 
-    //Relacion de uno a uno con persona
+    //Relacion  con persona
     // RELACIÓN CON PERSONA: ManyToOne (un usuario tiene una persona, pero una persona puede no ser usuario)
     @ManyToOne
     @JoinColumn(name = "id_Persona", referencedColumnName = "id_Persona", nullable = false)
     private Persona persona;
+
+    // RELACIÓN CON equipo: ManyToOne (un usuario tiene un equipo)
+    //Relacion muchos a uno con equipo, un equipo puede ser asignado a varios usuarios
+    @ManyToOne
+    @JoinColumn(name = "id_Equipo", referencedColumnName = "id_Equipo")
+    @JsonBackReference("usuario-equipo")
+    private Equipo equipo;
 
 }
