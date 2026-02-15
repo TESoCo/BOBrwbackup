@@ -1,9 +1,7 @@
 package com.example.servicio;
 
 import com.example.dao.InformacionComercialDao;
-import com.example.dao.PersonaDao;
 import com.example.domain.InformacionComercial;
-import com.example.domain.Persona;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,13 +31,13 @@ public class InfoComServicioImp implements InfoComServicio {
     @Override
     @Transactional(readOnly = true)
     public InformacionComercial localizarInformacionComercial(InformacionComercial informacionComercial) {
-        return informacionComercialDao.findByidInfoComerc(informacionComercial.getIdInfoComerc());
+        return informacionComercialDao.findByIdInfoComerc(informacionComercial.getIdInfoComerc());
     }
 
     @Override
     @Transactional(readOnly = true)
     public InformacionComercial localizarPorId(Long id){
-        return informacionComercialDao.findByidInfoComerc(id);
+        return informacionComercialDao.findByIdInfoComerc(id);
     }
 
 }

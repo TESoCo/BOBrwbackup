@@ -139,7 +139,7 @@
                         <div th:each="permiso : ${todosPermisos}" class="form-check">
                             <input type="checkbox"
                                    th:id="'permiso_' + ${permiso.idPermiso}"
-                                   th:name="permisoList"
+                                   th:name="permisosIds"
                                    th:value="${permiso.idPermiso}"
                                    class="form-check-input"
                                    th:checked="${rol.permisoList != null and rol.permisoList.contains(permiso)}">

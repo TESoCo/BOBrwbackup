@@ -43,7 +43,8 @@ public class Inventario implements Serializable {
 
 
     @Column(name = "tipo_inv")
-    private String tipoInv = "INGRESO";
+    private String tipoInv = "MATERIAL";
+    //Otras opciones: HERRAMIENTA y CONSUMIBLE
 
 
     @Column(name = "anular")

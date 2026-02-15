@@ -39,33 +39,6 @@ public class ControladorObras
         List<Obra> obras = obraServicio.listaObra();
         model.addAttribute("obras",obras);
 
-
-        //INFORMACION DE USUARIO PARA HEADER Y PERMISOS
-        if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-
-            // Debug información del usuario
-            System.out.println("Usuario autenticado: " + username);
-            System.out.println("Autoridades: " + authorities);
-
-            // Agregar información específica del usuario al modelo
-            model.addAttribute("nombreUsuario", username);
-            model.addAttribute("autoridades", authorities);
-
-            // Verificar roles específicos
-            boolean isAdmin = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-            boolean isSupervisor = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
-            boolean isOperativo = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
-
-            model.addAttribute("isAdmin", isAdmin);
-            model.addAttribute("isSupervisor", isSupervisor);
-            model.addAttribute("isOperativo", isOperativo);
-        }
-
         //FILTRAR OBRAS CON COORDENADAS PARA EL MAPA
         // Filtrar obras que tengan coordenadas (opcional)
         List<Obra> obrasConCoordenadas = obras.stream()

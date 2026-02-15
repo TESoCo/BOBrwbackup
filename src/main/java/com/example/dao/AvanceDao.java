@@ -17,15 +17,26 @@ public interface AvanceDao extends JpaRepository<Avance, Long> {
     List<Avance> findByIdObra_IdObra(Long idObra);
     List<Avance> findByIdObra(Obra obra);
     List<Avance> findByIdApu_IdAPU(Long idApu);
+    List<Avance> findByIdContratista_IdContratista(Long idContratista);
 
     // Find by fecha (exact and partial match)
     List<Avance> findByFechaAvance(LocalDate fechaAvance);
-
     List<Avance> findByFechaAvanceBetween(LocalDate start, LocalDate end);
+    List<Avance> findByFechaAvanceBefore(LocalDate date);
+    List<Avance> findByFechaAvanceAfter(LocalDate date);
+
+    // Búsqueda por cantidad ejecutada
+    List<Avance> findByCantEjecGreaterThan(Double cantidad);
+    List<Avance> findByCantEjecBetween(Double min, Double max);
 
     // Combined queries using existing fields
     List<Avance> findByIdUsuarioAndFechaAvance(Usuario idUsuario, LocalDate fechaAvance);
 
+    // Búsqueda combinada
+    List<Avance> findByIdUsuario_IdUsuarioAndFechaAvance(Long idUsuario, LocalDate fechaAvance);
+    List<Avance> findByIdObra_IdObraAndIdContratista_IdContratista(Long idObra, Long idContratista);
 
+    // Búsqueda por anular
+    List<Avance> findByAnular(boolean anular);
 
 }
