@@ -117,7 +117,19 @@ public class ObraServicioImp implements ObraServicio {
                 .toList();
     }
 
-
+    @Override
+    @Transactional
+    public void calcularDuracionLinealObra(Obra obra) {
+        List<ApusObra> apusObraList = obra.getApusObraList();
+        Long duracionTotalObra = 0L;
+        for(ApusObra apusObra : apusObraList) {
+            duracionTotalObra = duracionTotalObra + apusObra.getApu().getDuracionAPU();
+        };
+        if(obra.getFechaIni()!=null){
+            obra.setFechaFin(obra.getFechaIni().plusDays(duracionTotalObra));
+        };
+        obraDao.save(obra);
+    }
 
 
 

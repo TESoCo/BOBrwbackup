@@ -31,6 +31,6 @@ public interface ObraServicio {
     List<Apu> obtenerApusEntidadesPorObra(Long idObra);
 
    //
-
+   void calcularDuracionLinealObra(Obra obra);
 
 }
