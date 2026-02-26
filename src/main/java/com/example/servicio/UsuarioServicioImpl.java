@@ -44,13 +44,6 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     @Override
     @Transactional(readOnly = true)
     public Usuario encontrarPorNombreUsuario(String nombreUsuario) {
-        return usuarioDao.findBynombreUsuario(nombreUsuario);
-    }
-
-    @Override
-    @Transactional
-    public List <Usuario> buscarPorNombreList(String nombreUsuario)
-    {
         return usuarioDao.findByNombreUsuario(nombreUsuario);
     }
 

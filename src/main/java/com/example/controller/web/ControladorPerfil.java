@@ -2,6 +2,8 @@ package com.example.controller.web;
 
 import com.example.dao.UsuarioDao;
 import com.example.domain.Usuario;
+import com.example.servicio.UsuarioServicio;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -13,6 +15,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class ControladorPerfil {
     private final UsuarioDao usuarioDao;
+
+    @Autowired
+    private UsuarioServicio usuarioServicio;
     public ControladorPerfil(UsuarioDao usuarioDao) {
         this.usuarioDao = usuarioDao;
     }
@@ -20,7 +25,7 @@ public class ControladorPerfil {
     @GetMapping("/perfil")
     public String mostrarPerfil(Authentication auth, Model model) {
         String username = auth.getName();
-        Usuario usuario = usuarioDao.findBynombreUsuario(username);
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
         model.addAttribute("usuario", usuario);
         return "perfil";
     }
@@ -29,7 +34,7 @@ public class ControladorPerfil {
     @ResponseBody
     public ResponseEntity<byte[]> mostrarFoto(Authentication auth) {
         String username = auth.getName();
-        Usuario usuario = usuarioDao.findBynombreUsuario(username);
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
 
         if (usuario == null || usuario.getFotoPerfil() == null) {
             return ResponseEntity.notFound().build();

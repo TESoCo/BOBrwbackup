@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ProyectoDao extends JpaRepository<Proyecto, Long> {
 
@@ -68,5 +69,21 @@ public interface ProyectoDao extends JpaRepository<Proyecto, Long> {
     // List<Proyecto> findByGerenteProyectoId(Long idUsuario);
     // Long countByEstadoProyecto(String estadoProyecto);
     // Double sumPresupuestoByEstadoProyecto(String estadoProyecto);
+
+    // Métodos adicionales
+    @Query("SELECT p FROM Proyecto p JOIN p.obras o WHERE o.idObra = :idObra")
+    Optional<Proyecto> findByObraId(@Param("idObra") Long idObra);
+
+    @Query("SELECT p.descProyecto, COUNT(o) FROM Proyecto p LEFT JOIN p.obras o GROUP BY p.idProyecto, p.descProyecto")
+    List<Object[]> countObrasByProyecto();
+
+
+
+    // Búsqueda por texto en descripción o en obras
+    @Query("SELECT DISTINCT p FROM Proyecto p LEFT JOIN p.obras o WHERE " +
+            "p.descProyecto LIKE %:texto% OR " +
+            "o.nombreObra LIKE %:texto%")
+    List<Proyecto> buscarPorTextoEnProyectoYObras(@Param("texto") String texto);
+
 
 }

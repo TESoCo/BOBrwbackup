@@ -1,6 +1,6 @@
 package com.example.servicio;
 
-import com.example.dao.APUDao;
+import com.example.dao.ApuDao;
 import com.example.dao.AvanceDao;
 import com.example.dao.FotoDatoDao;
 import com.example.domain.Apu;
@@ -31,7 +31,7 @@ public class FotoDatoServicioImp implements FotoDatoServicio{
     private AvanceDao avanceDao;
 
     @Autowired
-    private APUDao mateDao;
+    private ApuDao mateDao;
 
     @Autowired
     private FotoDatoDao fotoDatoDao;

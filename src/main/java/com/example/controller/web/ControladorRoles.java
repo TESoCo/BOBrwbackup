@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -239,12 +240,9 @@ public class ControladorRoles {
                 return "redirect:/roles";
             }
 
-            List<Permiso> permisosSeleccionados = List.of();
+            List<Permiso> permisosSeleccionados = new ArrayList<>();
             if (permisosIds != null && !permisosIds.isEmpty()) {
-                permisosSeleccionados = permisoServicio.listarPermisos()
-                        .stream()
-                        .filter(p -> permisosIds.contains(p.getIdPermiso()))
-                        .toList();
+                permisosSeleccionados = permisoServicio.buscarPorIds(permisosIds);
             }
 
 

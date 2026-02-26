@@ -124,26 +124,14 @@
       <div class="user-menu">
         <div class="user-avatar">
         </div>
-        <div>Bienvenido <span th:text="${nombreUsuario}"></span></div>
-        <a th:href="@{/perfil}" class="btn btn-profile">
-          <i class="fas fa-user"></i> Perfil
-        </a>
         <div>
-            <!-- Mostrar rol usando datos del controlador -->
-          <span th:if="${isAdmin}" class="role-badge admin-badge">
-            <i class="fas fa-shield-alt"></i> Administrador
-          </span>
-          <span th:if="${isSupervisor}" class="role-badge supervisor-badge">
-            <i class="fas fa-user-check"></i> Supervisor
-          </span>
-          <span th:if="${isOperativo}" class="role-badge operativo-badge">
-            <i class="fas fa-user"></i> Operativo
-          </span>
-            <!-- Si no tiene ningún rol conocido -->
-          <span th:if="${!isAdmin and !isSupervisor and !isOperativo}"
-                  class="role-badge" style="background: rgba(100, 116, 139, 0.1); color: var(--secondary);">
-            <i class="fas fa-user"></i> Usuario
-          </span>
+          <div>Bienvenido <span sec:authentication="name"></span></div>
+          <div>
+            <span class="role-badge">
+              <i class="fas fa-user-tag"></i>
+              <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>

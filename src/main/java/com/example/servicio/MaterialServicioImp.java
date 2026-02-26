@@ -1,8 +1,6 @@
 package com.example.servicio;
 
-import com.example.dao.APUDao;
 import com.example.dao.MaterialDao;
-import com.example.domain.Apu;
 import com.example.domain.Material;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

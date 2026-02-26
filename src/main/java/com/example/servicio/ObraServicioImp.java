@@ -1,6 +1,6 @@
 package com.example.servicio;
 
-import com.example.dao.APUDao;
+import com.example.dao.ApuDao;
 import com.example.dao.ApusObraDao;
 import com.example.dao.ObraDao;
 import com.example.domain.Apu;
@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,7 @@ public class ObraServicioImp implements ObraServicio {
     private ObraDao obraDao;
 
     @Autowired
-    private APUDao apuDao;
+    private ApuDao apuDao;
 
     @Autowired
     private ApusObraDao apusObraDao;
@@ -112,7 +111,7 @@ public class ObraServicioImp implements ObraServicio {
     @Override
     @Transactional(readOnly = true)
     public List<Apu> obtenerApusEntidadesPorObra(Long idObra) {
-        List<ApusObra> apusObra = apusObraDao.findByObraId(idObra);
+        List<ApusObra> apusObra = apusObraDao.findByObra_IdObra(idObra);
         return apusObra.stream()
                 .map(ApusObra::getApu)
                 .toList();

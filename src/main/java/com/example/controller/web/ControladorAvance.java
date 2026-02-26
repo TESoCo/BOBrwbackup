@@ -61,34 +61,6 @@ public class ControladorAvance
 
             Model model, org.springframework.security.core.Authentication authentication){
 
-
-
-        //INFORMACION DE USUARIO PARA HEADER Y PERMISOS
-        if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-
-            // Debug información del usuario
-            System.out.println("Usuario autenticado: " + username);
-            System.out.println("Autoridades: " + authorities);
-
-            // Agregar información específica del usuario al modelo
-            model.addAttribute("nombreUsuario", username);
-            model.addAttribute("autoridades", authorities);
-
-            // Verificar roles específicos
-            boolean isAdmin = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-            boolean isSupervisor = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
-            boolean isOperativo = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
-
-            model.addAttribute("isAdmin", isAdmin);
-            model.addAttribute("isSupervisor", isSupervisor);
-            model.addAttribute("isOperativo", isOperativo);
-        }
-
         //Necesito cargar obras para mostrar nombres
         List<Obra> obras = obraServicio.listaObra();
         model.addAttribute("presupuestos", obras);
@@ -142,37 +114,9 @@ public class ControladorAvance
         List<Obra> obras = obraServicio.listaObra();
         List<Apu> apus = apuServicio.listarElementos();
 
-
         model.addAttribute("avance", new Avance());
         model.addAttribute("obras",obras);
         model.addAttribute("apus",apus);
-
-        //INFORMACION DE USUARIO PARA HEADER Y PERMISOS
-        if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-
-            // Debug información del usuario
-            System.out.println("Usuario autenticado: " + username);
-            System.out.println("Autoridades: " + authorities);
-
-            // Agregar información específica del usuario al modelo
-            model.addAttribute("nombreUsuario", username);
-            model.addAttribute("autoridades", authorities);
-
-            // Verificar roles específicos
-            boolean isAdmin = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-            boolean isSupervisor = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
-            boolean isOperativo = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
-
-            model.addAttribute("isAdmin", isAdmin);
-            model.addAttribute("isSupervisor", isSupervisor);
-            model.addAttribute("isOperativo", isOperativo);
-
-        }
 
         return "avances/agregarAvance";
     }
@@ -340,27 +284,6 @@ public class ControladorAvance
         model.addAttribute("apus", apus);
         model.addAttribute("fotos", fotos);
 
-
-        // INFORMACION DE USUARIO PARA HEADER Y PERMISOS
-        if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-
-            model.addAttribute("nombreUsuario", username);
-            model.addAttribute("autoridades", authorities);
-
-            boolean isAdmin = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-            boolean isSupervisor = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
-            boolean isOperativo = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
-
-            model.addAttribute("isAdmin", isAdmin);
-            model.addAttribute("isSupervisor", isSupervisor);
-            model.addAttribute("isOperativo", isOperativo);
-        }
-
         return "avances/editarAvance"; // Cambia a la vista correcta
     }
 
@@ -453,31 +376,9 @@ public class ControladorAvance
         model.addAttribute("fotos", fotos);
         model.addAttribute("autor", autor);
         model.addAttribute("contratista", contratista);
-
-        // INFORMACION DE USUARIO PARA HEADER Y PERMISOS
-        if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-
-            model.addAttribute("nombreUsuario", username);
-            model.addAttribute("autoridades", authorities);
-
-            boolean isAdmin = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-            boolean isSupervisor = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
-            boolean isOperativo = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
-
-            model.addAttribute("isAdmin", isAdmin);
-            model.addAttribute("isSupervisor", isSupervisor);
-            model.addAttribute("isOperativo", isOperativo);
-        }
-
         model.addAttribute("actividad", avanceServicio.localizarAvance(idAvance));
         model.addAttribute("obras",obras);
         model.addAttribute("matriz", matriz);
-
         model.addAttribute("Editando", false); // ← This forces VIEW mode
         return "avances/verAvances";
     }

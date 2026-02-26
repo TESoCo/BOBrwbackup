@@ -60,7 +60,7 @@ public class InventarioServicioImp implements InventarioServicio {
     @Transactional(readOnly = true)
     public List<Inventario> buscarPorNombreGestor(String nombreGestor) {
         try {
-            Usuario usuario = usuarioDao.findBynombreUsuario(nombreGestor);
+            Usuario usuario = usuarioDao.findByNombreUsuario(nombreGestor);
             // Verificar si el usuario existe
             if (usuario == null || usuario.getIdUsuario() == null) {
                 return Collections.emptyList(); // Retorna lista vacía si no existe

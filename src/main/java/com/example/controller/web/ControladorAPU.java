@@ -40,33 +40,7 @@ public class ControladorAPU {
     @Autowired
     private MaterialesAPUServicio materialesAPUServicio;
 
-    //INFORMACION DE USUARIO PARA HEADER Y PERMISOS
-    private void agregarInfoUsuario(Model model, Authentication authentication){
-        if (authentication != null && authentication.isAuthenticated()) {
-            String username = authentication.getName();
-            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-            // Debug información del usuario
-            System.out.println("Usuario autenticado: " + username);
-            System.out.println("Autoridades: " + authorities);
-
-            // Agregar información específica del usuario al modelo
-            model.addAttribute("nombreUsuario", username);
-            model.addAttribute("autoridades", authorities);
-
-            // Verificar roles específicos
-            boolean isAdmin = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-            boolean isSupervisor = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
-            boolean isOperativo = authorities.stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
-
-            model.addAttribute("isAdmin", isAdmin);
-            model.addAttribute("isSupervisor", isSupervisor);
-            model.addAttribute("isOperativo", isOperativo);
-        }
-    }
 
     // ========== MÉTODOS PRINCIPALES ==========
     @GetMapping("/inicioAPU")
@@ -74,35 +48,31 @@ public class ControladorAPU {
             @RequestParam(required = false) String search,
             Model model,
             Authentication authentication) {
-
         List<Apu> apus;
-
         // Aplicar filtro de búsqueda si se proporciona
         if (getSearch(search) != null && !search.trim().isEmpty()) {
             apus = apuServicio.buscarPorNombre(search);
         } else {
             apus = apuServicio.listarElementos();
         }
-
         model.addAttribute("apus", apus);
         model.addAttribute("materiales", materialServicio.listarTodos());
         model.addAttribute("searchTerm", search);
-
-        agregarInfoUsuario(model, authentication);
-
         return "apus/inicioAPU";
     }
+
+
 
     private static String getSearch(String search) {
         return search;
     }
 
+
+
     @GetMapping("/crearAPU")
     public String mostrarFormularioCrear(Model model, Authentication authentication) {
-
         // Obtener todos los materiales disponibles
         List<Material> materiales = materialServicio.listarTodos();
-
         // Debug para verificar que los materiales se cargan
         System.out.println("Materiales cargados para crear APU: " + (materiales != null ? materiales.size() : 0));
         if (materiales != null) {
@@ -110,13 +80,12 @@ public class ControladorAPU {
                 System.out.println("Material: " + material.getNombreMaterial() + " - ID: " + material.getIdMaterial());
             }
         }
-
         model.addAttribute("apu", new Apu());
         model.addAttribute("materiales", materiales);
-        agregarInfoUsuario(model, authentication);
-
         return "apus/crearAPU";
     }
+
+
 
     @PostMapping("/salvar")
     public String salvarAPU(@ModelAttribute Apu apu,
@@ -211,16 +180,15 @@ public class ControladorAPU {
             materialIdsActuales.add(ma.getMaterial().getIdMaterial());
 
         }
-
         model.addAttribute("apu", apu);
         model.addAttribute("materiales", materialServicio.listarTodos());
         model.addAttribute("materialesActuales", materialesActuales);
         model.addAttribute("materialIdsActuales", materialIdsActuales);
         model.addAttribute("cantidadesMap", cantidadesMateriales);
-
-        agregarInfoUsuario(model, authentication);
         return "apus/editarAPU";
     }
+
+
 
     @GetMapping("/detalle/{id}")
     public String verDetalleAPU(@PathVariable Long id, Model model,Authentication authentication) {
@@ -233,8 +201,6 @@ public class ControladorAPU {
             model.addAttribute("apu", apu);
             model.addAttribute("SoloLectura", true);
             model.addAttribute("materiales", materialesAPUServicio.obtenerPorId(id));
-
-            agregarInfoUsuario(model, authentication);
 
             return "apus/detalleAPU";
         } catch (Exception e) {
@@ -274,7 +240,6 @@ public class ControladorAPU {
         model.addAttribute("materiales", materialesDisponibles);
         model.addAttribute("Editando", editando);
 
-        agregarInfoUsuario(model, authentication);
         return "apus/form";
     }
 

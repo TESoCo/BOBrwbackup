@@ -32,8 +32,6 @@ public class ControladorDashboard {
     @Autowired
     private InventarioServicio inventarioServicio;
 
-
-
     @GetMapping("/dashboard")
     public String showDashboard(Model model, Authentication authentication) {
         try {
@@ -68,19 +66,7 @@ public class ControladorDashboard {
                 model.addAttribute("nombreUsuario", username);
                 model.addAttribute("autoridades", authorities);
 
-                // Verificar roles específicos
-                boolean isAdmin = authorities.stream()
-                        .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-                boolean isSupervisor = authorities.stream()
-                        .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
-                boolean isOperativo = authorities.stream()
-                        .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
-
-                model.addAttribute("isAdmin", isAdmin);
-                model.addAttribute("isSupervisor", isSupervisor);
-                model.addAttribute("isOperativo", isOperativo);
             }
-
 
             // Agregar datos al modelo
             model.addAttribute("cantidadObras", cantidadObras);
@@ -91,8 +77,6 @@ public class ControladorDashboard {
             model.addAttribute("hayObrasConCoordenadas", obrasConCoordenadas != null && !obrasConCoordenadas.isEmpty());
             model.addAttribute("totalAvances", avancesRecientes != null ? avancesRecientes.size() : 0);
             model.addAttribute("totalInventarios", inventariosRecientes != null ? inventariosRecientes.size() : 0);
-
-
 
             // Debug: Verificar roles del usuario actual
             if (authentication != null && authentication.isAuthenticated()) {
@@ -110,8 +94,8 @@ public class ControladorDashboard {
             }
         }
         catch (Exception e){
-                System.err.println("Error en dashboard: " + e.getMessage());
-                e.printStackTrace();
+            System.err.println("Error en dashboard: " + e.getMessage());
+            e.printStackTrace();
 
             // Valores por defecto en caso de error
             model.addAttribute("cantidadObras", 0);
@@ -129,18 +113,17 @@ public class ControladorDashboard {
 
 
 
-            // Agregar información de roles al modelo para debugging
-            boolean isAdmin = authentication.getAuthorities().stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-            boolean isSupervisor = authentication.getAuthorities().stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
-            boolean isOperativo = authentication.getAuthorities().stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
+        // Agregar información de roles al modelo para debugging
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+        boolean isSupervisor = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPERVISOR"));
+        boolean isOperativo = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_OPERATIVO"));
 
-            model.addAttribute("isAdmin", isAdmin);
-            model.addAttribute("isSupervisor", isSupervisor);
-            model.addAttribute("isOperativo", isOperativo);
-
+        model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("isSupervisor", isSupervisor);
+        model.addAttribute("isOperativo", isOperativo);
 
         return "dashboard";
     }
@@ -204,8 +187,6 @@ public class ControladorDashboard {
                 .collect(Collectors.toList());
     }
 
-
-
     private List<Obra> obtenerObrasConCoordenadas(List<Obra> obras) {
         if (obras == null) {
             return new ArrayList<>();
@@ -259,8 +240,6 @@ public class ControladorDashboard {
             return 0.0;
         }
     }
-
-
 
     @GetMapping("/redirigir")
     public String redirectToDashboard() {
