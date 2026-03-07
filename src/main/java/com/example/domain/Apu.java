@@ -51,9 +51,8 @@ public class Apu implements Serializable {
     @Column(name = "unidad_apu", table = "caracteristicas_apu")
     private String unidadesAPU;
 
-    @NotEmpty
     @Column(name = "duracion_apu", table = "caracteristicas_apu")
-    private Long duracionAPU;
+    private BigDecimal duracionAPU;
 
 
     //`valor_apu`

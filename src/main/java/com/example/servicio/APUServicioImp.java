@@ -58,6 +58,7 @@ public class APUServicioImp implements APUServicio {
 
     // CSV Import Implementation - FIXED VERSION
     @Override
+    @Transactional
     public List<Apu> importarAPUsDesdeCSV(MultipartFile file, Usuario usuario) throws IOException {
         List<Apu> apusImportados = new ArrayList<>();
 
@@ -127,16 +128,17 @@ public class APUServicioImp implements APUServicio {
             apu.setIdUsuario(usuario);
 
             // Map CSV columns to APU fields
-            // CSV format: id_Apu,nombreAPU,descAPU,unidades,vMaterialesAPU,vManoDeObraAPU,vTransporteAPU,vMiscAPU
+            // CSV format: item,nombreAPU,descAPU,unidades,duracion, vMaterialesAPU,vManoDeObraAPU,vTransporteAPU,vMiscAPU
             apu.setNombreAPU(record.length > 1 ? cleanValue(record[1]) : "");     // nombreAPU (column 1)
             apu.setDescAPU(record.length > 2 ? cleanValue(record[2]) : "");       // descAPU (column 2)
             apu.setUnidadesAPU(record.length > 3 ? cleanValue(record[3]) : "");   // unidades (column 3)
+            apu.setDuracionAPU(record.length > 4 ? parseBigDecimal(record[4]) : BigDecimal.ZERO);   // duracion (column 4)
 
             // Handle optional numeric values (columns 4-7)
-            apu.setVMaterialesAPU(record.length > 4 ? parseBigDecimal(record[4]) : BigDecimal.ZERO);    // vMaterialesAPU
-            apu.setVManoDeObraAPU(record.length > 5 ? parseBigDecimal(record[5]) : BigDecimal.ZERO);    // vManoDeObraAPU
-            apu.setVTransporteAPU(record.length > 6 ? parseBigDecimal(record[6]) : BigDecimal.ZERO);    // vTransporteAPU
-            apu.setVMiscAPU(record.length > 7 ? parseBigDecimal(record[7]) : BigDecimal.ZERO);          // vMiscAPU
+            apu.setVMaterialesAPU(record.length > 5 ? parseBigDecimal(record[5]) : BigDecimal.ZERO);    // vMaterialesAPU
+            apu.setVManoDeObraAPU((record.length > 6) ? parseBigDecimal(record[6]) : BigDecimal.ZERO);    // vManoDeObraAPU
+            apu.setVTransporteAPU(record.length > 7 ? parseBigDecimal(record[7]) : BigDecimal.ZERO);    // vTransporteAPU
+            apu.setVMiscAPU(record.length > 8 ? parseBigDecimal(record[8]) : BigDecimal.ZERO);          // vMiscAPU
 
             return apu;
         } catch (Exception e) {
@@ -195,7 +197,14 @@ public class APUServicioImp implements APUServicio {
     @Override
     @Transactional
     public void guardarTodos(List<Apu> apus) {
-        APUDao.saveAll(apus);
+        try {
+            APUDao.saveAll(apus);
+            System.out.println("✅ guardarTodos completado");
+        } catch (Exception e) {
+            System.err.println("❌ Error en guardarTodos: " + e.getMessage());
+            e.printStackTrace();
+            throw e; // Re-lanzar para que el rollback sea visible
+        }
     }
 
     //calcular valor de APU

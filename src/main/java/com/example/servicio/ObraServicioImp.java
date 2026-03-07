@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,12 +122,12 @@ public class ObraServicioImp implements ObraServicio {
     @Transactional
     public void calcularDuracionLinealObra(Obra obra) {
         List<ApusObra> apusObraList = obra.getApusObraList();
-        Long duracionTotalObra = 0L;
+        BigDecimal duracionTotalObra = BigDecimal.ZERO;
         for(ApusObra apusObra : apusObraList) {
-            duracionTotalObra = duracionTotalObra + apusObra.getApu().getDuracionAPU();
+            duracionTotalObra = duracionTotalObra.add(apusObra.getApu().getDuracionAPU());
         };
         if(obra.getFechaIni()!=null){
-            obra.setFechaFin(obra.getFechaIni().plusDays(duracionTotalObra));
+            obra.setFechaFin(obra.getFechaIni().plusDays(duracionTotalObra.longValue()));
         };
         obraDao.save(obra);
     }
