@@ -74,11 +74,19 @@ public class ControladorEquipos {
     @PreAuthorize("hasAuthority('CREAR_EQUIPO')")
     public String mostrarFormularioNuevo(Model model) {
         try {
+            // Obtener todos los usuarios y proyectos disponibles
+            List<Usuario> todosUsuarios = usuarioServicio.listarUsuarios();
+            List<Proyecto> todosProyectos = proyectoServicio.listarProyectos();
+
             model.addAttribute("modo", "crear");
             model.addAttribute("equipo", new Equipo());
+            model.addAttribute("todosUsuarios", todosUsuarios);
+            model.addAttribute("todosProyectos", todosProyectos);
         } catch (Exception e) {
             System.err.println("Error al cargar formulario nuevo equipo: " + e.getMessage());
             e.printStackTrace();
+            model.addAttribute("todosUsuarios", List.of());
+            model.addAttribute("todosProyectos", List.of());
         }
 
         return "equipos/equipo_formulario";
@@ -91,6 +99,8 @@ public class ControladorEquipos {
     @PreAuthorize("hasAuthority('CREAR_EQUIPO')")
     public String guardarEquipo(
             @ModelAttribute Equipo equipo,
+            @RequestParam(value = "usuariosSeleccionados", required = false) List<Long> idsUsuarios,
+            @RequestParam(value = "proyectosSeleccionados", required = false) List<Long> idsProyectos,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -100,7 +110,33 @@ public class ControladorEquipos {
                 return "redirect:/equipos/nuevo";
             }
 
+            // Guardar el equipo primero
             equipoServicio.guardar(equipo);
+
+            // Asignar usuarios seleccionados al equipo
+            if (idsUsuarios != null && !idsUsuarios.isEmpty()) {
+                for (Long idUsuario : idsUsuarios) {
+                    Usuario usuario = usuarioServicio.encontrarPorId(idUsuario);
+                    if (usuario != null) {
+                        usuario.setEquipo(equipo);
+                        usuarioServicio.guardar(usuario);
+                    }
+                }
+            }
+
+            // Asignar proyectos seleccionados al equipo
+            if (idsProyectos != null && !idsProyectos.isEmpty()) {
+                for (Long idProyecto : idsProyectos) {
+                    Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
+                    if (proyecto != null) {
+                        proyecto.setEquipo(equipo);
+                        proyectoServicio.guardar(proyecto);
+                    }
+                }
+            }
+
+
+
             redirectAttributes.addFlashAttribute("success", "Equipo creado exitosamente");
             return "redirect:/equipos?creacionExitosa=true";
 
@@ -149,7 +185,21 @@ public class ControladorEquipos {
                 return "redirect:/equipos";
             }
 
+            // Obtener todos los usuarios y proyectos
+            List<Usuario> todosUsuarios = usuarioServicio.listarUsuarios();
+            List<Proyecto> todosProyectos = proyectoServicio.listarProyectos();
+
+            // Obtener IDs de usuarios y proyectos ya asignados
+            List<Long> idsUsuariosAsignados = equipo.getUsuarios() != null ?
+                    equipo.getUsuarios().stream().map(Usuario::getIdUsuario).toList() : List.of();
+            List<Long> idsProyectosAsignados = equipo.getProyectos() != null ?
+                    equipo.getProyectos().stream().map(Proyecto::getIdProyecto).toList() : List.of();
+
             model.addAttribute("equipo", equipo);
+            model.addAttribute("todosUsuarios", todosUsuarios);
+            model.addAttribute("todosProyectos", todosProyectos);
+            model.addAttribute("idsUsuariosAsignados", idsUsuariosAsignados);
+            model.addAttribute("idsProyectosAsignados", idsProyectosAsignados);
             model.addAttribute("modo", "editar");
 
             return "equipos/equipo_formulario";
@@ -162,6 +212,7 @@ public class ControladorEquipos {
         }
     }
 
+
     /**
      * Actualizar equipo existente
      */
@@ -170,6 +221,8 @@ public class ControladorEquipos {
     public String actualizarEquipo(
             @PathVariable Long id,
             @ModelAttribute Equipo equipo,
+            @RequestParam(value = "usuariosSeleccionados", required = false) List<Long> idsUsuarios,
+            @RequestParam(value = "proyectosSeleccionados", required = false) List<Long> idsProyectos,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -186,10 +239,48 @@ public class ControladorEquipos {
                 return "redirect:/equipos/editar/" + id;
             }
 
-            // Actualizar datos
+            // Actualizar descripción
             equipoExistente.setDescEquipo(equipo.getDescEquipo());
-
             equipoServicio.guardar(equipoExistente);
+
+            // PRIMERO: Remover todos los usuarios actuales del equipo
+            if (equipoExistente.getUsuarios() != null) {
+                for (Usuario usuario : equipoExistente.getUsuarios()) {
+                    usuario.setEquipo(null);
+                    usuarioServicio.guardar(usuario);
+                }
+            }
+
+            // SEGUNDO: Asignar los nuevos usuarios seleccionados
+            if (idsUsuarios != null && !idsUsuarios.isEmpty()) {
+                for (Long idUsuario : idsUsuarios) {
+                    Usuario usuario = usuarioServicio.encontrarPorId(idUsuario);
+                    if (usuario != null) {
+                        usuario.setEquipo(equipoExistente);
+                        usuarioServicio.guardar(usuario);
+                    }
+                }
+            }
+
+            // TERCERO: Remover todos los proyectos actuales del equipo
+            if (equipoExistente.getProyectos() != null) {
+                for (Proyecto proyecto : equipoExistente.getProyectos()) {
+                    proyecto.setEquipo(null);
+                    proyectoServicio.guardar(proyecto);
+                }
+            }
+
+            // CUARTO: Asignar los nuevos proyectos seleccionados
+            if (idsProyectos != null && !idsProyectos.isEmpty()) {
+                for (Long idProyecto : idsProyectos) {
+                    Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
+                    if (proyecto != null) {
+                        proyecto.setEquipo(equipoExistente);
+                        proyectoServicio.guardar(proyecto);
+                    }
+                }
+            }
+
             redirectAttributes.addFlashAttribute("success", "Equipo actualizado exitosamente");
             return "redirect:/equipos?actualizacionExitosa=true";
 
