@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ObraServicioImp implements ObraServicio {
@@ -132,6 +133,24 @@ public class ObraServicioImp implements ObraServicio {
         obraDao.save(obra);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Obra> findByProyectoIsNull() {
+        List<Obra> todasObras = (List<Obra>) obraDao.findAll();
+        return todasObras.stream()
+                .filter(obra -> obra.getProyecto() == null)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Obra> findByProyectoIdProyecto(Long idProyecto) {
+        List<Obra> todasObras = (List<Obra>) obraDao.findAll();
+        return todasObras.stream()
+                .filter(obra -> obra.getProyecto() != null &&
+                        obra.getProyecto().getIdProyecto().equals(idProyecto))
+                .collect(Collectors.toList());
+    }
 
 
 }

@@ -168,6 +168,32 @@
                                       th:unless="${proyecto.equipo.usuarios != null}">0</span>
                             </p>
                         </div>
+                        <!-- Usuarios del Equipo Asignado -->
+                        <div class="card mb-4" th:if="${proyecto.equipo != null and proyecto.equipo.usuarios != null and !proyecto.equipo.usuarios.isEmpty()}">
+                            <div class="card-header bg-primary text-white">
+                                <h3><i class="fas fa-users"></i> Usuarios del Equipo</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Correo</th>
+                                            <th>Teléfono</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr th:each="usuario : ${proyecto.equipo.usuarios}">
+                                            <td th:text="${usuario.nombreUsuario}"></td>
+                                            <td th:text="${usuario.correoUsuario}"></td>
+                                            <td th:text="${usuario.telefonoUsuario}"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-md-3">
                             <h6>Proyectos del Equipo:</h6>
                             <p>

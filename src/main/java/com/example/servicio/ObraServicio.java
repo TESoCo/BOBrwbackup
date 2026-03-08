@@ -19,10 +19,12 @@ public interface ObraServicio {
 
     Obra localizarObra(Long entryId);
 
+    // Métodos de búsqueda
     List<Obra> findByObraName(String obraName);
     List<Obra> findByObraNameContaining(String obraName);
     List<Obra> findByObraNameIgnoreCase(String obraName);
 
+    // Métodos para APUs
     public List<Apu> listarApus();
 
     void agregarApuAObra(Obra obra, Apu apu);
@@ -32,5 +34,9 @@ public interface ObraServicio {
 
    //
    void calcularDuracionLinealObra(Obra obra);
+
+    // para filtrar obras
+    List<Obra> findByProyectoIsNull();
+    List<Obra> findByProyectoIdProyecto(Long idProyecto);
 
 }
