@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -74,13 +75,25 @@ public class ControladorProyectos {
     public String mostrarFormularioNuevo(Model model) {
         try {
             List<Equipo> equipos = equipoServicio.listarEquipos();
+
+            // Obtener obras sin proyecto asignado
+            List<Obra> obrasDisponibles = new ArrayList<>();
+            List<Obra> todasObras = obraServicio.listaObra();
+            for (Obra obra : todasObras) {
+                if (obra.getProyecto() == null) {
+                    obrasDisponibles.add(obra);
+                }
+            }
+
             model.addAttribute("equipos", equipos);
+            model.addAttribute("obrasDisponibles", obrasDisponibles);
             model.addAttribute("modo", "crear");
             model.addAttribute("proyecto", new Proyecto());
         } catch (Exception e) {
             System.err.println("Error al cargar formulario nuevo proyecto: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("equipos", List.of());
+            model.addAttribute("obrasDisponibles", List.of());
         }
 
         return "proyectos/proyecto_formulario";
@@ -94,6 +107,7 @@ public class ControladorProyectos {
     public String guardarProyecto(
             @ModelAttribute Proyecto proyecto,
             @RequestParam(value = "equipo.idEquipo", required = false) Long idEquipo,
+            @RequestParam(value = "obrasSeleccionadas", required = false) List<Long> obrasSeleccionadas,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -111,7 +125,20 @@ public class ControladorProyectos {
                 }
             }
 
+            // Guardar el proyecto
             proyectoServicio.guardar(proyecto);
+
+            // Asignar obras seleccionadas al proyecto
+            if (obrasSeleccionadas != null && !obrasSeleccionadas.isEmpty()) {
+                for (Long idObra : obrasSeleccionadas) {
+                    Obra obra = obraServicio.localizarObra(idObra);
+                    if (obra != null) {
+                        obra.setProyecto(proyecto);
+                        obraServicio.actualizar(obra);
+                    }
+                }
+            }
+
             redirectAttributes.addFlashAttribute("success", "Proyecto creado exitosamente");
             return "redirect:/proyectos?creacionExitosa=true";
 
@@ -161,8 +188,30 @@ public class ControladorProyectos {
             }
 
             List<Equipo> equipos = equipoServicio.listarEquipos();
+
+            // Obtener todas las obras y determinar cuáles están disponibles
+            List<Obra> todasObras = obraServicio.listaObra();
+            List<Obra> obrasDisponibles = new ArrayList<>();
+
+            // Obtener IDs de obras ya asignadas a este proyecto
+            List<Long> obrasAsignadasIds = new ArrayList<>();
+            if (proyecto.getObras() != null) {
+                for (Obra obra : proyecto.getObras()) {
+                    obrasAsignadasIds.add(obra.getIdObra());
+                }
+            }
+
+            // Filtrar obras: las que no tienen proyecto O las que ya pertenecen a este proyecto
+            for (Obra obra : todasObras) {
+                if (obra.getProyecto() == null || obra.getProyecto().getIdProyecto().equals(id)) {
+                    obrasDisponibles.add(obra);
+                }
+            }
+
             model.addAttribute("proyecto", proyecto);
             model.addAttribute("equipos", equipos);
+            model.addAttribute("obrasDisponibles", obrasDisponibles);
+            model.addAttribute("obrasAsignadasIds", obrasAsignadasIds);
             model.addAttribute("modo", "editar");
 
             return "proyectos/proyecto_formulario";
@@ -184,6 +233,7 @@ public class ControladorProyectos {
             @PathVariable Long id,
             @ModelAttribute Proyecto proyecto,
             @RequestParam(value = "equipo.idEquipo", required = false) Long idEquipo,
+            @RequestParam(value = "obrasSeleccionadas", required = false) List<Long> obrasSeleccionadas,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -211,7 +261,29 @@ public class ControladorProyectos {
                 proyectoExistente.setEquipo(null); // Remover equipo si no se seleccionó
             }
 
+            // Guardar cambios del proyecto
             proyectoServicio.guardar(proyectoExistente);
+
+            // Desasignar todas las obras actuales de este proyecto
+            List<Obra> obrasActuales = obraServicio.listaObra();
+            for (Obra obra : obrasActuales) {
+                if (obra.getProyecto() != null && obra.getProyecto().getIdProyecto().equals(id)) {
+                    obra.setProyecto(null);
+                    obraServicio.actualizar(obra);
+                }
+            }
+
+            // Asignar nuevas obras seleccionadas
+            if (obrasSeleccionadas != null && !obrasSeleccionadas.isEmpty()) {
+                for (Long idObra : obrasSeleccionadas) {
+                    Obra obra = obraServicio.localizarObra(idObra);
+                    if (obra != null) {
+                        obra.setProyecto(proyectoExistente);
+                        obraServicio.actualizar(obra);
+                    }
+                }
+            }
+
             redirectAttributes.addFlashAttribute("success", "Proyecto actualizado exitosamente");
             return "redirect:/proyectos?actualizacionExitosa=true";
 
