@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title th:text="${modo == 'crear' ? 'Crear Equipo - BOB' : 'Editar Equipo - BOB'}"></title>
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
+    <link rel="stylesheet" th:href="@{/CSS/EQUIPOS/crearEquipos.css}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .selection-container {
@@ -233,7 +234,7 @@
             <h2 th:text="${modo == 'crear' ? 'Crear Nuevo Equipo' : 'Editar Equipo'}"></h2>
         </div>
 
-        <div class="container">
+        <div class="form-container">
             <!-- Mostrar mensajes de error/success -->
             <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
