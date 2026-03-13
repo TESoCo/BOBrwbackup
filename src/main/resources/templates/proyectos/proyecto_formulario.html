@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title th:text="${modo == 'crear' ? 'Crear Proyecto - BOB' : 'Editar Proyecto - BOB'}">Gestion de Proyectos</title>
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
+    <link rel="stylesheet" th:href="@{/CSS/PROYECTOS/crearProyectos.css}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -116,23 +117,25 @@
             </h2>
         </div>
 
-        <div class="container">
+        <div class="form-container">
             <form th:action="${modo == 'crear' ? '/proyectos/guardar' : '/proyectos/actualizar/' + proyecto.idProyecto}"
                   method="post" class="mt-4">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                 <!-- Descripción del Proyecto -->
-                <div class="form-group mb-3">
-                    <label for="descProyecto" class="form-label">Descripción del Proyecto *</label>
+                <div class="form-group">
+                    <label for="descProyecto" class="form-label required">Descripción del Proyecto</label>
                     <input type="text"
                            id="descProyecto"
                            name="descProyecto"
                            th:value="${proyecto.descProyecto}"
-                           class="form-control"
+                           class="form-input"
                            required
-                           maxlength="200"
-                           placeholder="Ingrese la descripción del proyecto">
-                    <div class="form-text">Máximo 200 caracteres</div>
+                           maxlength="100"
+                           placeholder="Ej: Proyecto Residencial, Proyecto Vial, etc.">
+                    <small class="error-message" style="color: var(--secondary); margin-top: 5px; display: block;">
+                        Descripción del proyecto (máximo 100 caracteres)
+                    </small>
                 </div>
 
                 <!-- Selección de Equipo -->
