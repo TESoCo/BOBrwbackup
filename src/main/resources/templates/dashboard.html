@@ -21,8 +21,7 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <img th:src="@{/IMG/imagen-bob.png}" alt="BOB Logo">
-      <h1>BOB</h1>
+      <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
     </div>
     <ul class="nav-links">
 
@@ -122,14 +121,16 @@
     <div class="header">
       <h2>Panel de Control</h2>
       <div class="user-menu">
-        <div class="user-avatar">
-        </div>
         <div>
-          <div>Bienvenido <span sec:authentication="name"></span></div>
+          <div>
+            Bienvenido
+            <a th:href="@{/perfil}" class="user-name-link">
+              <span sec:authentication="name"></span>
+            </a>
+          </div>
           <div>
             <span class="role-badge">
-              <i class="fas fa-user-tag"></i>
-              <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+                <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
             </span>
           </div>
         </div>
