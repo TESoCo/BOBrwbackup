@@ -1,143 +1,368 @@
-/* CSS BASE DEL FORMULARIO */
-/* Define las variables que usas en el CSS en línea */
-:root {
-  --primary: #2563eb;
-  --secondary: #64748b;
-  --dark: #1e293b;
-  --success: #10b981;
-  --danger: #ef4444;
+/* * ESTILOS ESPECÍFICOS PARA CREAR MATERIALES
+ * Estos estilos se centran en los componentes internos: Tabs, Contenedores de Formulario y Tablas.
+ * Se asume que las variables CSS (--primary, --shadow, --border-radius, etc.)
+ * y los estilos base de botones (.btn) están definidos en dashboard.css.
+ */
+
+/* --- Tabs Navigation --- */
+.tabs {
+    display: flex;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--gray); /* CORREGIDO: Usando --gray */
 }
 
-body {
-  font-family: 'Roboto', sans-serif;
-  background-color: #f1f5f9; /* Color de fondo del Dashboard */
-  color: var(--dark);
-  line-height: 1.6;
-}
-
-.registrar {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.registrar form {
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.registrar h1 {
-    text-align: center;
-    margin-bottom: 30px;
-    color: var(--primary);
-}
-
-.registrar label {
-    display: block;
-    margin-bottom: 5px;
+.tab {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
     font-weight: 500;
+    color: var(--secondary);
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-bottom-color 0.2s;
+    user-select: none;
+}
+
+.tab:hover {
     color: var(--dark);
+    border-bottom-color: var(--gray);
 }
 
-.registrar input, .registrar select, .registrar .file-input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
+.tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
 }
 
-.registrar fieldset {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
+/* --- Tab Content Display --- */
+.tab-content {
+    display: none;
+    padding-top: 1rem;
 }
 
-.registrar legend {
-    padding: 0 10px;
+.tab-content.active {
+    display: block;
+}
+
+/* --- Form Container (Card Style) --- */
+.form-container {
+    background-color: white; /* CORREGIDO: Usando white (en lugar de --bg-card) */
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    border-left: 5px solid var(--primary);
+}
+
+.form-title {
+    font-size: 1.25rem;
     font-weight: 600;
     color: var(--primary);
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--gray); /* CORREGIDO: Usando --gray */
 }
 
-.enlace {
-    text-align: center;
-    margin-top: 20px;
+/* --- Form Elements Overrides/Specifics --- */
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
-.enlace a {
-    color: var(--secondary);
-    text-decoration: none;
-}
-
-.enlace a:hover {
-    text-decoration: underline;
-}
-
-.file-input {
-    background: #f8f9fa;
-    cursor: pointer;
-}
-
-.file-input:hover {
-    background: #e9ecef;
-}
-
-.file-preview {
-    text-align: center;
-    margin: 10px 0;
-}
-
-.file-preview img {
-    max-width: 150px;
-    max-height: 150px;
-    border-radius: 50%;
-    border: 2px solid #ddd;
-}
-
-.file-info {
-    font-size: 0.9rem;
-    color: #666;
-    margin-top: 5px;
-}
-
-/* Estilo para el botón de submit (ajustar si es necesario) */
-.registrar button[type="submit"] {
+.form-label {
     display: block;
-    width: 100%;
-    padding: 10px;
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.registrar button[type="submit"]:hover {
-    background-color: var(--primary-dark);
-}
-
-/* Estilos de mensajes de alerta */
-.alert {
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 15px;
     font-weight: 500;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
 }
 
-.alert-success {
-    background-color: #d1e7dd;
-    color: var(--success);
-    border: 1px solid #badbcc;
-}
-
-.alert-error {
-    background-color: #f8d7da;
+.form-label.required::after {
+    content: '*';
     color: var(--danger);
-    border: 1px solid #f5c6cb;
+    margin-left: 0.25rem;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--gray);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-color: white;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+    background-color: white;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.error-message {
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+/* Botones y Acciones (Se asume que .btn está en dashboard.css) */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--gray);
+}
+
+.form-actions .btn {
+    min-width: 150px;
+    justify-content: center;
+}
+
+/* --- Estilos para la tabla de Materiales Generados (Import Tab) --- */
+
+.table-container {
+    overflow-x: auto;
+    background-color: white; /* CORREGIDO: Usando white (en lugar de --bg-card) */
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray);
+    margin-top: 1.5rem; /* Asegurar espacio si se muestra dinámicamente */
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+.data-table thead tr {
+    background-color: var(--primary-dark);
+    color: white;
+    text-align: left;
+}
+
+.data-table th, .data-table td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+}
+
+.data-table th {
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--primary);
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--gray);
+}
+
+.data-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--light); /* Fondo claro para hover */
+}
+
+.data-table td .form-input,
+.data-table td .form-select {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    border: 1px solid var(--gray);
+    background-color: white;
+}
+
+/* Estilo para inputs readonly en la tabla */
+.data-table td input[readonly] {
+    background-color: var(--light);
+    color: var(--dark);
+    cursor: default;
+}
+
+.data-table td input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    vertical-align: middle;
+    margin: 0;
+}
+
+/* Adaptación responsiva para la tabla */
+@media (max-width: 768px) {
+    .data-table th, .data-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .form-actions {
+            flex-direction: column; /* Apila los botones verticalmente */
+            align-items: stretch; /* Estira los botones al 100% del ancho */
+        }
+
+    .form-actions .btn {
+        min-width: 100%; /* Asegura que el botón ocupe todo el ancho */
+        margin-top: 0.5rem; /* Agrega un pequeño margen entre ellos */
+    }
+}
+
+.selection-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .selection-box {
+            flex: 1;
+            min-width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+
+        .selection-box h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .selection-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .selection-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .selection-item:hover {
+            background-color: #e8f4ff;
+            border-color: #007bff;
+        }
+
+        .selection-item.selected {
+            background-color: #007bff;
+            color: white;
+            border-color: #0056b3;
+        }
+
+        .selection-item.selected:hover {
+            background-color: #0056b3;
+        }
+
+        .badge {
+            background-color: #6c757d;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .selected-count {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e8f4ff;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .alert {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .text-muted {
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .mt-4 {
+            margin-top: 20px;
+        }
+
+.user-name-link {
+  color: var(--primary); /* Esto usa el azul que ya definiste en :root */
+  font-weight: 600;      /* Opcional: para que se vea un poco más marcado */
+  text-decoration: none;
+}
+
+.user-name-link:hover {
+  text-decoration: underline; /* Opcional: efecto al pasar el ratón */
+  color: var(--primary-dark); /* Un tono de azul un poco más oscuro al pasar el mouse */
 }
