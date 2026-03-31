@@ -2,7 +2,9 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${modo == 'crear' ? 'Crear Rol - BOB' : 'Editar Rol - BOB'}"></title>
+    <link rel="stylesheet" th:href="@{/CSS/ROLES/crearRoles.css}"/>
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -15,14 +17,23 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img th:src="@{/IMG/imagen-bob.png}" alt="BOB Logo">
-            <h1>BOB</h1>
+            <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
         </div>
         <ul class="nav-links">
 
             <!-- Dashboard - Para todos los usuarios autenticados -->
             <div sec:authorize="isAuthenticated()">
                 <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            </div>
+
+            <!-- Gestión de Equipos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_EQUIPO', 'EDITAR_EQUIPO')">
+                <li><a th:href="@{/equipos}"><i class="fas fa-users"></i> <span>Gestión de Equipos</span></a></li>
+            </div>
+
+            <!-- Gestión de Proyectos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROYECTO', 'EDITAR_PROYECTO')">
+                <li><a th:href="@{/proyectos}"><i class="fas fa-project-diagram"></i> <span>Gestión de Proyectos</span></a></li>
             </div>
 
             <!-- Gestión de Usuarios - Solo con permisos de usuario -->
@@ -100,12 +111,28 @@
         </ul>
     </aside>
 
+    <!-- Main content -->
     <main class="main-content">
+        <!-- Header -->
         <div class="header">
             <h2 th:text="${modo == 'crear' ? 'Crear Nuevo Rol' : 'Editar Rol'}"></h2>
+            <div class="user-menu">
+                <div>
+                    <div>
+                        <a th:href="@{/perfil}" class="user-name-link">
+                            <span sec:authentication="name"></span>
+                        </a>
+                    </div>
+                    <div>
+            <span class="role-badge">
+                <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+            </span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="container">
+        <div class="form-container">
             <h2 th:text="${modo == 'crear' ? 'Crear Nuevo Rol' : 'Editar Rol'}"></h2>
 
             <form th:action="${modo == 'crear' ? '/roles/guardar' : '/roles/actualizar/' + rol.idRol}"
@@ -134,18 +161,25 @@
 
                 <!-- Selección de Permisos -->
                 <div class="form-group">
-                    <label>Permisos</label>
-                    <div class="permisos-container">
-                        <div th:each="permiso : ${todosPermisos}" class="form-check">
+                    <label class="section-title">Asignación de Permisos</label>
+                    <small class="form-text text-muted mb-3 d-block">
+                        Selecciona las acciones que este rol tendrá permitidas en el sistema.
+                    </small>
+
+                    <div class="permisos-layout">
+                        <div th:each="permiso : ${todosPermisos}" class="permiso-item">
                             <input type="checkbox"
                                    th:id="'permiso_' + ${permiso.idPermiso}"
                                    th:name="permisosIds"
                                    th:value="${permiso.idPermiso}"
-                                   class="form-check-input"
+                                   class="permiso-checkbox"
                                    th:checked="${rol.permisoList != null and rol.permisoList.contains(permiso)}">
-                            <label th:for="'permiso_' + ${permiso.idPermiso}"
-                                   class="form-check-label">
-                                <strong th:text="${permiso.nombrePermiso}"></strong><br>
+
+                            <label th:for="'permiso_' + ${permiso.idPermiso}" class="permiso-card">
+                                <div class="permiso-info">
+                                    <i class="fas fa-check-circle check-icon"></i>
+                                    <span class="permiso-nombre" th:text="${permiso.nombrePermiso}"></span>
+                                </div>
                             </label>
                         </div>
                     </div>
