@@ -3,6 +3,7 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Equipos - BOB</title>
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
     <link rel="stylesheet" th:href="@{/CSS/EQUIPOS/inicioEquipos.css}"/>
@@ -118,7 +119,6 @@
             <div class="user-menu">
                 <div>
                     <div>
-                        Bienvenido
                         <a th:href="@{/perfil}" class="user-name-link">
                             <span sec:authentication="name"></span>
                         </a>
@@ -213,16 +213,25 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const toggleButton = document.getElementById('menu-toggle');
-        const appContainer = document.getElementById('app-container');
+    // Cerrar modal al hacer clic fuera
+   window.onclick = function(event) {
+       const modals = document.querySelectorAll('.modal');
+       modals.forEach(modal => {
+           if (event.target === modal) {
+               modal.style.display = 'none';
+           }
+       });
+   }
+   document.addEventListener('DOMContentLoaded', function() {
+       const toggleButton = document.getElementById('menu-toggle');
+       const appContainer = document.getElementById('app-container');
 
-        if (toggleButton && appContainer) {
-            toggleButton.addEventListener('click', function() {
-                appContainer.classList.toggle('sidebar-active');
-            });
-        }
-    });
+       if (toggleButton && appContainer) {
+           toggleButton.addEventListener('click', function() {
+               appContainer.classList.toggle('sidebar-active');
+           });
+       }
+   });
 </script>
 </body>
 </html>

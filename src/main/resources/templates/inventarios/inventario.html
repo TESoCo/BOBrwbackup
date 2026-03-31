@@ -22,8 +22,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img th:src="@{/IMG/imagen-bob.png}" alt="BOB Logo">
-            <h1>BOB</h1>
+            <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
         </div>
         <ul class="nav-links">
 
@@ -32,9 +31,23 @@
                 <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
             </div>
 
+            <!-- Gestión de Equipos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_EQUIPO', 'EDITAR_EQUIPO')">
+                <li><a th:href="@{/equipos}"><i class="fas fa-users"></i> <span>Gestión de Equipos</span></a></li>
+            </div>
+
+            <!-- Gestión de Proyectos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROYECTO', 'EDITAR_PROYECTO')">
+                <li><a th:href="@{/proyectos}"><i class="fas fa-project-diagram"></i> <span>Gestión de Proyectos</span></a></li>
+            </div>
+
             <!-- Gestión de Usuarios - Solo con permisos de usuario -->
             <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
                 <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
+            </div>
+
+            <div sec:authorize="hasAnyAuthority('CREAR_ROL', 'EDITAR_ROL', 'LEER_ROL')">
+                <li><a th:href="@{/roles}"><i class="fas fa-user-shield"></i> <span>Gestión de Roles</span></a></li>
             </div>
 
             <!-- Menu items for users with inventory permissions -->
@@ -103,80 +116,141 @@
         </ul>
     </aside>
 
+    <!-- Main context -->
     <main class="main-content">
+        <!-- Header -->
         <div class="header">
-            <div>
-                <h2>Lista de Avances de Obra</h2>
-                <p>Administra el inventario de las Obras</p>
-            </div>
+                <h2><i class="fas fa-box"></i> Inventario</h2>
             <div class="user-menu">
-                <div class="user-avatar">
-                    <span sec:authentication="name" th:text="${#strings.substring(name, 0, 1)}"></span>
-                </div>
                 <div>
-                    <div>Bienvenido <span sec:authentication="name"></span></div>
                     <div>
-                        <span class="role-badge admin-badge" sec:authorize="hasRole('ADMIN')">
-                            <i class="fas fa-shield-alt"></i> Administrador
-                        </span>
-                        <span class="role-badge supervisor-badge" sec:authorize="hasRole('SUPERVISOR')">
-                            <i class="fas fa-user-check"></i> Supervisor
-                        </span>
-                        <span class="role-badge operativo-badge" sec:authorize="hasRole('OPERATIVO')">
-                            <i class="fas fa-user"></i> Operativo
+                        <a th:href="@{/perfil}" class="user-name-link">
+                            <span sec:authentication="name"></span>
+                        </a>
+                    </div>
+                    <div>
+                        <span class="role-badge">
+                            <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
                         </span>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="dashboard-content">
 
-
-            <!-- Contenedor principal -->
+        <!-- Contenedor principal -->
             <div class="container">
-                <!-- Subtítulo -->
-                <h2 class="section-title">Inventario</h2>
 
-                <!-- Contenedor de opciones -->
-                <div class="options-container">
+                <div class="dashboard-content">
                     <!-- Crear inventario -->
-                    <div class="option-card">
-                        <a th:href="@{/inventarios/crearInv}" class="option-link">
-                            <span class="option-icon">📝</span>
-                            <h3 class="option-title">Crear inventario</h3>
-                            <p class="option-description">Crear un nuevo registro de inventario en el sistema</p>
+                    <div class="mb-3">
+                        <a th:href="@{/inventarios/crearInv}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Crear Inventario
                         </a>
                     </div>
 
-                    <!-- Visualizar inventario -->
-                    <div class="option-card">
-                        <a th:href="@{/inventarios/verInv}" class="option-link">
-                            <span class="option-icon">👁</span>
-                            <h3 class="option-title">Visualizar inventario</h3>
-                            <p class="option-description">Ver y consultar todos los registros de inventario</p>
-                        </a>
+                    <div class="search-container">
+                        <h2><i class='bx bx-search-alt'></i> Buscar Inventarios</h2>
+
+                        <div class="error-message" th:if="${error}" style="color: red; margin-bottom: 10px; padding: 10px; background-color: #ffe6e6; border-radius: 5px;">
+                            <i class='bx bx-error'></i> <span th:text="${error}"></span>
+                        </div>
+
+                        <form class="search-form" th:action="@{/inventarios/verInv}" method="get">
+                            <label for="tipoBusqueda"><i class='bx bx-filter'></i> Buscar por:</label>
+                            <select name="tipoBusqueda" id="tipoBusqueda">
+                                <option value="inventarios.idUsuario.nombreUsuario">Nombre Gestor</option>
+                                <option value="inventarios.idObra.nombreObra">Nombre Obra</option>
+                                <option value="inventarios.fechaIngreso">Fecha</option>
+                            </select>
+
+                            <input type="text" name="valorBusqueda" placeholder="Ingrese término de búsqueda...">
+                            <input type="submit" value="Buscar">
+
+                            <!-- Botón para limpiar búsqueda (solo mostrar si hay búsqueda activa) -->
+                            <a th:if="${tipoBusquedaSeleccionado != null and valorBusquedaActual != null}"
+                               th:href="@{/inventarios/verInv}"
+                               class="clear-search">
+                                <i class='bx bx-x'></i> Limpiar
+                            </a>
+                        </form>
+
+                        <div th:if="${errorBusqueda}" class="alert alert-warning">
+                            <p th:text="${errorBusqueda}"></p>
+                        </div>
+
+                        <div class="table-container" th:if="${errorBusqueda == null}">
+                            <table>
+                            </table>
+                        </div>
                     </div>
 
+                <!-- Tabla de Inventarios -->
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre Gestor</th>
+                                <th>Nombre Obra</th>
+                                <th>Tipo Registro</th>
+                                <th>Fecha</th>
+                                <th>Unidad de Medida</th>
+                                <th>Cantidad</th>
+                                <th>Material</th>
+                                <th>Precio por Unidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="inv : ${inventarios}">
+                                <td th:text="${inv.idInventario}"></td>
+                                <td th:text="${inv.idUsuario.nombreUsuario}"></td>
+                                <td th:text="${inv.idObra.nombreObra}"></td>
+                                <td th:text="${inv.tipoInv}"></td>
+                                <td th:text="${inv.fechaIngreso}"></td>
+                                <td th:text="${inv.unidadInv}"></td>
 
-                    <!-- Eliminar inventario -->
-                    <!-- <div class="option-card">
-                        <a th:href="@{/inventarios/anularInv}" class="option-link">
-                            <span class="option-icon">🗑</span>
-                            <h3 class="option-title">Eliminar un inventario</h3>
-                            <p class="option-description">Eliminar registros de inventario del sistema</p>
-                        </a>
-                    </div> -->
+                                <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].cantidad}"></td>
+                                <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].material.nombreMaterial}"></td>
+                                <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].material.precioMaterial}"></td>
+
+                                <td th:unless="${!inv.materialesInventarios.empty}">-</td>
+                                <td th:unless="${!inv.materialesInventarios.empty}">-</td>
+                                <td th:unless="${!inv.materialesInventarios.empty}">-</td>
+
+                                <td >
+                                    <a th:href="@{/inventarios/cambiarInv/} + ${inv.idInventario}"
+                                       class="btn btn-warning btn-sm"
+                                       sec:authorize="hasAuthority('EDITAR_MATERIAL')">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </a>
+                                </td>
+
+                                <!--
+                                <td>
+
+                                    <a th:href="@{'/exportarExcelInv/' + ${inv.idInventario}}">
+                                        <i class='bx bx-export'></i> Exportar
+                                    </a>
+
+                                    <form th:action="@{'/api/reportes/email/inventario/' + ${inv.idInventario}}" method="post">
+                                        <input type="email" name="destinatario" placeholder="Correo destinatario" required>
+                                        <button type="submit">
+                                            <i class='bx bx-envelope'></i> Enviar por correo
+                                        </button>
+                                    </form>
+
+                                </td>
+                                -->
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="no-records" th:if="${inventarios == null or inventarios.empty}">
+                        <p>No hay registros de inventario para mostrar.</p>
+                    </div>
                 </div>
-
-                <!-- Sección de logout -->
-                <!-- <div class="logout-container">
-                    <form th:action="@{/logout}" method="post" class="logout-form">
-                        <a th:href="@{/redirigir}" class="btn btn-primary">Regresar</a>
-                        <a href="#" class="logout-btn" onclick="this.closest('form').submit()">Cerrar sesión</a>
-                    </form>
-                </div> -->
-            </div>
-        </div>
     </main>
 </div>
 
@@ -228,3 +302,4 @@
 </script>
 </body>
 </html>
+

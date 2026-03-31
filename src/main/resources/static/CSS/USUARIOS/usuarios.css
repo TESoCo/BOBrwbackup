@@ -548,7 +548,8 @@ tr:hover {
   .sidebar {
     width: var(--sidebar-width); /* 260px (Ancho completo) */
     position: fixed;
-    height: 100vh;
+    height: 100vh !important;
+    overflow-y: auto !important;
     z-index: 1050;
     /* Regla clave: OCULTAR fuera de la pantalla */
     transform: translateX(-260px);

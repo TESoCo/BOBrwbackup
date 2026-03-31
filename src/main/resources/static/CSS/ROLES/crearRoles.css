@@ -367,193 +367,69 @@
   color: var(--primary-dark); /* Un tono de azul un poco más oscuro al pasar el mouse */
 }
 
-/*CONTENEDOR DEL FORMULARIO*/
-.form-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  padding: 30px;
-  max-width: 700px; /* Contenedor un poco más ancho */
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: center;
+/* Contenedor en cuadrícula */
+.permisos-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    background: #f4f7f6;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e1e8ed;
 }
 
-/*PARTE DE ARRIBA DEL FORMULARIO*/
-.form-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
-  width: 100%;
+/* Escondemos el checkbox real */
+.permiso-checkbox {
+    display: none;
 }
 
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 20px; /* Botón más grande */
-  background: #f0f5ff;
-  color: #1e3c72;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  margin-bottom: 15px;
-  font-size: 1.1rem;
+/* La tarjeta que hace de botón */
+.permiso-card {
+    display: block;
+    background: white;
+    border: 2px solid #d1d8e0;
+    padding: 12px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
 }
 
-.back-link:hover {
-  background: #e0ebff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(30, 60, 114, 0.15);
+.permiso-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.form-content {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
+.permiso-nombre {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #4b6584;
+    text-transform: uppercase;
 }
 
-/* CAMPOS DEL FORMULARIO */
-.form-group {
-  margin-bottom: 25px; /* Espacio entre campos */
-  display: flex;
-  flex-direction: column;
-  width: 100%;
+.check-icon {
+    color: #d1d8e0;
+    font-size: 1.1rem;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 12px;
-  font-weight: 500;
-  color: #1e3c72;
-  width: 100%;
-  text-align: center;
-  font-size: 1.15rem;
+/* EFECTO CUANDO ESTÁ SELECCIONADO (Checked) */
+.permiso-checkbox:checked + .permiso-card {
+    border-color: #27ae60;
+    background-color: #ebfaf0;
+    transform: scale(1.02);
 }
 
-.form-group input,
-.form-group select {
-  width: 95%;
-  max-width: 550px;
-  padding: 14px 18px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  transition: all 0.3s ease;
-  text-align: center;
-  background: #f9fbfd;
+.permiso-checkbox:checked + .permiso-card .check-icon {
+    color: #27ae60;
 }
 
-.form-group input:focus,
-.form-group select:focus {
-  border-color: #2a5298;
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(42, 82, 152, 0.15);
-  background: white;
+.permiso-checkbox:checked + .permiso-card .permiso-nombre {
+    color: #1e7e44;
 }
 
-.error-message {
-  color: #e74c3c;
-  font-size: 0.95rem;
-  margin-top: 8px;
-  display: block;
-  width: 100%;
-  text-align: center;
-}
-
-/* BOTÓN DE ENVIAR */
-.submit-btn {
-  margin-top: 30px;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-.submit-btn input[type="submit"] {
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  color: white;
-  border: none;
-  padding: 16px 45px;
-  font-size: 1.2rem;
-  font-weight: 500;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: auto;
-  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.25);
-}
-
-.submit-btn input[type="submit"]:hover {
-  background: linear-gradient(135deg, #2a5298, #3a6ac7);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 18px rgba(42, 82, 152, 0.35);
-}
-
-/* CAMPOS DE SOLO LECTURA */
-.readonly-field {
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  padding: 8px;
-  border-radius: 4px;
-  color: #666;
-}
-
-/* SECCIÓN DE MATERIALES */
-.materials-section {
-  border: 1px solid #ddd;
-  padding: 15px;
-  border-radius: 5px;
-  margin-bottom: 20px;
-}
-
-.materials-section h3 {
-  margin-top: 0;
-  color: #333;
-  border-bottom: 2px solid #007bff;
-  padding-bottom: 10px;
-}
-
-.material-item {
-  border: 1px solid #eee;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-  position: relative;
-}
-
-/* BOTONES DE MATERIALES */
-.btn-add-material {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn-remove-material {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}
-
-.btn-add-material:hover {
-  background-color: #218838;
-}
-
-.btn-remove-material:hover {
-  background-color: #c82333;
+/* Hover effect */
+.permiso-card:hover {
+    border-color: #3498db;
+    background-color: #f0f7ff;
 }

@@ -3,8 +3,10 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Roles - BOB</title>
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
+    <link rel="stylesheet" th:href="@{/CSS/ROLES/inicioRoles.css}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -15,14 +17,23 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img th:src="@{/IMG/imagen-bob.png}" alt="BOB Logo">
-            <h1>BOB</h1>
+            <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
         </div>
         <ul class="nav-links">
 
             <!-- Dashboard - Para todos los usuarios autenticados -->
             <div sec:authorize="isAuthenticated()">
                 <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            </div>
+
+            <!-- Gestión de Equipos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_EQUIPO', 'EDITAR_EQUIPO')">
+                <li><a th:href="@{/equipos}"><i class="fas fa-users"></i> <span>Gestión de Equipos</span></a></li>
+            </div>
+
+            <!-- Gestión de Proyectos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROYECTO', 'EDITAR_PROYECTO')">
+                <li><a th:href="@{/proyectos}"><i class="fas fa-project-diagram"></i> <span>Gestión de Proyectos</span></a></li>
             </div>
 
             <!-- Gestión de Usuarios - Solo con permisos de usuario -->
@@ -100,9 +111,25 @@
         </ul>
     </aside>
 
+    <!-- Main context -->
     <main class="main-content">
+        <!-- Header -->
         <div class="header">
             <h2><i class="fas fa-user-shield"></i> Gestión de Roles</h2>
+            <div class="user-menu">
+                <div>
+                    <div>
+                        <a th:href="@{/perfil}" class="user-name-link">
+                            <span sec:authentication="name"></span>
+                        </a>
+                    </div>
+                    <div>
+                        <span class="role-badge">
+                            <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="container">
@@ -114,7 +141,7 @@
             </div>
 
             <!-- Tabla de roles -->
-            <div class="table-responsive">
+            <div class="table-container">
                 <table class="table">
                     <thead>
                     <tr>
