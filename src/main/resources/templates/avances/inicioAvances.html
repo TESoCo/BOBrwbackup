@@ -18,8 +18,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img th:src="@{/IMG/imagen-bob.png}" alt="BOB Logo">
-            <h1>BOB</h1>
+            <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
         </div>
         <ul class="nav-links">
 
@@ -28,9 +27,23 @@
                 <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
             </div>
 
+            <!-- Gestión de Equipos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_EQUIPO', 'EDITAR_EQUIPO')">
+                <li><a th:href="@{/equipos}"><i class="fas fa-users"></i> <span>Gestión de Equipos</span></a></li>
+            </div>
+
+            <!-- Gestión de Proyectos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROYECTO', 'EDITAR_PROYECTO')">
+                <li><a th:href="@{/proyectos}"><i class="fas fa-project-diagram"></i> <span>Gestión de Proyectos</span></a></li>
+            </div>
+
             <!-- Gestión de Usuarios - Solo con permisos de usuario -->
             <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
                 <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
+            </div>
+
+            <div sec:authorize="hasAnyAuthority('CREAR_ROL', 'EDITAR_ROL', 'LEER_ROL')">
+                <li><a th:href="@{/roles}"><i class="fas fa-user-shield"></i> <span>Gestión de Roles</span></a></li>
             </div>
 
             <!-- Menu items for users with inventory permissions -->
@@ -68,7 +81,7 @@
             </div>
             <!-- Proveedores - Con permisos de proveedor -->
             <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
-                <li><a href="/proveedores"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
+                <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
             </div>
 
             <!-- Menu items for users with report permissions -->
@@ -108,21 +121,16 @@
                 <p>Administra los Avances de las Obras</p>
             </div>
             <div class="user-menu">
-                <div class="user-avatar">
-                    <span sec:authentication="name" th:text="${#strings.substring(name, 0, 1)}"></span>
-                </div>
                 <div>
-                    <div>Bienvenido <span sec:authentication="name"></span></div>
                     <div>
-                        <span class="role-badge admin-badge" sec:authorize="hasRole('ADMIN')">
-                            <i class="fas fa-shield-alt"></i> Administrador
-                        </span>
-                        <span class="role-badge supervisor-badge" sec:authorize="hasRole('SUPERVISOR')">
-                            <i class="fas fa-user-check"></i> Supervisor
-                        </span>
-                        <span class="role-badge operativo-badge" sec:authorize="hasRole('OPERATIVO')">
-                            <i class="fas fa-user"></i> Operativo
-                        </span>
+                        <a th:href="@{/perfil}" class="user-name-link">
+                            <span sec:authentication="name"></span>
+                        </a>
+                    </div>
+                    <div>
+            <span class="role-badge">
+                <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+            </span>
                     </div>
                 </div>
             </div>
@@ -199,107 +207,110 @@
 
         <br>
 
-        <div class="table-container">
-            <div th:if="${avances != null and !avances.empty}">
-                <table id="avancesTable">
-                    <thead>
-                    <tr>
-                        <th>ID Avance</th>
-                        <th>ID Obra</th>
-                        <th>Nombre de la obra</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="avance : ${avances}">
-                        <td th:text="${avance.idAvance}"></td>
-                        <td th:text="${avance.idObra.idObra}"></td>
-                        <td th:text="${avance.idObra.nombreObra}"></td>
-                        <td th:text="${avance.fechaAvance}"></td>
-                        <td class="actions">
-                            <a th:href="@{/avances/cambiar/} + ${avance.idAvance}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit"></i> Editar
-                            </a>
-                            <a th:href="@{/avances/anular/} + ${avance.idAvance}" class="btn btn-sm btn-warning"
-                               onclick="return confirm('¿Está seguro que desea anular este avance?')">
-                                <i class="fas fa-ban"></i> Anular
-                            </a>
-                            <a th:href="@{/avances/detalle/} + ${avance.idAvance}" class="btn btn-sm btn-secondary">
-                                <i class="fas fa-eye"></i> Ver Detalle
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="container">
 
-            <div th:if="${avances == null or avances.empty}" class="p-4 text-center">
-                <p>No hay avances registrados</p>
-            </div>
-        </div>
-
-        <!-- Modal para enviar reporte por correo -->
-        <div class="modal" id="emailReportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
-            <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; border-radius: var(--border-radius); width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
-                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;">
-                    <h3 style="margin: 0;">Enviar Reporte de Avances Filtrados</h3>
-                    <button class="close-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            <div class="table-container">
+                <div th:if="${avances != null and !avances.empty}">
+                    <table id="avancesTable">
+                        <thead>
+                        <tr>
+                            <th>ID Avance</th>
+                            <th>ID Obra</th>
+                            <th>Nombre de la obra</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="avance : ${avances}">
+                            <td th:text="${avance.idAvance}"></td>
+                            <td th:text="${avance.idObra.idObra}"></td>
+                            <td th:text="${avance.idObra.nombreObra}"></td>
+                            <td th:text="${avance.fechaAvance}"></td>
+                            <td class="actions">
+                                <a th:href="@{/avances/cambiar/} + ${avance.idAvance}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <a th:href="@{/avances/anular/} + ${avance.idAvance}" class="btn btn-sm btn-warning"
+                                   onclick="return confirm('¿Está seguro que desea anular este avance?')">
+                                    <i class="fas fa-ban"></i> Anular
+                                </a>
+                                <a th:href="@{/avances/detalle/} + ${avance.idAvance}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-eye"></i> Ver Detalle
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-body">
-                    <form id="emailReportForm">
-                        <!-- Información de los filtros aplicados -->
-                        <div class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1.5rem;">
-                            <h4 style="margin-bottom: 0.5rem;">Filtros aplicados:</h4>
-                            <p id="filtrosInfo" style="margin: 0; font-size: 0.9rem; color: var(--secondary);">
-                                Se enviará el reporte con los avances filtrados actualmente
-                            </p>
-                        </div>
 
-                        <div class="form-group">
-                            <label>Destinatarios:</label>
-                            <div class="recipients-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #d1d5db; border-radius: var(--border-radius); padding: 1rem;">
-                                <div class="recipient-checkbox" th:each="proveedor : ${proveedores}" style="margin-bottom: 0.5rem;">
-                                    <input type="checkbox" name="recipients"
-                                           th:value="${proveedor.informacionComercial.correoElectronico}"
-                                           th:attr="data-name=${proveedor.idPersona.nombre} + ' ' + ${proveedor.idPersona.apellido}">
-                                    <label th:text="${proveedor.idPersona.nombre} + ' ' + ${proveedor.idPersona.apellido} + ' (' + ${proveedor.informacionComercial.correoElectronico} + ')'" style="margin-left: 0.5rem;"></label>
+                <div th:if="${avances == null or avances.empty}" class="p-4 text-center">
+                    <p>No hay avances registrados</p>
+                </div>
+            </div>
+
+            <!-- Modal para enviar reporte por correo -->
+            <div class="modal" id="emailReportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+                <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; border-radius: var(--border-radius); width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;">
+                        <h3 style="margin: 0;">Enviar Reporte de Avances Filtrados</h3>
+                        <button class="close-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="emailReportForm">
+                            <!-- Información de los filtros aplicados -->
+                            <div class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1.5rem;">
+                                <h4 style="margin-bottom: 0.5rem;">Filtros aplicados:</h4>
+                                <p id="filtrosInfo" style="margin: 0; font-size: 0.9rem; color: var(--secondary);">
+                                    Se enviará el reporte con los avances filtrados actualmente
+                                </p>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Destinatarios:</label>
+                                <div class="recipients-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #d1d5db; border-radius: var(--border-radius); padding: 1rem;">
+                                    <div class="recipient-checkbox" th:each="proveedor : ${proveedores}" style="margin-bottom: 0.5rem;">
+                                        <input type="checkbox" name="recipients"
+                                               th:value="${proveedor.informacionComercial.correoElectronico}"
+                                               th:attr="data-name=${proveedor.idPersona.nombre} + ' ' + ${proveedor.idPersona.apellido}">
+                                        <label th:text="${proveedor.idPersona.nombre} + ' ' + ${proveedor.idPersona.apellido} + ' (' + ${proveedor.informacionComercial.correoElectronico} + ')'" style="margin-left: 0.5rem;"></label>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="form-group">
-                            <label for="customEmail">Correos adicionales (separados por coma):</label>
-                            <input type="text" id="customEmail" name="customEmail" class="form-control"
-                                   placeholder="ejemplo1@correo.com, ejemplo2@correo.com">
-                            <small style="color: var(--secondary);">Puede ingresar múltiples correos separados por comas</small>
-                        </div>
+                            <div class="form-group">
+                                <label for="customEmail">Correos adicionales (separados por coma):</label>
+                                <input type="text" id="customEmail" name="customEmail" class="form-control"
+                                       placeholder="ejemplo1@correo.com, ejemplo2@correo.com">
+                                <small style="color: var(--secondary);">Puede ingresar múltiples correos separados por comas</small>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="emailSubject">Asunto:</label>
-                            <input type="text" id="emailSubject" name="subject" class="form-control"
-                                   value="Reporte de Avances - Construction Optimization Baseline" required>
-                        </div>
+                            <div class="form-group">
+                                <label for="emailSubject">Asunto:</label>
+                                <input type="text" id="emailSubject" name="subject" class="form-control"
+                                       value="Reporte de Avances - Construction Optimization Baseline" required>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="emailMessage">Mensaje:</label>
-                            <textarea id="emailMessage" name="message" rows="4" class="form-control" required>
-                                Cordial saludo,
+                            <div class="form-group">
+                                <label for="emailMessage">Mensaje:</label>
+                                <textarea id="emailMessage" name="message" rows="4" class="form-control" required>
+                                    Cordial saludo,
 
-                                Adjunto encontrará el reporte actualizado de avances con los filtros aplicados.
+                                    Adjunto encontrará el reporte actualizado de avances con los filtros aplicados.
 
-                                Gracias por su atención,
-                                Equipo Construction Optimization Baseline
-                            </textarea>
-                        </div>
+                                    Gracias por su atención,
+                                    Equipo Construction Optimization Baseline
+                                </textarea>
+                            </div>
 
-                        <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-                            <button type="button" class="btn btn-secondary btn-cancel">Cancelar</button>
-                            <button type="submit" class="btn btn-primary btn-send">
-                                <i class="fas fa-paper-plane"></i> Enviar Reporte
-                            </button>
-                        </div>
-                    </form>
+                            <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                                <button type="button" class="btn btn-secondary btn-cancel">Cancelar</button>
+                                <button type="submit" class="btn btn-primary btn-send">
+                                    <i class="fas fa-paper-plane"></i> Enviar Reporte
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>

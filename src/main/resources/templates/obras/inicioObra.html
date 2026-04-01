@@ -102,8 +102,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img th:src="@{/IMG/imagen-bob.png}" alt="BOB Logo">
-            <h1>BOB</h1>
+            <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
         </div>
         <ul class="nav-links">
 
@@ -166,7 +165,7 @@
             </div>
             <!-- Proveedores - Con permisos de proveedor -->
             <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
-                <li><a href="@{/proveedores}"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
+                <li><a href="#"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
             </div>
 
             <!-- Menu items for users with report permissions -->
@@ -203,15 +202,16 @@
         <div class="header">
             <h2>Panel de Control</h2>
             <div class="user-menu">
-                <div class="user-avatar">
-                </div>
                 <div>
-                    <div>Bienvenido <span sec:authentication="name"></span></div>
                     <div>
-            <span class="role-badge">
-              <i class="fas fa-user-tag"></i>
-              <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
-            </span>
+                        <a th:href="@{/perfil}" class="user-name-link">
+                            <span sec:authentication="name"></span>
+                        </a>
+                    </div>
+                    <div>
+                        <span class="role-badge">
+                            <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -271,57 +271,59 @@
             </form>
         </section>
 
-        <section>
-            <div th:if="${obras != null and !obras.empty}">
-                <div class="table-container">
-                    <table class="data-table" id="obrasTable">
-                        <thead>
-                        <tr>
-                            <th>ID Obra</th>
-                            <th>Nombre de la Obra</th>
-                            <th>Coordenadas</th>
-                            <th>Acciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="obra : ${obras}">
-                            <td th:text="${obra.idObra}"></td>
-                            <td th:text="${obra.nombreObra}"></td>
-                            <td>
-                                <span th:if="${obra.cooNObra != null and obra.cooEObra != null}"
-                                      th:text="${#numbers.formatDecimal(obra.cooNObra, 1, 6)} + ', ' + ${#numbers.formatDecimal(obra.cooEObra, 1, 6)}">
-                                </span>
-                                <span th:unless="${obra.cooNObra != null and obra.cooEObra != null}" class="text-muted">
-                                    <i class='bx bx-map-pin'></i> Sin coordenadas
-                                </span>
-                            </td>
-                            <td class="actions" >
-                                <a th:href="@{/obras/cambiar/} + ${obra.idObra}" class="btn btn-edit">
-                                    <i class='bx bx-edit'></i> Editar
-                                </a>
-                                <a th:href="@{/obras/anular/{id}(id=${obra.idObra})}" class="btn btn-delete"
-                                   onclick="return confirm('¿Está seguro que desea anular y archivar esta obra?')">
-                                    <i class='bx bx-trash'></i> Anular registro (se ocultará de la visualización).
-                                </a>
-                                <a th:href="@{/obras/detalle/}+${obra.idObra}" class="btn btn-primary">
-                                    <i class='bx bx-show'></i> Ver Detalle
-                                </a>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+        <div class="form-container">
+            <section>
+                <div th:if="${obras != null and !obras.empty}">
+                    <div class="table-container">
+                        <table class="data-table" id="obrasTable">
+                            <thead>
+                            <tr>
+                                <th>ID Obra</th>
+                                <th>Nombre de la Obra</th>
+                                <th>Coordenadas</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="obra : ${obras}">
+                                <td th:text="${obra.idObra}"></td>
+                                <td th:text="${obra.nombreObra}"></td>
+                                <td>
+                                    <span th:if="${obra.cooNObra != null and obra.cooEObra != null}"
+                                          th:text="${#numbers.formatDecimal(obra.cooNObra, 1, 6)} + ', ' + ${#numbers.formatDecimal(obra.cooEObra, 1, 6)}">
+                                    </span>
+                                    <span th:unless="${obra.cooNObra != null and obra.cooEObra != null}" class="text-muted">
+                                        <i class='bx bx-map-pin'></i> Sin coordenadas
+                                    </span>
+                                </td>
+                                <td class="actions" >
+                                    <a th:href="@{/obras/cambiar/} + ${obra.idObra}" class="btn btn-edit">
+                                        <i class='bx bx-edit'></i> Editar
+                                    </a>
+                                    <a th:href="@{/obras/anular/{id}(id=${obra.idObra})}" class="btn btn-delete"
+                                       onclick="return confirm('¿Está seguro que desea anular y archivar esta obra?')">
+                                        <i class='bx bx-trash'></i> Anular registro (se ocultará de la visualización).
+                                    </a>
+                                    <a th:href="@{/obras/detalle/}+${obra.idObra}" class="btn btn-primary">
+                                        <i class='bx bx-show'></i> Ver Detalle
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
 
-            <div th:if="${obras == null or obras.empty}" class="empty-message">
-                <i class='bx bx-building-house'></i>
-                <h3>No hay obras registradas</h3>
-                <p>Comienza registrando tu primera obra para verla aquí.</p>
-                <a th:href="@{/obras/agregarObra}" class="btn btn-success" style="margin-top: 1rem;">
-                    <i class='bx bx-plus'></i> Crear Primera Obra
-                </a>
-            </div>
-        </section>
+                <div th:if="${obras == null or obras.empty}" class="empty-message">
+                    <i class='bx bx-building-house'></i>
+                    <h3>No hay obras registradas</h3>
+                    <p>Comienza registrando tu primera obra para verla aquí.</p>
+                    <a th:href="@{/obras/agregarObra}" class="btn btn-success" style="margin-top: 1rem;">
+                        <i class='bx bx-plus'></i> Crear Primera Obra
+                    </a>
+                </div>
+            </section>
+        </div>
     </main>
 </div>
 

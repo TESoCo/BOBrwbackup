@@ -140,154 +140,156 @@
             </a>
         </div>
 
-        <!-- Detail Card -->
-        <div class="detail-card">
-            <div class="detail-header">
-                <h3 class="detail-title">
-                    <i class="fas fa-info-circle"></i> Información General
-                </h3>
-                <div class="detail-actions">
-                    <a th:href="@{/apu/editar/} + ${apu.idAPU}"
-                       class="btn btn-warning"
-                       sec:authorize="hasAuthority('EDITAR_APU')">
-                        <i class="fas fa-edit"></i> Editar
-                    </a>
-                    <a th:href="@{/apu/eliminar/} + ${apu.idAPU}"
-                       class="btn btn-danger"
-                       sec:authorize="hasAuthority('ELIMINAR_APU')"
-                       onclick="return confirm('¿Está seguro de que desea eliminar este APU?')">
-                        <i class="fas fa-trash"></i> Eliminar
-                    </a>
-                </div>
-            </div>
-
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-label">ID del APU</div>
-                    <div class="info-value" th:text="${apu.idAPU}">-</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Nombre</div>
-                    <div class="info-value" th:text="${apu.nombreAPU}">-</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Unidades de Medida</div>
-                    <div class="info-value">
-                        <span class="status-badge badge-active" th:text="${apu.unidadesAPU}">-</span>
+        <div class="form-container">
+            <!-- Detail Card -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h3 class="detail-title">
+                        <i class="fas fa-info-circle"></i> Información General
+                    </h3>
+                    <div class="detail-actions">
+                        <a th:href="@{/apu/editar/} + ${apu.idAPU}"
+                           class="btn btn-warning"
+                           sec:authorize="hasAuthority('EDITAR_APU')">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a th:href="@{/apu/eliminar/} + ${apu.idAPU}"
+                           class="btn btn-danger"
+                           sec:authorize="hasAuthority('ELIMINAR_APU')"
+                           onclick="return confirm('¿Está seguro de que desea eliminar este APU?')">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </a>
                     </div>
                 </div>
-            </div>
 
-            <div class="detail-section">
-                <h4 class="section-title">
-                    <i class="fas fa-align-left"></i> Descripción
-                </h4>
-                <div style="background: #f8fafc; padding: 1.5rem; border-radius: var(--border-radius);">
-                    <p th:text="${apu.descAPU}" style="line-height: 1.6; color: var(--dark);">-</p>
-                </div>
-            </div>
-
-            <div class="detail-section">
-                <h4 class="section-title">
-                    <i class="fas fa-chart-pie"></i> Desglose de Costos
-                </h4>
-
-                <div class="cost-breakdown">
-                    <div class="cost-item">
-                        <div class="cost-label">Materiales</div>
-                        <div class="cost-value currency"
-                             th:text="${apu.vMaterialesAPU != null ? '$' + #numbers.formatDecimal(apu.vMaterialesAPU, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
-                            $0.00
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">ID del APU</div>
+                        <div class="info-value" th:text="${apu.idAPU}">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Nombre</div>
+                        <div class="info-value" th:text="${apu.nombreAPU}">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Unidades de Medida</div>
+                        <div class="info-value">
+                            <span class="status-badge badge-active" th:text="${apu.unidadesAPU}">-</span>
                         </div>
                     </div>
-                    <div class="cost-item">
-                        <div class="cost-label">Mano de Obra</div>
-                        <div class="cost-value currency"
-                             th:text="${apu.vManoDeObraAPU != null ? '$' + #numbers.formatDecimal(apu.vManoDeObraAPU, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
-                            $0.00
-                        </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-align-left"></i> Descripción
+                    </h4>
+                    <div style="background: #f8fafc; padding: 1.5rem; border-radius: var(--border-radius);">
+                        <p th:text="${apu.descAPU}" style="line-height: 1.6; color: var(--dark);">-</p>
                     </div>
-                    <div class="cost-item">
-                        <div class="cost-label">Transporte</div>
-                        <div class="cost-value currency"
-                             th:text="${apu.vTransporteAPU != null ? '$' + #numbers.formatDecimal(apu.vTransporteAPU, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
-                            $0.00
-                        </div>
-                    </div>
-                    <div class="cost-item">
-                        <div class="cost-label">Misceláneo</div>
-                        <div class="cost-value currency"
-                             th:text="${apu.vMiscAPU != null ? '$' + #numbers.formatDecimal(apu.vMiscAPU, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
-                            $0.00
-                        </div>
-                    </div>
-                    <div class="cost-item total">
-                        <div class="cost-label">Valor Total</div>
-                        <div class="cost-value">
-                            <span th:text="'$' + ${#numbers.formatDecimal(
-                                (apu.vMaterialesAPU != null ? apu.vMaterialesAPU : 0) +
-                                (apu.vManoDeObraAPU != null ? apu.vManoDeObraAPU : 0) +
-                                (apu.vTransporteAPU != null ? apu.vTransporteAPU : 0) +
-                                (apu.vMiscAPU != null ? apu.vMiscAPU : 0),
-                                1, 'COMMA', 2, 'POINT'
-                            )}">
+                </div>
+
+                <div class="detail-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-chart-pie"></i> Desglose de Costos
+                    </h4>
+
+                    <div class="cost-breakdown">
+                        <div class="cost-item">
+                            <div class="cost-label">Materiales</div>
+                            <div class="cost-value currency"
+                                 th:text="${apu.vMaterialesAPU != null ? '$' + #numbers.formatDecimal(apu.vMaterialesAPU, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
                                 $0.00
-                            </span>
+                            </div>
+                        </div>
+                        <div class="cost-item">
+                            <div class="cost-label">Mano de Obra</div>
+                            <div class="cost-value currency"
+                                 th:text="${apu.vManoDeObraAPU != null ? '$' + #numbers.formatDecimal(apu.vManoDeObraAPU, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
+                                $0.00
+                            </div>
+                        </div>
+                        <div class="cost-item">
+                            <div class="cost-label">Transporte</div>
+                            <div class="cost-value currency"
+                                 th:text="${apu.vTransporteAPU != null ? '$' + #numbers.formatDecimal(apu.vTransporteAPU, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
+                                $0.00
+                            </div>
+                        </div>
+                        <div class="cost-item">
+                            <div class="cost-label">Misceláneo</div>
+                            <div class="cost-value currency"
+                                 th:text="${apu.vMiscAPU != null ? '$' + #numbers.formatDecimal(apu.vMiscAPU, 1, 'COMMA', 2, 'POINT') : '$0.00'}">
+                                $0.00
+                            </div>
+                        </div>
+                        <div class="cost-item total">
+                            <div class="cost-label">Valor Total</div>
+                            <div class="cost-value">
+                                <span th:text="'$' + ${#numbers.formatDecimal(
+                                    (apu.vMaterialesAPU != null ? apu.vMaterialesAPU : 0) +
+                                    (apu.vManoDeObraAPU != null ? apu.vManoDeObraAPU : 0) +
+                                    (apu.vTransporteAPU != null ? apu.vTransporteAPU : 0) +
+                                    (apu.vMiscAPU != null ? apu.vMiscAPU : 0),
+                                    1, 'COMMA', 2, 'POINT'
+                                )}">
+                                    $0.00
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Additional Information -->
-        <div class="detail-card" th:if="${materiales != null and !materiales.empty}">
-            <h3 class="detail-title">
-                <i class="fas fa-cubes"></i> Materiales Asociados
-            </h3>
+            <!-- Additional Information -->
+            <div class="detail-card" th:if="${materiales != null and !materiales.empty}">
+                <h3 class="detail-title">
+                    <i class="fas fa-cubes"></i> Materiales Asociados
+                </h3>
 
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>Material</th>
-                        <th>Descripción</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Subtotal</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="materialApu : ${materiales}">
-                        <td>
-                            <strong th:text="${materialApu.material.nombreMaterial}"></strong>
-                        </td>
-                        <td th:text="${materialApu.material.descripcionMaterial}"></td>
-                        <td th:text="${#numbers.formatDecimal(materialApu.cantidad, 1, 'COMMA', 2, 'POINT')}"></td>
-                        <td>
-                            $<span th:text="${#numbers.formatDecimal(materialApu.material.precioMaterial, 1, 'COMMA', 2, 'POINT')}"></span>
-                        </td>
-                        <td>
-                            <strong>
-                                $<span th:text="${#numbers.formatDecimal(materialApu.cantidad * materialApu.material.precioMaterial.doubleValue(), 1, 'COMMA', 2, 'POINT')}"></span>
-                            </strong>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Descripción</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="materialApu : ${materiales}">
+                            <td>
+                                <strong th:text="${materialApu.material.nombreMaterial}"></strong>
+                            </td>
+                            <td th:text="${materialApu.material.descripcionMaterial}"></td>
+                            <td th:text="${#numbers.formatDecimal(materialApu.cantidad, 1, 'COMMA', 2, 'POINT')}"></td>
+                            <td>
+                                $<span th:text="${#numbers.formatDecimal(materialApu.material.precioMaterial, 1, 'COMMA', 2, 'POINT')}"></span>
+                            </td>
+                            <td>
+                                <strong>
+                                    $<span th:text="${#numbers.formatDecimal(materialApu.cantidad * materialApu.material.precioMaterial.doubleValue(), 1, 'COMMA', 2, 'POINT')}"></span>
+                                </strong>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-        <!-- Empty State for Materials -->
-        <div class="detail-card" th:if="${materiales == null or materiales.empty}">
-            <h3 class="detail-title">
-                <i class="fas fa-cubes"></i> Materiales Asociados
-            </h3>
-            <div style="text-align: center; padding: 2rem; color: var(--secondary);">
-                <i class="fas fa-cubes" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                <p>No hay materiales asociados a este APU</p>
-                <a th:href="@{/apu/editar/} + ${apu.idAPU}" class="btn btn-primary" style="margin-top: 1rem;">
-                    <i class="fas fa-link"></i> Asociar Materiales
-                </a>
+            <!-- Empty State for Materials -->
+            <div class="detail-card" th:if="${materiales == null or materiales.empty}">
+                <h3 class="detail-title">
+                    <i class="fas fa-cubes"></i> Materiales Asociados
+                </h3>
+                <div style="text-align: center; padding: 2rem; color: var(--secondary);">
+                    <i class="fas fa-cubes" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>No hay materiales asociados a este APU</p>
+                    <a th:href="@{/apu/editar/} + ${apu.idAPU}" class="btn btn-primary" style="margin-top: 1rem;">
+                        <i class="fas fa-link"></i> Asociar Materiales
+                    </a>
+                </div>
             </div>
         </div>
     </main>

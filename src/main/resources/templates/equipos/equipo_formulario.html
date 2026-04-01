@@ -124,15 +124,15 @@
                         </a>
                     </div>
                     <div>
-            <span class="role-badge">
-                <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
-            </span>
+                        <span class="role-badge">
+                            <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="form-container">
+        <div class="container">
             <!-- Mostrar mensajes de error/success -->
             <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
