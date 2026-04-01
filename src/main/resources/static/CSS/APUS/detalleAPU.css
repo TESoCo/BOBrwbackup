@@ -401,3 +401,13 @@
 .tab-content.active {
     display: block;
 }
+
+/* --- Form Container (Card Style) --- */
+.form-container {
+    background-color: white; /* CORREGIDO: Usando white (en lugar de --bg-card) */
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    border-left: 5px solid var(--primary);
+}

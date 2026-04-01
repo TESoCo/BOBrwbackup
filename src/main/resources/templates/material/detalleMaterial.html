@@ -116,22 +116,21 @@
     <main class="main-content">
         <!-- Header -->
         <div class="header">
-            <div>
-                <h2><i class="fas fa-cube"></i> Detalle de Material</h2>
-                <div class="user-menu">
+            <h2><i class="fas fa-cube"></i> Detalle de Material</h2>
+            <div class="user-menu">
+                <div>
                     <div>
-                        <div>
-                            <a th:href="@{/perfil}" class="user-name-link">
-                                <span sec:authentication="name"></span>
-                            </a>
-                        </div>
-                        <div>
+                        <a th:href="@{/perfil}" class="user-name-link">
+                            <span sec:authentication="name"></span>
+                        </a>
+                    </div>
+                    <div>
                         <span class="role-badge">
                             <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
                         </span>
-                        </div>
                     </div>
                 </div>
+            </div>
         </div>
 
         <!-- Action Buttons -->
@@ -146,108 +145,110 @@
             </a>
         </div>
 
-        <!-- Material Detail Card -->
-        <div class="detail-card">
-            <div class="detail-header">
-                <h2><i class="fas fa-cube"></i> <span th:text="${material.nombreMaterial}">Nombre del Material</span></h2>
-                <div class="status-badge badge-active" th:text="${material.unidadMaterial}">Unidad</div>
+        <div class="form-container">
+            <!-- Material Detail Card -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h2><i class="fas fa-cube"></i> <span th:text="${material.nombreMaterial}">Nombre del Material</span></h2>
+                    <div class="status-badge badge-active" th:text="${material.unidadMaterial}">Unidad</div>
+                </div>
+
+                <div class="detail-body">
+                    <!-- Basic Information Section -->
+                    <div class="detail-section">
+                        <h3><i class="fas fa-info-circle"></i> Información Básica</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">ID del Material</span>
+                                <div class="detail-value" th:text="${material.idMaterial}">ID</div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Nombre</span>
+                                <div class="detail-value" th:text="${material.nombreMaterial}">Nombre</div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Unidad de Medida</span>
+                                <div class="detail-value" th:text="${material.unidadMaterial}">Unidad</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    <div class="detail-section">
+                        <h3><i class="fas fa-align-left"></i> Descripción</h3>
+                        <div class="detail-item">
+                            <div class="detail-value" style="min-height: 80px;" th:text="${material.descripcionMaterial}">
+                                Descripción del material...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Information Section -->
+                    <div class="detail-section">
+                        <h3><i class="fas fa-tag"></i> Información de Precios</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Precio Unitario</span>
+                                <div class="detail-value" th:text="${material.precioMaterial != null ? '₡' + #numbers.formatDecimal(material.precioMaterial, 1, 2) : 'No disponible'}">
+                                    Precio
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Suppliers Section -->
+                    <div class="detail-section">
+                        <h3><i class="fas fa-truck"></i> Proveedores</h3>
+                        <div class="detail-item">
+                            <span class="detail-label">Proveedores Asociados</span>
+                            <div class="detail-value">
+                                <div th:if="${material.proveedorList != null and !material.proveedorList.empty}" class="proveedor-list">
+                                    <span th:each="proveedor : ${material.proveedorList}" class="proveedor-badge">
+                                        <i class="fas fa-building"></i>
+                                        <span th:text="${proveedor.nombreProveedor}">Proveedor</span>
+                                    </span>
+                                </div>
+                                <div th:if="${material.proveedorList == null or material.proveedorList.empty}" style="color: var(--secondary); font-style: italic;">
+                                    No hay proveedores asociados a este material
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- TODO relaciones con APU, inventario y proveedor. -->
+                    <!-- Related Information Section -->
+                    <div class="detail-section">
+                        <h3><i class="fas fa-link"></i> Información Relacionada</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">APUs que utilizan este material</span>
+                                <div class="detail-value" th:text="${material.materialesApus != null ? material.materialesApus.size() : 0}">0</div>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">En inventario</span>
+                                <div class="detail-value" th:text="${material.materialesInventarios != null ? material.materialesInventarios.size() : 0}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="detail-body">
-                <!-- Basic Information Section -->
-                <div class="detail-section">
-                    <h3><i class="fas fa-info-circle"></i> Información Básica</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">ID del Material</span>
-                            <div class="detail-value" th:text="${material.idMaterial}">ID</div>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Nombre</span>
-                            <div class="detail-value" th:text="${material.nombreMaterial}">Nombre</div>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Unidad de Medida</span>
-                            <div class="detail-value" th:text="${material.unidadMaterial}">Unidad</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Description Section -->
-                <div class="detail-section">
-                    <h3><i class="fas fa-align-left"></i> Descripción</h3>
-                    <div class="detail-item">
-                        <div class="detail-value" style="min-height: 80px;" th:text="${material.descripcionMaterial}">
-                            Descripción del material...
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pricing Information Section -->
-                <div class="detail-section">
-                    <h3><i class="fas fa-tag"></i> Información de Precios</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">Precio Unitario</span>
-                            <div class="detail-value" th:text="${material.precioMaterial != null ? '₡' + #numbers.formatDecimal(material.precioMaterial, 1, 2) : 'No disponible'}">
-                                Precio
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Suppliers Section -->
-                <div class="detail-section">
-                    <h3><i class="fas fa-truck"></i> Proveedores</h3>
-                    <div class="detail-item">
-                        <span class="detail-label">Proveedores Asociados</span>
-                        <div class="detail-value">
-                            <div th:if="${material.proveedorList != null and !material.proveedorList.empty}" class="proveedor-list">
-                                <span th:each="proveedor : ${material.proveedorList}" class="proveedor-badge">
-                                    <i class="fas fa-building"></i>
-                                    <span th:text="${proveedor.nombreProveedor}">Proveedor</span>
-                                </span>
-                            </div>
-                            <div th:if="${material.proveedorList == null or material.proveedorList.empty}" style="color: var(--secondary); font-style: italic;">
-                                No hay proveedores asociados a este material
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- TODO relaciones con APU, inventario y proveedor. -->
-                <!-- Related Information Section -->
-                <div class="detail-section">
-                    <h3><i class="fas fa-link"></i> Información Relacionada</h3>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">APUs que utilizan este material</span>
-                            <div class="detail-value" th:text="${material.materialesApus != null ? material.materialesApus.size() : 0}">0</div>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">En inventario</span>
-                            <div class="detail-value" th:text="${material.materialesInventarios != null ? material.materialesInventarios.size() : 0}">0</div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Additional Action Buttons -->
+            <div class="header-actions" style="justify-content: center;">
+                <a th:href="@{/material/inicioMaterial}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver a Materiales
+                </a>
+                <a th:href="@{/material/editar/} + ${material.idMaterial}"
+                   class="btn btn-warning"
+                   sec:authorize="hasAuthority('EDITAR_MATERIAL')">
+                    <i class="fas fa-edit"></i> Editar Material
+                </a>
+                <a th:href="@{/material/eliminar/} + ${material.idMaterial}"
+                   class="btn btn-danger"
+                   sec:authorize="hasAuthority('ELIMINAR_MATERIAL')"
+                   onclick="return confirm('¿Está seguro de que desea eliminar este material? Esta acción no se puede deshacer.')">
+                    <i class="fas fa-trash"></i> Eliminar Material
+                </a>
             </div>
-        </div>
-
-        <!-- Additional Action Buttons -->
-        <div class="header-actions" style="justify-content: center;">
-            <a th:href="@{/material/inicioMaterial}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Volver a Materiales
-            </a>
-            <a th:href="@{/material/editar/} + ${material.idMaterial}"
-               class="btn btn-warning"
-               sec:authorize="hasAuthority('EDITAR_MATERIAL')">
-                <i class="fas fa-edit"></i> Editar Material
-            </a>
-            <a th:href="@{/material/eliminar/} + ${material.idMaterial}"
-               class="btn btn-danger"
-               sec:authorize="hasAuthority('ELIMINAR_MATERIAL')"
-               onclick="return confirm('¿Está seguro de que desea eliminar este material? Esta acción no se puede deshacer.')">
-                <i class="fas fa-trash"></i> Eliminar Material
-            </a>
         </div>
     </main>
 </div>

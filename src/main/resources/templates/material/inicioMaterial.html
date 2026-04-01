@@ -184,65 +184,67 @@
             </form>
         </div>
 
-        <!-- main Table -->
-        <div th:if="${materiales != null and !materiales.empty}">
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th>Unidades</th>
-                        <th>Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="material : ${materiales}">
-                        <td th:text="${material.idMaterial}"></td>
-                        <td>
-                            <strong th:text="${material.nombreMaterial}"></strong>
-                        </td>
-                        <td>
-                                <span th:text="${#strings.abbreviate(material.descripcionMaterial, 50)}"
-                                      th:title="${material.descripcionMaterial}"></span>
-                        </td>
-                        <td>
-                            <span class="status-badge badge-active" th:text="${material.unidadMaterial}"></span>
-                        </td>
+        <div class="container">
+            <!-- main Table -->
+            <div th:if="${materiales != null and !materiales.empty}">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Unidades</th>
+                            <th>Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="material : ${materiales}">
+                            <td th:text="${material.idMaterial}"></td>
+                            <td>
+                                <strong th:text="${material.nombreMaterial}"></strong>
+                            </td>
+                            <td>
+                                    <span th:text="${#strings.abbreviate(material.descripcionMaterial, 50)}"
+                                          th:title="${material.descripcionMaterial}"></span>
+                            </td>
+                            <td>
+                                <span class="status-badge badge-active" th:text="${material.unidadMaterial}"></span>
+                            </td>
 
-                        <td class="actions">
-                            <a th:href="@{/material/editar/} + ${material.idMaterial}"
-                               class="btn btn-warning btn-sm"
-                               sec:authorize="hasAuthority('EDITAR_MATERIAL')">
-                                <i class="fas fa-edit"></i> Editar
-                            </a>
-                            <a th:href="@{/material/detalle/} + ${material.idMaterial}"
-                               class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye"></i> Ver
-                            </a>
-                            <a th:href="@{/material/eliminar/} + ${material.idMaterial}"
-                               class="btn btn-danger btn-sm"
-                               sec:authorize="hasAuthority('ELIMINAR_MATERIAL')"
-                               onclick="return confirm('¿Está seguro de que desea eliminar este Material?')">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                            <td class="actions">
+                                <a th:href="@{/material/editar/} + ${material.idMaterial}"
+                                   class="btn btn-warning btn-sm"
+                                   sec:authorize="hasAuthority('EDITAR_MATERIAL')">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <a th:href="@{/material/detalle/} + ${material.idMaterial}"
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                                <a th:href="@{/material/eliminar/} + ${material.idMaterial}"
+                                   class="btn btn-danger btn-sm"
+                                   sec:authorize="hasAuthority('ELIMINAR_MATERIAL')"
+                                   onclick="return confirm('¿Está seguro de que desea eliminar este Material?')">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-        <!-- Empty State -->
-        <div th:if="${materiales == null or materiales.empty}" class="empty-message">
-            <i class="fas fa-calculator"></i>
-            <h3>No hay materiales registrados</h3>
-            <p>Comienza creando tu primer material para verlo aquí.</p>
-            <a th:href="@{/material/crearMaterial}" class="btn btn-success" sec:authorize="hasAuthority('CREAR_MATERIAL')"
-               style="margin-top: 1rem;">
-                <i class="fas fa-plus"></i> Crear Primer material
-            </a>
+            <!-- Empty State -->
+            <div th:if="${materiales == null or materiales.empty}" class="empty-message">
+                <i class="fas fa-calculator"></i>
+                <h3>No hay materiales registrados</h3>
+                <p>Comienza creando tu primer material para verlo aquí.</p>
+                <a th:href="@{/material/crearMaterial}" class="btn btn-success" sec:authorize="hasAuthority('CREAR_MATERIAL')"
+                   style="margin-top: 1rem;">
+                    <i class="fas fa-plus"></i> Crear Primer material
+                </a>
+            </div>
         </div>
     </main>
 </div>
