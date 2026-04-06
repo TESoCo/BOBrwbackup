@@ -10,10 +10,10 @@
 	</parent>
 
 	<groupId>com.example</groupId>
-	<artifactId>protoBOB</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>PorotipoBOB</name>
-	<description>Prototipo de BOB - </description>
+	<artifactId>protoCOB</artifactId>
+	<version>0.2.3-SNAPSHOT</version>
+	<name>PorotipoCOB</name>
+	<description>Prototipo de COB - </description>
 	<url/>
 
 	<licenses>
@@ -160,6 +160,18 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+		<!-- Spring Data Redis -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+		<!-- Para serialización JSON -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 
 
 	</dependencies>
