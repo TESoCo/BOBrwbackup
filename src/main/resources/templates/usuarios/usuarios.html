@@ -146,37 +146,18 @@
                 <div class="card-footer">Usuarios registrados en el sistema</div>
             </div>
 
-            <div class="card">
+            <div th:each="rolInfo : ${resumenRoles}" class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Administradores</h3>
-                    <div class="card-icon bg-danger">
-                        <i class="fas fa-user-shield"></i>
+                    <h3 class="card-title" th:text="${rolInfo.nombre}">Nombre Rol</h3>
+                    <div class="card-icon"
+                         th:classappend="${rolInfo.nombre == 'ADMIN' ? 'bg-danger' :
+                                   rolInfo.nombre == 'SUPERVISOR' ? 'bg-warning' :
+                                   rolInfo.nombre == 'OPERATIVO' ? 'bg-success' : 'bg-secondary'}">
+                        <i th:class="${rolInfo.nombre == 'ADMIN' ? 'fas fa-user-shield' : 'fas fa-user'}"></i>
                     </div>
                 </div>
-                <div class="card-value" th:text="${adminCount}">0</div>
-                <div class="card-footer">Usuarios con rol administrador</div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Supervisores</h3>
-                    <div class="card-icon bg-warning">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                </div>
-                <div class="card-value" th:text="${supervisorCount}">0</div>
-                <div class="card-footer">Usuarios con rol supervisor</div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Operativos</h3>
-                    <div class="card-icon bg-success">
-                        <i class="fas fa-user"></i>
-                    </div>
-                </div>
-                <div class="card-value" th:text="${operativoCount}">0</div>
-                <div class="card-footer">Usuarios con rol operativo</div>
+                <div class="card-value" th:text="${rolInfo.cantidad}">0</div>
+                <div class="card-footer" th:text="'Usuarios con rol ' + ${#strings.toLowerCase(rolInfo.nombre)}">Pie de card</div>
             </div>
         </div>
 
