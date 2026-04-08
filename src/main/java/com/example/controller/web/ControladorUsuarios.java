@@ -65,37 +65,36 @@ public class ControladorUsuarios {
             model.addAttribute("usuarioActual", auth);
 
             // Estadísticas REALES por rol
-            if (usuarios != null) {
-                long adminCount = usuarios.stream()
-                        .filter(u -> u.getRol() != null && "ADMIN".equalsIgnoreCase(u.getRol().getNombreRol()))
-                        .count();
-                long supervisorCount = usuarios.stream()
-                        .filter(u -> u.getRol() != null && "SUPERVISOR".equalsIgnoreCase(u.getRol().getNombreRol()))
-                        .count();
-                long operativoCount = usuarios.stream()
-                        .filter(u -> u.getRol() != null && "OPERATIVO".equalsIgnoreCase(u.getRol().getNombreRol()))
-                        .count();
+            // Reemplaza desde "if (usuarios != null) {" hasta el final del "else { ... }"
+            if (usuarios != null && roles != null) {
+                // 1. Creamos la lista dinámica recorriendo todos los roles que existan en la BD
+                List<java.util.Map<String, Object>> resumenRoles = roles.stream().map(rol -> {
+                    // Contamos cuántos usuarios tienen asignado este rol específico
+                    long count = usuarios.stream()
+                            .filter(u -> u.getRol() != null && u.getRol().getIdRol().equals(rol.getIdRol()))
+                            .count();
 
-                model.addAttribute("adminCount", adminCount);
-                model.addAttribute("supervisorCount", supervisorCount);
-                model.addAttribute("operativoCount", operativoCount);
+                    // Guardamos el nombre y la cantidad en un mapa temporal
+                    java.util.Map<String, Object> info = new java.util.HashMap<>();
+                    info.put("nombre", rol.getNombreRol());
+                    info.put("cantidad", count);
+                    return info;
+                }).collect(java.util.stream.Collectors.toList());
+
+                // 2. Enviamos la lista completa al HTML
+                model.addAttribute("resumenRoles", resumenRoles);
             } else {
-                model.addAttribute("adminCount", 0);
-                model.addAttribute("supervisorCount", 0);
-                model.addAttribute("operativoCount", 0);
+                model.addAttribute("resumenRoles", java.util.List.of());
             }
 
         } catch (Exception e) {
-            System.err.println("Error al cargar gestión de usuarios: " + e.getMessage());
-            e.printStackTrace();
-            // Agregar listas vacías en caso de error
-            model.addAttribute("usuarios", List.of());
-            model.addAttribute("roles", List.of());
-            model.addAttribute("totalUsuarios", 0);
-            model.addAttribute("adminCount", 0);
-            model.addAttribute("supervisorCount", 0);
-            model.addAttribute("operativoCount", 0);
-        }
+        System.err.println("Error al cargar gestión de usuarios: " + e.getMessage());
+        e.printStackTrace();
+        model.addAttribute("usuarios", java.util.List.of());
+        model.addAttribute("roles", java.util.List.of());
+        model.addAttribute("totalUsuarios", 0);
+        model.addAttribute("resumenRoles", java.util.List.of()); // Nueva lista vacía
+    }
 
         return "usuarios/usuarios";
     }
