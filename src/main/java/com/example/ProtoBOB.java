@@ -149,7 +149,7 @@ public class ProtoBOB {
 
                     .httpBasic(httpSecurityHttpBasicConfigurer -> {})
                     .csrf(csrf -> csrf
-                            .ignoringRequestMatchers("/api/**") // Disable CSRF for API endpoints
+                            .ignoringRequestMatchers("/api/**", "/material/refinarMateriales", "/material/generarConAgente") // Disable CSRF for API endpoints
                     );
 
             return http.build();
