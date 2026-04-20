@@ -14,11 +14,12 @@
 }
 
 .form-container {
-    background: white;
-    border-radius: 12px;
+    background-color: white; /* CORREGIDO: Usando white (en lugar de --bg-card) */
     padding: 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-top: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    border-left: 5px solid var(--primary);
 }
 
 .supplier-form {

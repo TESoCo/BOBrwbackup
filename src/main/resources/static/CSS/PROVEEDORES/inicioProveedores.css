@@ -244,3 +244,11 @@
         grid-template-columns: 1fr;
     }
 }
+
+.table-container {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
