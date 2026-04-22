@@ -2,9 +2,12 @@ package com.example.servicio;
 
 import com.example.dao.MaterialDao;
 import com.example.dao.ProveedorDao;
+import com.example.domain.InformacionComercial;
 import com.example.domain.Material;
+import com.example.domain.Persona;
 import com.example.domain.Proveedor;
 import com.example.dto.MaterialScrapedDTO;
+import com.example.scraper.EasyConScraper;
 import com.example.scraper.HomecenterScraper;
 import com.example.scraper.ScrapingSource;
 import com.example.servicio.WebScraperService;
@@ -24,11 +27,15 @@ public class WebScraperServiceImp implements WebScraperService {
     private MaterialDao materialDao;
 
     @Autowired
-    private ProveedorDao proveedorDao;
+    private ProveedorServicio proveedorServicio;
+
+
+
 
     public WebScraperServiceImp() {
         this.fuentes = new ArrayList<>();
         this.fuentes.add(new HomecenterScraper());
+        this.fuentes.add(new EasyConScraper());
         // TODO agregar más fuentes aquí
     }
 
@@ -79,8 +86,9 @@ public class WebScraperServiceImp implements WebScraperService {
                     Proveedor proveedor = encontrarOCrearProveedor(dto);
 
                     // Agregar material al proveedor (según relación)
-                    // TODO: Revisar relación Material-Proveedor
+                    // Revisar relación Material-Proveedor
                     // Si es ManyToMany, sería proveedor.getMaterialList().add(material)
+                    proveedor.getMaterialList().add(material);
 
                     // Guardar usando tu DAO
                     materialDao.save(material);
@@ -100,15 +108,37 @@ public class WebScraperServiceImp implements WebScraperService {
     }
 
     private Proveedor encontrarOCrearProveedor(MaterialScrapedDTO dto) {
-        // Buscar proveedor por NIT usando tu DAO
-        Proveedor proveedor = proveedorDao.findByInformacionComercial_NitRut(dto.getProveedorNit());
+        // Buscar proveedor por NIT usando el servicio
+        Proveedor proveedor = proveedorServicio.buscarPorNit(dto.getProveedorNit());
 
         if (proveedor == null) {
             // TODO: Aquí crear un nuevo proveedor
             // Esto es simplificado, necesitarías crear la persona y la info comercial
             System.out.println("⚠️ Proveedor no encontrado: " + dto.getProveedorNombre() +
                     " - NIT: " + dto.getProveedorNit());
-            return null;
+
+            //CREAR NUEVO PROVEEDOR
+            proveedor = new Proveedor();
+
+            // Inicializar info comercial y la asignamos al proveedor
+            InformacionComercial informacionComercial;
+            if (proveedor.getInformacionComercial() == null) {
+                informacionComercial = new InformacionComercial();
+                informacionComercial.setNitRut(dto.getProveedorNit());
+                informacionComercial.setCorreoElectronico(dto.getProveedorCorreo());
+                proveedor.setInformacionComercial(informacionComercial);
+            }
+
+            // Inicializar persona y la asignamos al proveedor
+            Persona persona;
+            if (proveedor.getIdPersona() == null) {
+                persona = new Persona();
+                persona.setNombre("Tienda en línea"+dto.getProveedorNombre());
+                persona.setApellido("obtenido con IA");
+                persona.setTelefono(dto.getProveedorTelefono());
+                persona.setCorreo(dto.getProveedorCorreo());
+                proveedor.setIdPersona(persona);
+            }
         }
 
         return proveedor;

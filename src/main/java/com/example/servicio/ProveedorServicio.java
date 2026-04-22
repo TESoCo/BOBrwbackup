@@ -7,6 +7,7 @@ import java.util.Optional;
 public interface ProveedorServicio {
     List<Proveedor> listar();
     Optional<Proveedor> buscarPorId(Long id);
+    Proveedor buscarPorNit(String Nit);
     Proveedor guardar(Proveedor proveedor);   // crea/actualiza
     void eliminar(Long id);
 

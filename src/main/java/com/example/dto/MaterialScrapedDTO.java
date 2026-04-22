@@ -16,7 +16,8 @@ public class MaterialScrapedDTO {
     private BigDecimal precio;
     private String proveedorNombre;
     private String proveedorNit;
-    private String proveedorContacto;
+    private String proveedorCorreo;
+    private String proveedorTelefono;
     private String urlFuente;
     private LocalDateTime fechaScraping;
     private String categoria;
@@ -46,8 +47,11 @@ public class MaterialScrapedDTO {
     public String getProveedorNit() { return proveedorNit; }
     public void setProveedorNit(String proveedorNit) { this.proveedorNit = proveedorNit; }
 
-    public String getProveedorContacto() { return proveedorContacto; }
-    public void setProveedorContacto(String proveedorContacto) { this.proveedorContacto = proveedorContacto; }
+    public String getProveedorCorreo() { return proveedorCorreo; }
+    public void setProveedorCorreo(String proveedorCorreo) { this.proveedorCorreo = this.proveedorCorreo; }
+
+    public String getProveedorTelefono() { return proveedorTelefono; }
+    public void setProveedorTelefono(String proveedorTelefono) { this.proveedorTelefono = proveedorTelefono; }
 
     public String getUrlFuente() { return urlFuente; }
     public void setUrlFuente(String urlFuente) { this.urlFuente = urlFuente; }

@@ -23,7 +23,7 @@ public class HomecenterScraper implements ScrapingSource {
     }
 
     @Override
-    public String getContacto() {
+    public String getCorreo() {
         return "servicioalcliente@homecenter.com.co";
     }
 
@@ -109,7 +109,7 @@ public class HomecenterScraper implements ScrapingSource {
                     // === DATOS DEL PROVEEDOR ===
                     material.setProveedorNombre(getName());
                     material.setProveedorNit(getNit());
-                    material.setProveedorContacto(getContacto());
+                    material.setProveedorCorreo(getCorreo());
                     material.setUrlFuente(url);
 
                     resultados.add(material);

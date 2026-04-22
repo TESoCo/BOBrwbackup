@@ -12,4 +12,5 @@ public interface MaterialServicio {
     Material obtenerPorId(Long idMaterial);
     void guardar(Material material);
     void eliminar(Long idMaterial);
+    Material obtenerPorNombre(String nombreMaterial);
 }

@@ -1,5 +1,6 @@
 package com.example.servicio;
 
+import com.example.dao.InformacionComercialDao;
 import com.example.dao.PersonaDao;
 import com.example.dao.ProveedorDao;
 import com.example.domain.Proveedor;
@@ -14,10 +15,12 @@ public class ProveedorServicioImp implements ProveedorServicio {
 
     private final ProveedorDao proveedorDao;
     private final PersonaDao personaDao;
+    private final InformacionComercialDao informacionComercialDao;
 
-    public ProveedorServicioImp(ProveedorDao proveedorDao, PersonaDao personaDao) {
+    public ProveedorServicioImp(ProveedorDao proveedorDao, PersonaDao personaDao, InformacionComercialDao informacionComercialDao) {
         this.proveedorDao = proveedorDao;
         this.personaDao = personaDao;
+        this.informacionComercialDao = informacionComercialDao;
     }
 
     @Override
@@ -28,6 +31,11 @@ public class ProveedorServicioImp implements ProveedorServicio {
     @Override
     public Optional<Proveedor> buscarPorId(Long id) {
         return proveedorDao.findById(id);
+    }
+
+    @Override
+    public Proveedor buscarPorNit(String Nit){
+        return proveedorDao.findByInformacionComercial_NitRut(Nit);
     }
 
     @Override
