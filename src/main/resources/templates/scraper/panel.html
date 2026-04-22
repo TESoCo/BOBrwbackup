@@ -87,10 +87,11 @@
         <div class="alert alert-info">
             <strong>📊 Resultados:</strong> Se encontraron <span th:text="${cantidad}"></span> materiales
         </div>
-
+    <!-- Tarjetas con check para escoger cuáles importar -->
         <form method="post" action="/scraper/importar-todos" id="importForm">
             <div class="row" id="resultsContainer">
                 <div th:each="material, iterStat : ${resultados}" class="col-md-4">
+                    <!-- Cada material va en una tarjeta -->
                     <div class="card material-card">
                         <div class="card-body">
                             <h5 class="card-title" th:text="${material.nombre}">Nombre</h5>
@@ -110,20 +111,22 @@
                                 <div>📧 <span th:text="${material.proveedorCorreo}"></span></div>
                             </div>
 
-                            <!-- Campos ocultos para importación -->
-                            <input type="hidden" th:name="'nombres[' + ${iterStat.index} + ']'" th:value="${material.nombre}">
-                            <input type="hidden" th:name="'descripciones[' + ${iterStat.index} + ']'" th:value="${material.descripcion}">
-                            <input type="hidden" th:name="'unidades[' + ${iterStat.index} + ']'" th:value="${material.unidad}">
-                            <input type="hidden" th:name="'precios[' + ${iterStat.index} + ']'" th:value="${material.precio}">
-
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox"
-                                       th:name="'seleccionados[' + ${iterStat.index} + ']'"
-                                       value="true" checked>
-                                <label class="form-check-label">
-                                    Importar este material
+                            <!-- Checkbox para seleccionar/deseleccionar -->
+                            <div class="form-check mb-2">
+                                <input class="form-check-input material-checkbox" type="checkbox"
+                                       th:id="'check-' + ${iterStat.index}" checked>
+                                <label class="form-check-label" th:for="'check-' + ${iterStat.index}">
+                                    Seleccionar para importar
                                 </label>
                             </div>
+
+                            <!-- Campos ocultos que se habilitan/deshabilitan con el checkbox -->
+                            <input type="hidden" class="material-data"
+                                   th:data-nombre="${material.nombre}"
+                                   th:data-descripcion="${material.descripcion}"
+                                   th:data-unidad="${material.unidad}"
+                                   th:data-precio="${material.precio}"
+                                   th:data-proveedor="${material.proveedorNombre}">
                         </div>
                     </div>
                 </div>
@@ -199,6 +202,39 @@
             document.getElementById('searchForm').submit();
         });
     });
+</script>
+<script>
+    document.getElementById('importForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const form = this;
+        const checkboxes = document.querySelectorAll('.material-checkbox:checked');
+
+        // Limpiar campos ocultos existentes
+        form.querySelectorAll('input[type="hidden"][name]').forEach(el => el.remove());
+
+        // Agregar solo los materiales seleccionados
+        checkboxes.forEach((checkbox, index) => {
+            const data = checkbox.closest('.card-body')
+                .querySelector('.material-data').dataset;
+
+            form.appendChild(createHiddenInput('nombres', data.nombre));
+            form.appendChild(createHiddenInput('descripciones', data.descripcion));
+            form.appendChild(createHiddenInput('unidades', data.unidad));
+            form.appendChild(createHiddenInput('precios', data.precio));
+            form.appendChild(createHiddenInput('proveedores', data.proveedor));
+        });
+
+        form.submit();
+    });
+
+    function createHiddenInput(name, value) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        return input;
+    }
 </script>
 </body>
 </html>

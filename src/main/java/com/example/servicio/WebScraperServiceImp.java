@@ -29,9 +29,6 @@ public class WebScraperServiceImp implements WebScraperService {
     @Autowired
     private ProveedorServicio proveedorServicio;
 
-
-
-
     public WebScraperServiceImp() {
         this.fuentes = new ArrayList<>();
         this.fuentes.add(new HomecenterScraper());
@@ -129,6 +126,26 @@ public class WebScraperServiceImp implements WebScraperService {
                 proveedor.setInformacionComercial(informacionComercial);
             }
 
+            //TODO:buscar proveedor por nombre w infoComercial por NIT, cruzar campos obligatorios con entidades y controladores
+            /*
+    // Buscar si ya existe por NIT
+    InformacionComercial infoComercial = informacionComercialRepository.findByNitRut(nit);
+
+    if (infoComercial == null) {
+        infoComercial = new InformacionComercial();
+        infoComercial.setNitRut(nit);
+        infoComercial.setCorreoElectronico(correo);
+        // Valores por defecto para campos obligatorios
+        infoComercial.setDireccion("Por definir");
+        infoComercial.setBanco("Por definir");
+        infoComercial.setNumCuenta("00000000");
+        infoComercial.setFormaPago("Contado");
+        infoComercial.setProducto("Materiales de construcción");
+        infoComercial = informacionComercialRepository.save(infoComercial);
+    }
+            */
+
+
             // Inicializar persona y la asignamos al proveedor
             Persona persona;
             if (proveedor.getIdPersona() == null) {
@@ -139,6 +156,10 @@ public class WebScraperServiceImp implements WebScraperService {
                 persona.setCorreo(dto.getProveedorCorreo());
                 proveedor.setIdPersona(persona);
             }
+
+            // ⚠️ IMPORTANTE: Guardar el nuevo proveedor
+            proveedor = proveedorServicio.guardar(proveedor);
+
         }
 
         return proveedor;
