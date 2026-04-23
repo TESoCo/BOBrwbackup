@@ -10,9 +10,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -158,33 +156,46 @@ public class EasyConScraper implements ScrapingSource {
 
     // Métodos auxiliares (Lógica de negocio específica para Easy)
 
+    //Mapa de equivalencias para inferir unidades
+    private static final Map<String, String> UNIDAD_MAP = new LinkedHashMap<>() {{
+        // Patrones más específicos primero
+        put("2\\.?5\\s*GL|X2\\.?5\\s*GAL", "2.5 Galones");//  \s* es para detectar espacios, el asterisco para que sea cualquier cantidad
+        put("1/4\\s*GL|0\\.25\\s*GAL|X1/4\\s*GAL", "1/4 Galón");// \\. y \\.? - Punto literal opcional
+        put("1\\s*GL|X1\\s*GAL", "1 Galón");
+        put("GL|GAL|GALS", "Galones");
+        put("LT|LITRO", "Litro");
+        put("LTS|LITROS", "Litros");
+        put("ML|MILILITRO", "Mililitro");
+        put("KG|KILO", "Kilogramo");
+        put("GR|GRAMO", "Gramo");
+        put("\\bUN\\b|UND|UNIDAD", "Unidad");
+        put("MT|METRO", "Metro");
+        put("CM|CENTIMETRO", "Centímetro");
+        put("MM|MILIMETRO", "Milímetro");
+        put("CJ|CAJA", "Caja");
+        put("PK|PQT|PAQUETE", "Paquete");
+        put("BL|BAG|BOLSA", "Bolsa");
+        put("RL|ROLLO", "Rollo");
+        put("PLG|PLIEGO", "Pliego");
+        put("\\bIN\\b|PULG|PULGADA", "Pulgada");
+        put("\\bFT\\b|PIE", "Pie");
+        put("\\bLB\\b|LIBRA", "Libra");
+        put("\\bTN\\b|TON|TONELADA", "Tonelada"); // \b es un limitador de palabra para evitar falsos positivos
+    }};
+
     private String extractUnidadFromName(String nombre) {
-        //TODO: mejorar extractUnidadFromName
-        if (nombre == null) return "Unidad";
-        String nombreUpper = nombre.toUpperCase();
-        if (nombreUpper.contains("GL") || nombreUpper.contains("GAL") || nombreUpper.contains("GALS")) return "Galones";
-        if (nombreUpper.contains("2.5GL") || nombreUpper.contains("2.5 GL") || nombreUpper.contains("X2.5GAL")) return "2.5 Galones";
-        if (nombreUpper.contains("1 GL") || nombreUpper.contains("X1GAL") || nombreUpper.contains("1GL")) return "1 Galón";
-        if (nombreUpper.contains("1/4GL") || nombreUpper.contains("1/4 GL") || nombreUpper.contains("X1/4GAL") || nombreUpper.contains("0.25 GAL")) return "1/4 Galón";
-        if (nombreUpper.contains("LT") || nombreUpper.contains("LITRO")) return "Litro";
-        if (nombreUpper.contains("LTS") || nombreUpper.contains("LITROS")) return "Litros";
-        if (nombreUpper.contains("ML") || nombreUpper.contains("MILILITRO")) return "Mililitro";
-        if (nombreUpper.contains("KG") || nombreUpper.contains("KILO")) return "Kilogramo";
-        if (nombreUpper.contains("GR") || nombreUpper.contains("GRAMO")) return "Gramo";
-        if (nombreUpper.contains(" UN") || nombreUpper.contains("UND") || nombreUpper.contains("UNIDAD")) return "Unidad";
-        if (nombreUpper.contains("MT") || nombreUpper.contains("METRO")) return "Metro";
-        if (nombreUpper.contains("CM") || nombreUpper.contains("CENTIMETRO")) return "Centímetro";
-        if (nombreUpper.contains("MM") || nombreUpper.contains("MILIMETRO")) return "Milímetro";
-        if (nombreUpper.contains("CJ") || nombreUpper.contains("CAJA")) return "Caja";
-        if (nombreUpper.contains("PK") || nombreUpper.contains("PQT") || nombreUpper.contains("PAQUETE")) return "Paquete";
-        if (nombreUpper.contains("BL") || nombreUpper.contains("BAG") || nombreUpper.contains("BOLSA")) return "Bolsa";
-        if (nombreUpper.contains("RL") || nombreUpper.contains("ROLLO")) return "Rollo";
-        if (nombreUpper.contains("PLG") || nombreUpper.contains("PLIEGO")) return "Pliego";
-        if (nombreUpper.contains(" IN") || nombreUpper.contains("PULG") || nombreUpper.contains("PULGADA")) return "Pulgada";
-        if (nombreUpper.contains(" FT") || nombreUpper.contains("PIE")) return "Pie";
-        if (nombreUpper.contains(" LB") || nombreUpper.contains("LIBRA,")) return "Libra";
-        if (nombreUpper.contains(" TN") || nombreUpper.contains("TON") || nombreUpper.contains("TONELADA")) return "Bolsa";
-        return "Unidad";
+        if (nombre == null || nombre.isBlank()) {
+            return "Unidad";
+        }
+
+        String nombreUpper = nombre.toUpperCase().trim();
+
+        return UNIDAD_MAP.entrySet().stream()
+                .filter(entry -> Arrays.stream(entry.getKey().split("\\|"))
+                        .anyMatch(pattern -> nombreUpper.matches(".*\\b" + pattern + "\\b.*")))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse("Unidad");
     }
 
 

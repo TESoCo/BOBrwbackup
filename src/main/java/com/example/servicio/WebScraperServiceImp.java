@@ -109,7 +109,6 @@ public class WebScraperServiceImp implements WebScraperService {
                 System.err.println("❌ Error importando: " + dto.getNombre() + " - " + e.getMessage());
             }
         }
-
         return importados;
     }
 
@@ -209,13 +208,14 @@ public class WebScraperServiceImp implements WebScraperService {
                 proveedor = proveedorServicio.guardar(proveedor);
             }
         }
-        //Finalmente, si encuentra un proveedor al principio simplemente lo devuelve:
+        //Finalmente, si encuentra un proveedor por nombre al principio simplemente lo devuelve:
+        System.out.println("✅ Proveedor encontrado por nombre: " + proveedor.getIdProveedor() +
+                " - " + dto.getNombre());
         return proveedor;
     }
 
     private Persona crearPersonaProveedor(MaterialScrapedDTO dto){
-        Persona personaProveedor;
-        personaProveedor = new Persona();
+        Persona personaProveedor = new Persona();
         personaProveedor.setNombre(dto.getProveedorNombre() + " (en línea)");
         if (dto.getFechaScraping() != null){
             personaProveedor.setApellido("guardada el " + dto.getFechaScraping());
