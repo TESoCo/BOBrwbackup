@@ -14,6 +14,8 @@ import com.example.scraper.ScrapingSource;
 import com.example.servicio.WebScraperService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +35,8 @@ public class WebScraperServiceImp implements WebScraperService {
     private InformacionComercialDao informacionComercialDao;
     @Autowired
     private InfoComServicio infoComServicio;
+    @Autowired
+    private PersonaServicio personaServicio;
 
     public WebScraperServiceImp() {
         this.fuentes = new ArrayList<>();
@@ -138,7 +142,7 @@ public class WebScraperServiceImp implements WebScraperService {
                         informacionComercial.setDireccion("Por definir");
                         informacionComercial.setBanco("Por definir");
                         informacionComercial.setNumCuenta("00000000");
-                        informacionComercial.setFormaPago("Contado");
+                        informacionComercial.setFormaPago("Por definir");
                         informacionComercial.setProducto("Materiales de construcción");
                         //Guardar nueva Información comercial
                         informacionComercial = infoComServicio.salvar(informacionComercial);
@@ -148,14 +152,9 @@ public class WebScraperServiceImp implements WebScraperService {
                     // Inicializar persona y la asignamos al proveedor
                     Persona persona;
                     if (proveedor.getIdPersona() == null) {
-                        persona = new Persona();
-                        persona.setNombre("Tienda en línea" + dto.getProveedorNombre());
-                        persona.setApellido("obtenido con IA");
-                        persona.setTelefono(dto.getProveedorTelefono());
-                        persona.setCorreo(dto.getProveedorCorreo());
+                        persona = crearPersonaProveedor(dto);
                         proveedor.setIdPersona(persona);
                     }
-
                     // ⚠️ IMPORTANTE: Guardar el nuevo proveedor
                     proveedor = proveedorServicio.guardar(proveedor);
 
@@ -171,37 +170,60 @@ public class WebScraperServiceImp implements WebScraperService {
                     // Inicializar persona y la asignamos al proveedor
                     Persona persona;
                     if (proveedor.getIdPersona() == null) {
-                        persona = new Persona();
-                        persona.setNombre("Tienda en línea" + dto.getProveedorNombre());
-                        persona.setApellido("obtenido con IA");
-                        persona.setTelefono(dto.getProveedorTelefono());
-                        persona.setCorreo(dto.getProveedorCorreo());
+                        persona = crearPersonaProveedor(dto);
                         proveedor.setIdPersona(persona);
                     }
-
                     // ⚠️ IMPORTANTE: Guardar el nuevo proveedor
                     proveedor = proveedorServicio.guardar(proveedor);
 
                 }
             }else{
-                //Si encuentra al proveedor por NIT, pero no por nombre; significa que la entidad comercial existe pero la persona no.
-                //También puede ser que el nombre esté mal escrito, asi que si encontramos una persona al momento de la inicialización ejamos esa.
+                /*
+                * Si encuentra al proveedor por NIT, pero no por nombre; puede ser que la entidad comercial existe
+                pero la persona no.
+                * También puede ser que el nombre esté mal escrito, asi que si encontramos una persona relacionada
+                con el proveedor con getIdPersona al momento de la inicialización, dejamos esa.
+                */
                 // Inicializar persona y la asignamos al proveedor
                 Persona persona;
                 if (proveedor.getIdPersona() == null) {
-                    persona = new Persona();
-                    persona.setNombre("Tienda en línea" + dto.getProveedorNombre());
-                    persona.setApellido("obtenido con IA");
+                    persona = crearPersonaProveedor(dto);
+                    proveedor.setIdPersona(persona);
+                }else{
+                    // Actualizar solo si es necesario
+                    System.out.println("Proveedor ya tiene persona asociada, actualizando datos...");
+                    persona = proveedor.getIdPersona();
+                    if (!persona.getNombre().equals(dto.getProveedorNombre() + " (en línea)")){
+                        persona.setNombre(dto.getProveedorNombre() + " (en línea)");
+                    }
+                    if (dto.getFechaScraping() != null){
+                        persona.setApellido("guardada el " + dto.getFechaScraping());
+                    }else{
+                        persona.setApellido("guardada el " + LocalDate.now());
+                    }
                     persona.setTelefono(dto.getProveedorTelefono());
                     persona.setCorreo(dto.getProveedorCorreo());
-                    proveedor.setIdPersona(persona);
+                    personaServicio.salvar(persona);
                 }
-
                 // ⚠️ IMPORTANTE: Guardar el nuevo proveedor
                 proveedor = proveedorServicio.guardar(proveedor);
             }
         }
         //Finalmente, si encuentra un proveedor al principio simplemente lo devuelve:
         return proveedor;
+    }
+
+    private Persona crearPersonaProveedor(MaterialScrapedDTO dto){
+        Persona personaProveedor;
+        personaProveedor = new Persona();
+        personaProveedor.setNombre(dto.getProveedorNombre() + " (en línea)");
+        if (dto.getFechaScraping() != null){
+            personaProveedor.setApellido("guardada el " + dto.getFechaScraping());
+        }else{
+            personaProveedor.setApellido("guardada el " + LocalDate.now());
+        }
+        personaProveedor.setTelefono(dto.getProveedorTelefono());
+        personaProveedor.setCorreo(dto.getProveedorCorreo());
+        return personaProveedor;
     }
 }

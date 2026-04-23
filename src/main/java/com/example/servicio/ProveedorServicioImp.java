@@ -47,7 +47,7 @@ public class ProveedorServicioImp implements ProveedorServicio {
     @jakarta.transaction.Transactional
     public Proveedor guardar(Proveedor form) {
 
-        // Resolver Persona si viene con id
+        // Resolver Persona si viene con ID
         if (form.getIdPersona() != null && form.getIdPersona().getIdPersona() != null) {
             form.setIdPersona(personaDao.findById(form.getIdPersona().getIdPersona())
                     .orElseThrow(() -> new IllegalArgumentException("Persona no existe")));
@@ -69,8 +69,6 @@ public class ProveedorServicioImp implements ProveedorServicio {
         Proveedor entity = proveedorDao.findById(form.getIdProveedor())
                 .orElseThrow(() -> new IllegalArgumentException("Proveedor no existe"));
 
-        // Copia aquí otros campos "simples" del proveedor que tengas (nombre, estado, etc.)
-        // entity.setXxx(form.getXxx());
 
         // ---- MERGE de InformacionComercial (evitar INSERT) ----
         var infoForm = form.getInformacionComercial();
