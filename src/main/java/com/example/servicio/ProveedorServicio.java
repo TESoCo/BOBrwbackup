@@ -10,6 +10,6 @@ public interface ProveedorServicio {
     Proveedor buscarPorNit(String Nit);
     Proveedor guardar(Proveedor proveedor);   // crea/actualiza
     void eliminar(Long id);
-
+    Proveedor buscarPorNombre(String Nombre);
 
 }

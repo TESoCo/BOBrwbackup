@@ -1,5 +1,6 @@
 package com.example.servicio;
 
+import com.example.dao.InformacionComercialDao;
 import com.example.dao.MaterialDao;
 import com.example.dao.ProveedorDao;
 import com.example.domain.InformacionComercial;
@@ -28,6 +29,10 @@ public class WebScraperServiceImp implements WebScraperService {
 
     @Autowired
     private ProveedorServicio proveedorServicio;
+    @Autowired
+    private InformacionComercialDao informacionComercialDao;
+    @Autowired
+    private InfoComServicio infoComServicio;
 
     public WebScraperServiceImp() {
         this.fuentes = new ArrayList<>();
@@ -105,63 +110,98 @@ public class WebScraperServiceImp implements WebScraperService {
     }
 
     private Proveedor encontrarOCrearProveedor(MaterialScrapedDTO dto) {
-        // Buscar proveedor por NIT usando el servicio
-        Proveedor proveedor = proveedorServicio.buscarPorNit(dto.getProveedorNit());
-
+        // Buscar proveedor por nombre (Persona)
+        Proveedor proveedor = proveedorServicio.buscarPorNombre(dto.getNombre());
+        //Si no encuentra un proveedor por nombre, buscar proveedor por NIT
         if (proveedor == null) {
-            // TODO: Aquí crear un nuevo proveedor
-            // Esto es simplificado, necesitarías crear la persona y la info comercial
-            System.out.println("⚠️ Proveedor no encontrado: " + dto.getProveedorNombre() +
-                    " - NIT: " + dto.getProveedorNit());
+            System.out.println("nombre proveedor no encontrado: " + dto.getProveedorNombre() +
+                    " - buscando NIT: " + dto.getProveedorNit());
+            proveedor = proveedorServicio.buscarPorNit(dto.getProveedorNit());
+            //Si no encuentra un proveedor de esas formas, buscar información comercial por NIT
+            if (proveedor == null) {
+                System.out.println("NIT proveedor no encontrado, buscando información comercial relacionada...");
+                InformacionComercial infoComProv = infoComServicio.localizarPorNitRut(dto.getProveedorNit());
+                //Si no encuentra una entidad comercial, creamos las tres entidades (persona, infoCom, proveedor)
+                if (infoComProv == null) {
+                    System.out.println("Entidad comercial no encontrada por NIT/RUT: " + dto.getProveedorNit()
+                            + "Se creará nuevo Proveedor " + dto.getProveedorNombre() + "y nueva entidad comercial con NIT/RUT " + dto.getProveedorNit());
 
-            //CREAR NUEVO PROVEEDOR
-            proveedor = new Proveedor();
+                    //CREAR NUEVO PROVEEDOR
+                    proveedor = new Proveedor();
+                    // Inicializar info comercial y la asignamos al proveedor
+                    InformacionComercial informacionComercial;
+                    if (proveedor.getInformacionComercial() == null) {
+                        informacionComercial = new InformacionComercial();
+                        informacionComercial.setNitRut(dto.getProveedorNit());
+                        informacionComercial.setCorreoElectronico(dto.getProveedorCorreo());
+                        // Valores por defecto para campos obligatorios
+                        informacionComercial.setDireccion("Por definir");
+                        informacionComercial.setBanco("Por definir");
+                        informacionComercial.setNumCuenta("00000000");
+                        informacionComercial.setFormaPago("Contado");
+                        informacionComercial.setProducto("Materiales de construcción");
+                        //Guardar nueva Información comercial
+                        informacionComercial = infoComServicio.salvar(informacionComercial);
+                        proveedor.setInformacionComercial(informacionComercial);
+                    }
 
-            // Inicializar info comercial y la asignamos al proveedor
-            InformacionComercial informacionComercial;
-            if (proveedor.getInformacionComercial() == null) {
-                informacionComercial = new InformacionComercial();
-                informacionComercial.setNitRut(dto.getProveedorNit());
-                informacionComercial.setCorreoElectronico(dto.getProveedorCorreo());
-                proveedor.setInformacionComercial(informacionComercial);
+                    // Inicializar persona y la asignamos al proveedor
+                    Persona persona;
+                    if (proveedor.getIdPersona() == null) {
+                        persona = new Persona();
+                        persona.setNombre("Tienda en línea" + dto.getProveedorNombre());
+                        persona.setApellido("obtenido con IA");
+                        persona.setTelefono(dto.getProveedorTelefono());
+                        persona.setCorreo(dto.getProveedorCorreo());
+                        proveedor.setIdPersona(persona);
+                    }
+
+                    // ⚠️ IMPORTANTE: Guardar el nuevo proveedor
+                    proveedor = proveedorServicio.guardar(proveedor);
+
+                } else {
+                    //Si encuentra una entidad comercial, solo habría que crear la persona y el proveedor
+                    System.out.println("Entidad comercial localizada, NIT/RUT: " + dto.getProveedorNit()
+                            + ". Se creará nuevo Proveedor " + dto.getProveedorNombre() + " relacionado a esta entidad");
+
+                    //CREAR NUEVO PROVEEDOR y asignarle la entidad encontrada
+                    proveedor = new Proveedor();
+                    proveedor.setInformacionComercial(infoComProv);
+
+                    // Inicializar persona y la asignamos al proveedor
+                    Persona persona;
+                    if (proveedor.getIdPersona() == null) {
+                        persona = new Persona();
+                        persona.setNombre("Tienda en línea" + dto.getProveedorNombre());
+                        persona.setApellido("obtenido con IA");
+                        persona.setTelefono(dto.getProveedorTelefono());
+                        persona.setCorreo(dto.getProveedorCorreo());
+                        proveedor.setIdPersona(persona);
+                    }
+
+                    // ⚠️ IMPORTANTE: Guardar el nuevo proveedor
+                    proveedor = proveedorServicio.guardar(proveedor);
+
+                }
+            }else{
+                //Si encuentra al proveedor por NIT, pero no por nombre; significa que la entidad comercial existe pero la persona no.
+                //También puede ser que el nombre esté mal escrito, asi que si encontramos una persona al momento de la inicialización ejamos esa.
+                // Inicializar persona y la asignamos al proveedor
+                Persona persona;
+                if (proveedor.getIdPersona() == null) {
+                    persona = new Persona();
+                    persona.setNombre("Tienda en línea" + dto.getProveedorNombre());
+                    persona.setApellido("obtenido con IA");
+                    persona.setTelefono(dto.getProveedorTelefono());
+                    persona.setCorreo(dto.getProveedorCorreo());
+                    proveedor.setIdPersona(persona);
+                }
+
+                // ⚠️ IMPORTANTE: Guardar el nuevo proveedor
+                proveedor = proveedorServicio.guardar(proveedor);
             }
-
-            //TODO:buscar proveedor por nombre w infoComercial por NIT, cruzar campos obligatorios con entidades y controladores
-            /*
-    // Buscar si ya existe por NIT
-    InformacionComercial infoComercial = informacionComercialRepository.findByNitRut(nit);
-
-    if (infoComercial == null) {
-        infoComercial = new InformacionComercial();
-        infoComercial.setNitRut(nit);
-        infoComercial.setCorreoElectronico(correo);
-        // Valores por defecto para campos obligatorios
-        infoComercial.setDireccion("Por definir");
-        infoComercial.setBanco("Por definir");
-        infoComercial.setNumCuenta("00000000");
-        infoComercial.setFormaPago("Contado");
-        infoComercial.setProducto("Materiales de construcción");
-        infoComercial = informacionComercialRepository.save(infoComercial);
-    }
-            */
-
-
-            // Inicializar persona y la asignamos al proveedor
-            Persona persona;
-            if (proveedor.getIdPersona() == null) {
-                persona = new Persona();
-                persona.setNombre("Tienda en línea"+dto.getProveedorNombre());
-                persona.setApellido("obtenido con IA");
-                persona.setTelefono(dto.getProveedorTelefono());
-                persona.setCorreo(dto.getProveedorCorreo());
-                proveedor.setIdPersona(persona);
-            }
-
-            // ⚠️ IMPORTANTE: Guardar el nuevo proveedor
-            proveedor = proveedorServicio.guardar(proveedor);
-
         }
-
+        //Finalmente, si encuentra un proveedor al principio simplemente lo devuelve:
         return proveedor;
     }
 }

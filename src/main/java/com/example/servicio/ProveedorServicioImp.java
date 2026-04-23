@@ -39,6 +39,11 @@ public class ProveedorServicioImp implements ProveedorServicio {
     }
 
     @Override
+    public Proveedor buscarPorNombre(String Nombre){
+        return proveedorDao.findByIdPersona_NombreContainingIgnoreCase(Nombre).get(0);
+    }
+
+    @Override
     @jakarta.transaction.Transactional
     public Proveedor guardar(Proveedor form) {
 

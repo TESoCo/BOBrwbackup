@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,7 +70,7 @@ public class EasyConScraper implements ScrapingSource {
                         String[] palabrasClave = terminoBusqueda.split(" ");
                         boolean esRelevante = false;
 
-                        //TODO: ¿Hay palabras clave válidas de menos de tres letras?
+                        //TODO: ¿Hay palabras clave válidas de menos de tres letras?... parece que no
                         for (String palabra : palabrasClave) {
                             if (palabra.length() > 3 && nombre.contains(palabra)) {
                                 esRelevante = true;
@@ -87,6 +88,7 @@ public class EasyConScraper implements ScrapingSource {
 
                         // 2. Navegación profunda para el precio
                         // .path() es más seguro que .get() porque evita NullPointerException si el nodo no existe
+                        //root->items->(first)->sellers->(first)->comertialoffer->price
                         JsonNode firstItem = p.path("items").get(0);
                         JsonNode firstSeller = firstItem.path("sellers").get(0);
                         JsonNode offer = firstSeller.path("commertialOffer");
@@ -108,10 +110,28 @@ public class EasyConScraper implements ScrapingSource {
                         material.setUrlFuente(p.path("link").asText());
 
                         // 5. Limpieza de unidad
-                        material.setUnidad(extractUnidadFromName(material.getNombre()));
+                        // en easy está guardado en una campo del JSON
+                        //root->items->(first)->measurementUnit
+                        JsonNode firstUnits = firstItem.path("measurementUnit");
+                        String unidadesProducto = firstUnits.asText("noHayUnJSON");
+
+                        if (Objects.equals(unidadesProducto, "noHayUnJSON")) {
+                            //Si no encuentra la información en el JSON, tratar de inferirla del nombre
+                            material.setUnidad(extractUnidadFromName(material.getNombre()));
+                        }else{
+                            material.setUnidad(unidadesProducto);
+                        }
 
                         // === 6. DESCRIPCIÓN ===
-                        material.setDescripcion(generarDescripcion(material.getNombre(), material.getMarca()));
+                        String descProducto = p.path("description").asText("noHayUnJSON");
+
+                        if (Objects.equals(descProducto, "noHayUnJSON")) {
+                            //Si no encuentra la información en el JSON, tratar de inferirla del nombre
+                            material.setDescripcion(generarDescripcion(material.getNombre(), material.getMarca()));
+                        }else{
+                            material.setUnidad(descProducto);
+                        }
+
 
                         // === 7. DATOS DEL PROVEEDOR ===
                         material.setProveedorNombre(getName());
@@ -139,17 +159,34 @@ public class EasyConScraper implements ScrapingSource {
     // Métodos auxiliares (Lógica de negocio específica para Easy)
 
     private String extractUnidadFromName(String nombre) {
+        //TODO: mejorar extractUnidadFromName
         if (nombre == null) return "Unidad";
         String nombreUpper = nombre.toUpperCase();
-        if (nombreUpper.contains("5 GL") || nombreUpper.contains("5GL") || nombreUpper.contains("X5GAL") || nombreUpper.contains("5 GAL")) return "5 Galones";
+        if (nombreUpper.contains("GL") || nombreUpper.contains("GAL") || nombreUpper.contains("GALS")) return "Galones";
         if (nombreUpper.contains("2.5GL") || nombreUpper.contains("2.5 GL") || nombreUpper.contains("X2.5GAL")) return "2.5 Galones";
         if (nombreUpper.contains("1 GL") || nombreUpper.contains("X1GAL") || nombreUpper.contains("1GL")) return "1 Galón";
         if (nombreUpper.contains("1/4GL") || nombreUpper.contains("1/4 GL") || nombreUpper.contains("X1/4GAL") || nombreUpper.contains("0.25 GAL")) return "1/4 Galón";
         if (nombreUpper.contains("LT") || nombreUpper.contains("LITRO")) return "Litro";
+        if (nombreUpper.contains("LTS") || nombreUpper.contains("LITROS")) return "Litros";
+        if (nombreUpper.contains("ML") || nombreUpper.contains("MILILITRO")) return "Mililitro";
+        if (nombreUpper.contains("KG") || nombreUpper.contains("KILO")) return "Kilogramo";
+        if (nombreUpper.contains("GR") || nombreUpper.contains("GRAMO")) return "Gramo";
         if (nombreUpper.contains(" UN") || nombreUpper.contains("UND") || nombreUpper.contains("UNIDAD")) return "Unidad";
         if (nombreUpper.contains("MT") || nombreUpper.contains("METRO")) return "Metro";
+        if (nombreUpper.contains("CM") || nombreUpper.contains("CENTIMETRO")) return "Centímetro";
+        if (nombreUpper.contains("MM") || nombreUpper.contains("MILIMETRO")) return "Milímetro";
+        if (nombreUpper.contains("CJ") || nombreUpper.contains("CAJA")) return "Caja";
+        if (nombreUpper.contains("PK") || nombreUpper.contains("PQT") || nombreUpper.contains("PAQUETE")) return "Paquete";
+        if (nombreUpper.contains("BL") || nombreUpper.contains("BAG") || nombreUpper.contains("BOLSA")) return "Bolsa";
+        if (nombreUpper.contains("RL") || nombreUpper.contains("ROLLO")) return "Rollo";
+        if (nombreUpper.contains("PLG") || nombreUpper.contains("PLIEGO")) return "Pliego";
+        if (nombreUpper.contains(" IN") || nombreUpper.contains("PULG") || nombreUpper.contains("PULGADA")) return "Pulgada";
+        if (nombreUpper.contains(" FT") || nombreUpper.contains("PIE")) return "Pie";
+        if (nombreUpper.contains(" LB") || nombreUpper.contains("LIBRA,")) return "Libra";
+        if (nombreUpper.contains(" TN") || nombreUpper.contains("TON") || nombreUpper.contains("TONELADA")) return "Bolsa";
         return "Unidad";
     }
+
 
     private String clasificarCategoria(String nombre) {
         if (nombre == null) return "Pinturas y Accesorios";
