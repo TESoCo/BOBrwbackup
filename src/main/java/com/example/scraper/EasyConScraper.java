@@ -22,13 +22,16 @@ public class EasyConScraper implements ScrapingSource {
     }
 
     @Override
-    public String getNit() {
-        return "900.456.789-1";  // NIT de Easy Colombia (Cencosud)
-    }
+    public String getNit() {return "900.456.789-1";}
 
     @Override
     public String getCorreo() {
         return "servicioalcliente@easy.com.co";
+    }
+
+    @Override
+    public String getTelefono() {
+        return "6017444444";
     }
 
     @Override
@@ -127,7 +130,7 @@ public class EasyConScraper implements ScrapingSource {
                             //Si no encuentra la información en el JSON, tratar de inferirla del nombre
                             material.setDescripcion(generarDescripcion(material.getNombre(), material.getMarca()));
                         }else{
-                            material.setUnidad(descProducto);
+                            material.setDescripcion(descProducto);
                         }
 
 
@@ -135,6 +138,14 @@ public class EasyConScraper implements ScrapingSource {
                         material.setProveedorNombre(getName());
                         material.setProveedorNit(getNit());
                         material.setProveedorCorreo(getCorreo());
+                        material.setProveedorTelefono(getTelefono());
+
+                        System.out.println("  verificación easyconscraper ");
+                        System.out.println("  Nombre: " + material.getNombre());
+                        System.out.println("  ProveedorNombre: " + material.getProveedorNombre());
+                        System.out.println("  NIT: " + material.getProveedorNit());
+                        System.out.println("  Correo: " + material.getProveedorCorreo());
+                        System.out.println("  Teléfono: " + material.getProveedorTelefono());
 
                         resultados.add(material);
                         System.out.println("✅ Easy: " + material.getNombre() + " - $" + material.getPrecio() + " - " + material.getUnidad());

@@ -51,6 +51,9 @@ public class ControladorScraper {
             @RequestParam List<String> unidades,
             @RequestParam List<String> precios,
             @RequestParam(required = false) List<String> proveedores,
+            @RequestParam(required = false) List<String> nits,
+            @RequestParam(required = false) List<String> correos,
+            @RequestParam(required = false) List<String> telefonos,
             RedirectAttributes redirectAttributes) {
 
         List<MaterialScrapedDTO> materiales = new ArrayList<>();
@@ -61,9 +64,20 @@ public class ControladorScraper {
             dto.setDescripcion(descripciones.get(i));
             dto.setUnidad(unidades.get(i));
             dto.setPrecio(new java.math.BigDecimal(precios.get(i)));
+
             if (proveedores != null && i < proveedores.size()) {
                 dto.setProveedorNombre(proveedores.get(i));
             }
+            if (nits != null && i < nits.size()) {
+                dto.setProveedorNit(nits.get(i));
+            }
+            if (correos != null && i < correos.size()) {
+                dto.setProveedorCorreo(correos.get(i));
+            }
+            if (telefonos != null && i < telefonos.size()) {
+                dto.setProveedorTelefono(telefonos.get(i));
+            }
+
             materiales.add(dto);
         }
 

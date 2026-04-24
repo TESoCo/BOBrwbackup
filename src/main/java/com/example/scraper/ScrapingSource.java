@@ -7,5 +7,6 @@ public interface ScrapingSource {
     String getName();           // Nombre de la fuente
     String getNit();            // NIT del proveedor
     String getCorreo();       // Email de contacto
+    String getTelefono();  // Teléfono
     List<MaterialScrapedDTO> scrape(String termino);  // Retorna DTOs, no entidades
 }

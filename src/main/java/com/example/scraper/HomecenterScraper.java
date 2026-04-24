@@ -28,6 +28,11 @@ public class HomecenterScraper implements ScrapingSource {
     }
 
     @Override
+    public String getTelefono() {
+        return "6017444444";  // Teléfono de Homecenter
+    }
+
+    @Override
     public List<MaterialScrapedDTO> scrape(String termino) {
         List<MaterialScrapedDTO> resultados = new ArrayList<>();
 
@@ -110,7 +115,14 @@ public class HomecenterScraper implements ScrapingSource {
                     material.setProveedorNombre(getName());
                     material.setProveedorNit(getNit());
                     material.setProveedorCorreo(getCorreo());
-                    material.setUrlFuente(url);
+                    material.setProveedorTelefono(getTelefono());
+
+                    System.out.println("  verificación homecenterscraper ");
+                    System.out.println("  Nombre: " + material.getNombre());
+                    System.out.println("  ProveedorNombre: " + material.getProveedorNombre());
+                    System.out.println("  NIT: " + material.getProveedorNit());
+                    System.out.println("  Correo: " + material.getProveedorCorreo());
+                    System.out.println("  Teléfono: " + material.getProveedorTelefono());
 
                     resultados.add(material);
                     System.out.println("✅ " + material.getNombre() + " - $" + material.getPrecio() + " - " + material.getUnidad());

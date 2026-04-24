@@ -126,7 +126,10 @@
                                    th:data-descripcion="${material.descripcion}"
                                    th:data-unidad="${material.unidad}"
                                    th:data-precio="${material.precio}"
-                                   th:data-proveedor="${material.proveedorNombre}">
+                                   th:data-proveedor="${material.proveedorNombre}"
+                                   th:data-nit="${material.proveedorNit}"
+                                   th:data-correo="${material.proveedorCorreo}"
+                                   th:data-telefono="${material.proveedorTelefono}">
                         </div>
                     </div>
                 </div>
@@ -223,6 +226,9 @@
             form.appendChild(createHiddenInput('unidades', data.unidad));
             form.appendChild(createHiddenInput('precios', data.precio));
             form.appendChild(createHiddenInput('proveedores', data.proveedor));
+            form.appendChild(createHiddenInput('nits', data.nit));
+            form.appendChild(createHiddenInput('correos', data.correo));
+            form.appendChild(createHiddenInput('telefonos', data.telefono));
         });
 
         form.submit();

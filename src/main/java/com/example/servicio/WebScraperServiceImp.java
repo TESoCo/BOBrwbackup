@@ -74,9 +74,15 @@ public class WebScraperServiceImp implements WebScraperService {
     @Override
     public int importarMateriales(List<MaterialScrapedDTO> materialesDTO) {
         int importados = 0;
-
+        System.out.println("Verificación importar materiales");
         for (MaterialScrapedDTO dto : materialesDTO) {
             try {
+                System.out.println("Procesando: " + dto.getNombre());
+                System.out.println("Procesando: " + dto.getNombre());
+                System.out.println("Proveedor: " + dto.getProveedorNombre());
+                System.out.println("Correo: " + dto.getProveedorCorreo());
+                System.out.println("NIT: " + dto.getProveedorNit());
+
                 // Verificar si el material ya existe
                 Optional<Material> existente = materialDao.findByNombreMaterial(dto.getNombre());
 
@@ -113,8 +119,21 @@ public class WebScraperServiceImp implements WebScraperService {
     }
 
     private Proveedor encontrarOCrearProveedor(MaterialScrapedDTO dto) {
+        System.out.println("=== DATOS DEL DTO ===");
+        System.out.println("Nombre del MATERIAL: " + dto.getNombre());
+        System.out.println("Nombre del PROVEEDOR: " + dto.getProveedorNombre());
+        System.out.println("NIT del proveedor: " + dto.getProveedorNit());
+        System.out.println("Correo proveedor: " + dto.getProveedorCorreo());
+        System.out.println("Teléfono proveedor: " + dto.getProveedorTelefono());
+
+        // Valores por defecto si son null
+        if (dto.getProveedorNit() == null) dto.setProveedorNit("NIT_NO_DISPONIBLE");
+        if (dto.getProveedorCorreo() == null) dto.setProveedorCorreo("no-disponible@proveedor.com");
+        if (dto.getProveedorTelefono() == null) dto.setProveedorTelefono("0000000");
+
         // Buscar proveedor por nombre (Persona)
-        Proveedor proveedor = proveedorServicio.buscarPorNombre(dto.getNombre());
+        System.out.println("buscando proveedor: " + dto.getProveedorNombre());
+        Proveedor proveedor = proveedorServicio.buscarPorNombre(dto.getProveedorNombre());
         //Si no encuentra un proveedor por nombre, buscar proveedor por NIT
         if (proveedor == null) {
             System.out.println("nombre proveedor no encontrado: " + dto.getProveedorNombre() +
@@ -131,6 +150,8 @@ public class WebScraperServiceImp implements WebScraperService {
 
                     //CREAR NUEVO PROVEEDOR
                     proveedor = new Proveedor();
+                    //Inicializar materiales relacionados al proveedor
+                    proveedor.setMaterialList(new ArrayList<>());
                     // Inicializar info comercial y la asignamos al proveedor
                     InformacionComercial informacionComercial;
                     if (proveedor.getInformacionComercial() == null) {
@@ -138,7 +159,7 @@ public class WebScraperServiceImp implements WebScraperService {
                         informacionComercial.setNitRut(dto.getProveedorNit());
                         informacionComercial.setCorreoElectronico(dto.getProveedorCorreo());
                         // Valores por defecto para campos obligatorios
-                        informacionComercial.setDireccion("Por definir");
+                        informacionComercial.setDireccion("Calle 0 # 0-00");
                         informacionComercial.setBanco("Por definir");
                         informacionComercial.setNumCuenta("00000000");
                         informacionComercial.setFormaPago("Por definir");
@@ -162,8 +183,9 @@ public class WebScraperServiceImp implements WebScraperService {
                     System.out.println("Entidad comercial localizada, NIT/RUT: " + dto.getProveedorNit()
                             + ". Se creará nuevo Proveedor " + dto.getProveedorNombre() + " relacionado a esta entidad");
 
-                    //CREAR NUEVO PROVEEDOR y asignarle la entidad encontrada
+                    //CREAR NUEVO PROVEEDOR y asignarle una lista de materiales y la entidad encontrada
                     proveedor = new Proveedor();
+
                     proveedor.setInformacionComercial(infoComProv);
 
                     // Inicializar persona y la asignamos al proveedor
@@ -210,7 +232,7 @@ public class WebScraperServiceImp implements WebScraperService {
         }
         //Finalmente, si encuentra un proveedor por nombre al principio simplemente lo devuelve:
         System.out.println("✅ Proveedor encontrado por nombre: " + proveedor.getIdProveedor() +
-                " - " + dto.getNombre());
+                " - " + dto.getProveedorNombre());
         return proveedor;
     }
 
