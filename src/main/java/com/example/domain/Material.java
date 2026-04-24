@@ -34,7 +34,7 @@ public class Material implements Serializable {
     private String descripcionMaterial;
 
 
-    // From precios_material
+    // From table precios_material
     @Column(name = "precio_Material", table = "precios_material", nullable = false)
     private BigDecimal precioMaterial;
 
