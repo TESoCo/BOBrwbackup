@@ -13,8 +13,7 @@ import java.util.List;
 @Entity
 @Table(name = "material")
 @SecondaryTables({
-        @SecondaryTable(name = "precios_material", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Material")),
-        @SecondaryTable(name = "proveedores_material", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Material"))
+        @SecondaryTable(name = "precios_material", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Material"))
 })
 public class Material implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -35,7 +34,7 @@ public class Material implements Serializable {
     private String descripcionMaterial;
 
 
-    // From precios_material
+    // From table precios_material
     @Column(name = "precio_Material", table = "precios_material", nullable = false)
     private BigDecimal precioMaterial;
 
@@ -43,7 +42,7 @@ public class Material implements Serializable {
     // From proveedores_material (proveedor ID)
     @ManyToMany(mappedBy = "materialList", fetch = FetchType.EAGER)
     @JsonManagedReference("proveedor-material")
-    private List<Proveedor> proveedorList;;
+    private List<Proveedor> proveedorList = new ArrayList<>();
 
 
     //RELACIONES INVERSAS PARA OTRAS ENTIDADES

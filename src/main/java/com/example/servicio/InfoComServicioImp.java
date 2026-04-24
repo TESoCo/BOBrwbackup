@@ -40,4 +40,7 @@ public class InfoComServicioImp implements InfoComServicio {
         return informacionComercialDao.findByIdInfoComerc(id);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public InformacionComercial localizarPorNitRut(String NitRut){ return informacionComercialDao.findByNitRut(NitRut);}
 }

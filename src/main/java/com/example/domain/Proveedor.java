@@ -41,7 +41,7 @@ public class Proveedor implements Serializable {
             inverseJoinColumns = @JoinColumn(name = "id_Material") //  Columna de la otra entidad
     )
     @JsonBackReference("proveedor-material")
-    private List<Material> materialList;
+    private List<Material> materialList  = new ArrayList<>();
 
 
 

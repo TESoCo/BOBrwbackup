@@ -6,11 +6,10 @@ import com.example.domain.Usuario;
 import com.example.servicio.APUServicio;
 import com.example.servicio.MaterialServicio;
 import com.example.servicio.UsuarioServicio;
-import com.example.servicioWeb.AIService;
-import com.example.servicioWeb.DeepSeekService;
-import com.example.servicioWeb.GeminiService;
-import com.example.servicioWeb.OpenRouterService;
+import com.example.servicioWeb.*;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -22,9 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 @RequestMapping("/material")
@@ -50,6 +47,15 @@ public class ControladorMaterial {
 
     @Autowired
     private GeminiService geminiService;
+
+    @Autowired
+    private ConversationService conversationService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private EnhancedAgentAIService enhancedAgentAIService;
 
     @GetMapping("/inicioMaterial")
     public String inicioMaterial(Model model, Authentication authentication) {
@@ -103,7 +109,6 @@ public class ControladorMaterial {
         }
     }
 
-
     @GetMapping("/detalle/{id}")
     public String verDetalleMaterial(@PathVariable Long id, Model model) {
         Material material = materialServicio.obtenerPorId(id);
@@ -115,6 +120,18 @@ public class ControladorMaterial {
     public String eliminarMaterial(@PathVariable Long id) {
         materialServicio.eliminar(materialServicio.obtenerPorId(id).getIdMaterial());
         return "redirect:/material/inicioMaterial";
+    }
+
+    //ayudante para interacciones con el agente
+    @GetMapping("/obtenerMaterialesActuales")
+    @ResponseBody
+    public List<Map<String, String>> obtenerMaterialesActuales(HttpSession session) {
+        String sessionId = session.getId();
+        AgentConversation conversation = conversationService.getConversation(sessionId);
+        if (conversation != null && conversation.getUltimosMateriales() != null) {
+            return conversation.getUltimosMateriales();
+        }
+        return new ArrayList<>();
     }
 
     @PostMapping("/generarDesdeDescripcion")
@@ -315,5 +332,170 @@ public class ControladorMaterial {
     public List<Apu> buscarApu(@RequestParam String termino) {
         return apuServicio.buscarPorNombre(termino);
     }
+
+    @GetMapping("/test-redis-simple")
+    @ResponseBody
+    public String testRedisSimple() {
+        try {
+            // Probar con un objeto simple primero
+            redisTemplate.opsForValue().set("test:simple", "Hola Redis!");
+            String result = (String) redisTemplate.opsForValue().get("test:simple");
+
+            if ("Hola Redis!".equals(result)) {
+                return "✅ Redis básico funciona!";
+            } else {
+                return "❌ Redis básico falló";
+            }
+        } catch (Exception e) {
+            return "❌ Error: " + e.getMessage();
+        }
+    }
+
+    @GetMapping("/test-redis-conversation")
+    @ResponseBody
+    public String testRedisConversation() {
+        try {
+            // Crear una conversación simple sin APU
+            AgentConversation test = new AgentConversation();
+            test.setUserId("test-user");
+            test.setApuId(1L);
+            test.setApuNombre("APU de prueba");
+            test.setInteractionCount(1);
+
+            conversationService.saveConversation("test-session-2", test);
+            AgentConversation retrieved = conversationService.getConversation("test-session-2");
+
+            if (retrieved != null && "test-user".equals(retrieved.getUserId())) {
+                return "✅ Conversación guardada y recuperada correctamente!";
+            } else {
+                return "❌ Falló la recuperación de conversación";
+            }
+        } catch (Exception e) {
+            return "❌ Error: " + e.getMessage();
+        }
+    }
+
+    // En ControladorMaterial.java
+    @GetMapping("/limpiarCache")
+    @ResponseBody
+    public String limpiarCache() {
+        // Esto es para limpiar
+        // En desarrollo, puedes limpiar desde Redis CLI: redis-cli FLUSHALL
+        return "Para limpiar caché, ejecuta: redis-cli FLUSHALL";
+    }
+
+    @PostMapping("/generarConAgente")
+    @ResponseBody
+    public Map<String, Object> generarConAgente(
+            @RequestParam Long apuId,
+            @RequestParam(required = false) String feedback,
+            HttpSession session,
+            Authentication authentication) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Apu apu = apuServicio.obtenerPorId(apuId);
+            if (apu == null) {
+                response.put("error", "APU no encontrado");
+                return response;
+            }
+
+            String sessionId = session.getId();
+            String userId = authentication.getName();
+
+            AgentResponse agentResponse = enhancedAgentAIService.generarMaterialesConContexto(
+                    sessionId, userId, apu, feedback
+            );
+
+            response.put("materiales", agentResponse.getMateriales());
+            response.put("mensaje", agentResponse.getMensaje());
+            response.put("sugerencias", agentResponse.getSugerencias());
+            response.put("preguntas", agentResponse.getPreguntas());
+            response.put("success", true);
+
+        } catch (Exception e) {
+            response.put("error", e.getMessage());
+            response.put("success", false);
+        }
+
+        return response;
+    }
+
+    @GetMapping("/conversacion/estado")
+    @ResponseBody
+    public Map<String, Object> getConversacionEstado(HttpSession session) {
+        String sessionId = session.getId();
+        AgentConversation conv = conversationService.getConversation(sessionId);
+
+        Map<String, Object> response = new HashMap<>();
+        if (conv != null) {
+            response.put("interacciones", conv.getInteractionCount());
+            response.put("ultimaActualizacion", conv.getLastUpdated());
+            response.put("materialesGenerados", conv.getUltimosMateriales() != null ?
+                    conv.getUltimosMateriales().size() : 0);
+        } else {
+            response.put("activa", false);
+        }
+        return response;
+    }
+
+    @PostMapping("/refinarMateriales")
+    @ResponseBody
+    public Map<String, Object> refinarMateriales(
+            @RequestBody Map<String, Object> request,
+            HttpSession session,
+            Authentication authentication) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Long apuId = Long.valueOf(request.get("apuId").toString());
+            String feedback = (String) request.get("feedback");
+            List<Map<String, String>> materialesActuales = (List<Map<String, String>>) request.get("materialesActuales");
+
+            String sessionId = session.getId();
+            String userId = authentication.getName();
+
+            Apu apu = apuServicio.obtenerPorId(apuId);
+
+            // Construir prompt con los materiales actuales y el feedback
+            StringBuilder prompt = new StringBuilder();
+            prompt.append("Lista actual de materiales:\n");
+            for (Map<String, String> m : materialesActuales) {
+                prompt.append("- ").append(m.get("nombre"))
+                        .append(" (").append(m.get("unidad")).append("): ")
+                        .append(m.get("descripcion")).append("\n");
+            }
+            prompt.append("\nFeedback del usuario: ").append(feedback);
+            prompt.append("\n\nPor favor, ajusta la lista de materiales según el feedback. ");
+            prompt.append("Responde SOLO con un array JSON como antes.");
+
+            // Usar IA para refinar
+            List<Map<String, String>> materialesRefinados = aiService.generarMateriales(prompt.toString());
+
+            // Guardar en la conversación
+            AgentConversation conversation = conversationService.getConversation(sessionId);
+            if (conversation == null) {
+                conversation = new AgentConversation(userId, apu);
+            }
+            conversation.setUltimosMateriales(materialesRefinados);
+            conversation.getHistorialFeedback().add(feedback);
+            conversation.setInteractionCount(conversation.getInteractionCount() + 1);
+            conversationService.saveConversation(sessionId, conversation);
+
+            response.put("success", true);
+            response.put("materiales", materialesRefinados);
+            response.put("mensaje", "Materiales refinados según tu feedback");
+            response.put("sugerencias", List.of("¿Necesitas ajustar algo más?", "¿Las cantidades son correctas?"));
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+        }
+
+        return response;
+    }
+
 
 }

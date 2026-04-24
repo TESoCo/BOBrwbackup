@@ -5,15 +5,17 @@ import java.util.List;
 
 public interface InfoComServicio {
 
-        public List<InformacionComercial> comercialList()  ;
+        List<InformacionComercial> comercialList()  ;
 
-        public InformacionComercial salvar(InformacionComercial informacionComercial);
+        InformacionComercial salvar(InformacionComercial informacionComercial);
 
-        public void borrar(InformacionComercial informacionComercial);
+        void borrar(InformacionComercial informacionComercial);
 
-        public InformacionComercial localizarInformacionComercial(InformacionComercial informacionComercial);
+        InformacionComercial localizarInformacionComercial(InformacionComercial informacionComercial);
 
-        public InformacionComercial localizarPorId(Long id);
+        InformacionComercial localizarPorId(Long id);
+
+        InformacionComercial localizarPorNitRut(String NitRut);
     }
 
 

@@ -38,4 +38,10 @@ public class MaterialServicioImp implements MaterialServicio {
         materialDao.deleteById(idMaterial);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Material obtenerPorNombre(String nombreMaterial) {
+        return materialDao.findByNombreMaterial(nombreMaterial) .orElse(null);
+    }
+
 }

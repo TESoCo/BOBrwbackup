@@ -1,5 +1,6 @@
 package com.example.servicio;
 
+import com.example.dao.InformacionComercialDao;
 import com.example.dao.PersonaDao;
 import com.example.dao.ProveedorDao;
 import com.example.domain.Proveedor;
@@ -14,10 +15,12 @@ public class ProveedorServicioImp implements ProveedorServicio {
 
     private final ProveedorDao proveedorDao;
     private final PersonaDao personaDao;
+    private final InformacionComercialDao informacionComercialDao;
 
-    public ProveedorServicioImp(ProveedorDao proveedorDao, PersonaDao personaDao) {
+    public ProveedorServicioImp(ProveedorDao proveedorDao, PersonaDao personaDao, InformacionComercialDao informacionComercialDao) {
         this.proveedorDao = proveedorDao;
         this.personaDao = personaDao;
+        this.informacionComercialDao = informacionComercialDao;
     }
 
     @Override
@@ -31,10 +34,22 @@ public class ProveedorServicioImp implements ProveedorServicio {
     }
 
     @Override
+    public Proveedor buscarPorNit(String Nit){
+        return proveedorDao.findByInformacionComercial_NitRut(Nit);
+    }
+
+    @Override
+    public Proveedor buscarPorNombre(String Nombre){
+        List<Proveedor> resultados = proveedorDao
+                .findByIdPersona_NombreContainingIgnoreCase(Nombre);
+        return resultados.isEmpty() ? null : resultados.get(0);
+    }
+
+    @Override
     @jakarta.transaction.Transactional
     public Proveedor guardar(Proveedor form) {
 
-        // Resolver Persona si viene con id
+        // Resolver Persona si viene con ID
         if (form.getIdPersona() != null && form.getIdPersona().getIdPersona() != null) {
             form.setIdPersona(personaDao.findById(form.getIdPersona().getIdPersona())
                     .orElseThrow(() -> new IllegalArgumentException("Persona no existe")));
@@ -56,8 +71,6 @@ public class ProveedorServicioImp implements ProveedorServicio {
         Proveedor entity = proveedorDao.findById(form.getIdProveedor())
                 .orElseThrow(() -> new IllegalArgumentException("Proveedor no existe"));
 
-        // Copia aquí otros campos "simples" del proveedor que tengas (nombre, estado, etc.)
-        // entity.setXxx(form.getXxx());
 
         // ---- MERGE de InformacionComercial (evitar INSERT) ----
         var infoForm = form.getInformacionComercial();

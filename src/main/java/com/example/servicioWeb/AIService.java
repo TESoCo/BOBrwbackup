@@ -20,12 +20,26 @@ public class AIService {
     @Autowired
     private GeminiService geminiService;
 
+    @Autowired
+    private CacheService cacheService;
+
     public List<Map<String, String>> generarMateriales(String descripcion) {
+
+        // 1. Verificar caché
+        String hash = cacheService.generarHash(descripcion);
+        List<Map<String, String>> cacheado = cacheService.obtenerDelCache(hash);
+
+        if (cacheado != null && !cacheado.isEmpty()) {
+            System.out.println("🎯 Usando respuesta cacheada (ahorro de API call)");
+            return cacheado;
+        }
+        // 2. Intentar APIs
         // Intentar OpenRouter primero
         try {
             System.out.println("Intentando OpenRouter...");
             List<Map<String, String>> materiales = openRouterService.generarMaterialesDesdeDescripcion(descripcion);
             System.out.println("✅ OpenRouter exitoso: " + materiales.size() + " materiales");
+            cacheService.guardarEnCache(hash, materiales);
             return materiales;
         } catch (Exception e) {
             System.out.println("❌ OpenRouter falló: " + e.getMessage());
@@ -38,6 +52,7 @@ public class AIService {
             System.out.println("🔄 2° Intentando Gemini...");
             List<Map<String, String>> materiales = geminiService.generarMaterialesDesdeDescripcion(descripcion);
             System.out.println("✅ Gemini exitoso: " + materiales.size() + " materiales");
+            cacheService.guardarEnCache(hash, materiales);
             return materiales;
         } catch (Exception e) {
             System.out.println("❌ Gemini falló: " + e.getMessage());
@@ -50,7 +65,9 @@ public class AIService {
             System.out.println("Intentando DeepSeek...");
             List<Map<String, String>> materiales = deepSeekService.generarMaterialesDesdeDescripcion(descripcion);
             System.out.println("✅ DeepSeek exitoso: " + materiales.size() + " materiales");
+            cacheService.guardarEnCache(hash, materiales);
             return materiales;
+
         } catch (Exception e) {
             System.out.println("❌ DeepSeek falló: " + e.getMessage());
         }
@@ -62,6 +79,15 @@ public class AIService {
 
     public List<Map<String, String>> generarMaterialesLocalmente(String descripcion) {
         System.out.println("🔧 Generando materiales localmente para: " + descripcion);
+
+        // 1. Verificar caché
+        String hash = cacheService.generarHash(descripcion);
+        List<Map<String, String>> cacheado = cacheService.obtenerDelCache(hash);
+
+        if (cacheado != null && !cacheado.isEmpty()) {
+            System.out.println("🎯 Usando respuesta cacheada (ahorro de API call)");
+            return cacheado;
+        }
 
         List<Map<String, String>> materiales = new ArrayList<>();
         String descLower = descripcion.toLowerCase();
@@ -105,8 +131,12 @@ public class AIService {
         }
 
         System.out.println("✅ Generados " + materiales.size() + " materiales localmente");
+        cacheService.guardarEnCache(hash, materiales);
         return materiales;
     }
+
+
+
 
     private Map<String, String> crearMaterial(String nombre, String descripcion, String unidad) {
         Map<String, String> material = new HashMap<>();
@@ -115,5 +145,7 @@ public class AIService {
         material.put("unidad", unidad);
         return material;
     }
+
+
 
 }
