@@ -15,7 +15,7 @@ import java.util.List;
 
 @Component
 @WebService(serviceName = "BOBWS")
-
+//TODO esto es para acceder al módulo de avances desde la red, está roto,.
 public class BOBWS {
 
     @Autowired

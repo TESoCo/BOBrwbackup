@@ -15,7 +15,7 @@ import org.springframework.ws.transport.http.MessageDispatcherServlet;
 @EnableWs
 @EnableWebMvc
 public class WebServiceConfig {
-
+//TODO Esto es el compañerito de BOBWS
     private int serverPort;
 
     @EventListener
