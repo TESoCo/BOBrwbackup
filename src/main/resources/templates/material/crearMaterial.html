@@ -275,7 +275,7 @@
                             </span>
                         </h4>
 
-                        <!-- ✅ Asegúrate de que este formulario se muestre -->
+                        <!--  Asegúrate de que este formulario se muestre -->
                         <form th:action="@{/material/guardarGenerados}" method="post" id="guardarMaterialesForm">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
@@ -618,9 +618,9 @@
     });
     }
 
-        window.generarConAgente = function(apuId, feedback) {
-        const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+        window.generarConAgente = function(apuId, feedback, sessionId) {
 
+        const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
         const materialesActuales = obtenerMaterialesDeTabla();
 
         if (materialesActuales.length === 0) {
@@ -631,8 +631,9 @@
         const requestData = {
         apuId: apuId,
         feedback: feedback,
-        materialesActuales: materialesActuales
-    };
+        materialesActuales: materialesActuales,
+        sessionId: sessionId
+        };
 
         agregarMensajeAgente('🔄 Procesando tu feedback...');
 
@@ -725,12 +726,12 @@
         console.log(`✅ Tabla actualizada con ${materiales.length} materiales`);
     }
 
-        window.enviarFeedback = function() {
+    window.enviarFeedback = function() {
         const feedback = document.getElementById('agentFeedback').value;
         if (!feedback.trim()) {
         alert('Escribe tu feedback (ej: "Agrega cemento" o "Elimina la madera")');
         return;
-    }
+        }
 
         // Obtener el APU actual
         let apuId = currentApuId || document.getElementById('apuId').value;
@@ -738,18 +739,36 @@
         if (!apuId) {
         agregarMensajeAgente('⚠️ Primero selecciona un APU y haz clic en "Generar Materiales"');
         return;
-    }
+        }
 
         const materialesActuales = obtenerMaterialesDeTabla();
         if (materialesActuales.length === 0) {
         agregarMensajeAgente('⚠️ Primero genera materiales usando el botón "Generar Materiales"');
         return;
-    }
+        }
 
         agregarMensajeUsuario(feedback);
         document.getElementById('agentFeedback').value = '';
-        generarConAgente(apuId, feedback);
+        const sessionId = obtenerSessionId();
+        generarConAgente(apuId, feedback, sessionId);
     };
+
+        function obtenerSessionId() {
+            // Opción 1: Leer de una cookie (Spring Boot la crea automáticamente)
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'SESSION') return value;
+            }
+            // Opción 2: Usar sessionStorage como fallback
+            let sessionId = sessionStorage.getItem('appSessionId');
+            if (!sessionId) {
+                sessionId = 'session_' + Date.now() + '_' + Math.random();
+                sessionStorage.setItem('appSessionId', sessionId);
+            }
+            return sessionId;
+        }
+
 
         function agregarMensajeUsuario(texto) {
         const container = document.getElementById('agentConversation');

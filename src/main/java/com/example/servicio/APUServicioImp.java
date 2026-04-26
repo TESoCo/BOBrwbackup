@@ -1,7 +1,10 @@
 package com.example.servicio;
 
 import com.example.dao.ApuDao;
+import com.example.dao.MaterialesApuDao;
+import com.example.dao.PrecioMaterialDao;
 import com.example.domain.Apu;
+import com.example.domain.MaterialesApu;
 import com.example.domain.Usuario;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -25,6 +28,15 @@ public class APUServicioImp implements APUServicio {
 
     @Autowired
     private ApuDao APUDao;
+
+    @Autowired
+    private MaterialesApuDao materialesApuDao;
+
+    @Autowired
+    private PrecioMaterialDao precioMaterialDao;
+
+    @Autowired
+    private MaterialServicio materialServicio;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,6 +67,91 @@ public class APUServicioImp implements APUServicio {
     public List<Apu> buscarPorNombre(String nombre) {
         return APUDao.findByNombreAPUContainingIgnoreCase(nombre);
     }
+
+    // Calcular costo de materiales de un APU con proveedor específico
+    @Transactional(readOnly = true)
+    public BigDecimal calcularCostoMaterialesConProveedor(Long apuId, Long proveedorId) {
+        List<MaterialesApu> materialesApu = materialesApuDao.findByApu_IdAPU(apuId);
+
+        if (materialesApu == null || materialesApu.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return materialesApu.stream()
+                .map(ma -> {
+                    BigDecimal precioUnitario = materialServicio.getPrecioPorProveedor(
+                            ma.getMaterial().getIdMaterial(), proveedorId);
+
+                    if (precioUnitario == null) {
+                        precioUnitario = materialServicio.getPrecioActual(ma.getMaterial().getIdMaterial());
+                    }
+
+                    BigDecimal cantidad = BigDecimal.valueOf(ma.getCantidad());
+                    return precioUnitario.multiply(cantidad);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    //Actualizar vMaterialesAPU con el mejor precio disponible
+    @Transactional
+    public void actualizarCostoMateriales(Long apuId) {
+        Apu apu = obtenerPorId(apuId);
+        if (apu != null) {
+            // Usar el mejor precio disponible (más bajo entre todos los proveedores)
+            BigDecimal costoTotal = calcularMejorCostoMateriales(apuId);
+            apu.setVMaterialesAPU(costoTotal);
+            APUDao.save(apu);
+        }
+    }
+
+    // Calcular el mejor costo posible (más bajo entre proveedores)
+    @Transactional(readOnly = true)
+    public BigDecimal calcularMejorCostoMateriales(Long apuId) {
+        List<MaterialesApu> materialesApu = materialesApuDao.findByApu_IdAPU(apuId);
+
+        if (materialesApu == null || materialesApu.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return materialesApu.stream()
+                .map(ma -> {
+                    BigDecimal mejorPrecio = materialServicio.getPrecioActual(ma.getMaterial().getIdMaterial());
+                    BigDecimal cantidad = BigDecimal.valueOf(ma.getCantidad());
+                    return mejorPrecio.multiply(cantidad);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    //calcular valor de APU
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal getPrecioTotalAPU(Apu apu) {
+        BigDecimal total = BigDecimal.ZERO;
+
+        // Si el APU tiene materiales, calcular dinámicamente
+        if (apu.getMaterialesApus() != null && !apu.getMaterialesApus().isEmpty()) {
+            total = calcularMejorCostoMateriales(apu.getIdAPU());
+        } else {
+            // Fallback a valores guardados
+            if (apu.getVMaterialesAPU() != null) {
+                total = total.add(apu.getVMaterialesAPU());
+            }
+        }
+
+        if (apu.getVManoDeObraAPU() != null) {
+            total = total.add(apu.getVManoDeObraAPU());
+        }
+        if (apu.getVMiscAPU() != null) {
+            total = total.add(apu.getVMiscAPU());
+        }
+        if (apu.getVTransporteAPU() != null) {
+            total = total.add(apu.getVTransporteAPU());
+        }
+
+        return total;
+    }
+
+
 
     // CSV Import Implementation - FIXED VERSION
     @Override
@@ -207,27 +304,7 @@ public class APUServicioImp implements APUServicio {
         }
     }
 
-    //calcular valor de APU
-    @Override
-    @Transactional(readOnly = true)
-    public BigDecimal getPrecioTotalAPU(Apu apu) {
-        BigDecimal total = BigDecimal.ZERO;
 
-        if (apu.getVMaterialesAPU() != null) {
-            total = total.add(apu.getVMaterialesAPU());
-        }
-        if (apu.getVManoDeObraAPU() != null) {
-            total = total.add(apu.getVManoDeObraAPU());
-        }
-        if (apu.getVMiscAPU() != null) {
-            total = total.add(apu.getVMiscAPU());
-        }
-        if (apu.getVTransporteAPU() != null) {
-            total = total.add(apu.getVTransporteAPU());
-        }
-
-        return total;
-    }
 
 
 }

@@ -92,7 +92,7 @@ public class OpenRouterService {
                 "DESCRIPCIÓN DE LA ACTIVIDAD: " + descripcion + "\n\n" +
                 "INSTRUCCIONES:\n" +
                 "1. Genera SOLO un array JSON\n" +
-                "2. Cada elemento debe tener: nombre, descripcion, unidad\n" +
+                "2. Cada elemento debe tener: nombre, descripcion, unidad, precio.\n" +
                 "3. Genera entre 5 y 9 materiales\n" +
                 "4. La unidad debe ser: kg, m³, m², m, gl, und (abreviado)\n" +
                 "5. NO agregues explicaciones ni texto extra\n" +

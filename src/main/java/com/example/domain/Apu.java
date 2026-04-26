@@ -86,5 +86,29 @@ public class Apu implements Serializable {
     @JsonManagedReference("materialesapu-apu")
     private List<MaterialesApu> materialesApus = new ArrayList<>();
 
+    // Helper para calcular costo total de materiales con proveedor específico
+    public BigDecimal calcularCostoMaterialesConProveedor(Long proveedorId) {
+        if (materialesApus == null || materialesApus.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return materialesApus.stream()
+                .map(materialApu -> {
+                    Material material = materialApu.getMaterial();
+                    BigDecimal precioUnitario = material.getPrecioPorProveedor(proveedorId);
+                    if (precioUnitario == null) {
+                        precioUnitario = material.getPrecioActual(); // Fallback al mejor precio
+                    }
+                    BigDecimal cantidad = BigDecimal.valueOf(materialApu.getCantidad());
+                    return precioUnitario.multiply(cantidad);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Helper para recalcular y actualizar vMaterialesAPU
+    public void actualizarCostoMateriales(Long proveedorId) {
+        this.vMaterialesAPU = calcularCostoMaterialesConProveedor(proveedorId);
+    }
+
 
 }

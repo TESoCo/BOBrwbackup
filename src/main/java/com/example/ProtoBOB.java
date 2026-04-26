@@ -133,7 +133,7 @@ public class ProtoBOB {
                             .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "SUPERVISOR")
                             .requestMatchers("/reportes/**").hasAnyRole("ADMIN", "SUPERVISOR")
 
-                            // 🔒 Cualquier otra solicitud requiere autenticación
+                            // Cualquier otra solicitud requiere autenticación
                             .anyRequest().authenticated()
                     )
                     .formLogin(form -> form

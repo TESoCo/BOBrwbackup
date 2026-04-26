@@ -91,7 +91,7 @@ public class GeminiService {
 
     private String crearPrompt(String descripcionApu) {
         return "Eres un experto en construcción. Analiza esta descripción y genera una lista de materiales necesarios. " +
-                "Responde SOLO con un array JSON válido. Cada objeto debe tener exactamente: nombre, descripcion, unidad.\n\n" +
+                "Responde SOLO con un array JSON válido. Cada objeto debe tener exactamente: nombre, descripcion, unidad, precio.\n\n" +
                 "Unidades permitidas: m³, m², m, kg, und, gl, l, hr, día, viaje, juego\n\n" +
                 "Descripción: " + descripcionApu + "\n\n" +
                 "Ejemplo de formato:\n" +

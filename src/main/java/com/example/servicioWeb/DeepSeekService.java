@@ -97,7 +97,7 @@ public class DeepSeekService {
 
     private String crearPrompt(String descripcionApu) {
         return "Eres un experto en construcción. Analiza esta descripción y genera una lista de materiales necesarios. " +
-                "Responde SOLO con un array JSON. Cada objeto debe tener: nombre, descripcion, unidad.\n\n" +
+                "Responde SOLO con un array JSON. Cada objeto debe tener: nombre, descripcion, unidad, precio.\n\n" +
                 "Unidades permitidas: m³, m², m, kg, und, gl, l, hr, día\n\n" +
                 "Descripción: " + descripcionApu + "\n\n" +
                 "Ejemplo: [{\"nombre\": \"Cemento\", \"descripcion\": \"Cemento gris para construcción\", \"unidad\": \"kg\"}]";

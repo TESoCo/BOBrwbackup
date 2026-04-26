@@ -143,6 +143,7 @@ public class AIService {
         material.put("nombre", nombre);
         material.put("descripcion", descripcion);
         material.put("unidad", unidad);
+
         return material;
     }
 
