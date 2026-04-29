@@ -23,6 +23,9 @@ public class AIService {
     @Autowired
     private CacheService cacheService;
 
+    @Autowired
+    private OllamaService ollamaService;
+
     public List<Map<String, String>> generarMateriales(String descripcion) {
 
         // 1. Verificar caché
@@ -60,7 +63,7 @@ public class AIService {
 
 
 
-        // Fallback a DeepSeek
+        // 3° Intento: DeepSeek
         try {
             System.out.println("Intentando DeepSeek...");
             List<Map<String, String>> materiales = deepSeekService.generarMaterialesDesdeDescripcion(descripcion);
@@ -70,6 +73,17 @@ public class AIService {
 
         } catch (Exception e) {
             System.out.println("❌ DeepSeek falló: " + e.getMessage());
+        }
+
+        // 4° Intento: OLLAMA (Local LLM)
+        try {
+            System.out.println("🔄 4° Intentando Ollama (local LLM)...");
+            List<Map<String, String>> materiales = ollamaService.generarMaterialesDesdeDescripcion(descripcion);
+            System.out.println("✅ Ollama exitoso: " + materiales.size() + " materiales");
+            cacheService.guardarEnCache(hash, materiales);
+            return materiales;
+        } catch (Exception e) {
+            System.out.println("❌ Ollama falló: " + e.getMessage());
         }
 
         // Último recurso: generador local
@@ -105,7 +119,7 @@ public class AIService {
             materiales.add(crearMaterial("Grava triturada", "Grava de 1/2\" para concretos", "m³"));
             materiales.add(crearMaterial("Varilla corrugada", "Acero de refuerzo para estructuras", "kg"));
             materiales.add(crearMaterial("Madera para formaleta", "Madera para encofrados", "m²"));
-            materiales.add(crearMaterial("Alambre de amarre", "Alambre negro para amarre de varillas", "kg"));
+            materiales.add(crearMaterial("Alambre negro de amarre", "Alambre negro para amarre de varillas", "kg"));
         } else if (descLower.contains("muro") || descLower.contains("pared") || descLower.contains("ladrillo") || descLower.contains("bloque")) {
             materiales.add(crearMaterial("Ladrillo o bloque", "Unidad de mampostería", "und"));
             materiales.add(crearMaterial("Mezcla para pega", "Mezcla adhesiva para mampostería", "kg"));

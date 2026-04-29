@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Web Scraper - Materiales de Construcción</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .material-card {
             transition: transform 0.2s;
@@ -39,9 +41,17 @@
     </style>
 </head>
 <body>
-<div class="container mt-4">
-    <h1 class="mb-4">🕷️ Web Scraper - Materiales de Construcción</h1>
 
+<div class="container mt-4">
+    <h1 class="mb-4">Web Scraper - Materiales de Construcción</h1>
+    <!-- Agregar al inicio, después del título -->
+    <div th:if="${modoCotizacion}" class="alert alert-info mb-3">
+        <i class="fas fa-shopping-cart"></i>
+        <strong>Cotizar material de IA:</strong> Buscando "<span th:text="${terminoBusqueda}"></span>"
+        <button type="button" class="btn btn-sm btn-secondary float-end" onclick="window.close()">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+    </div>
     <!-- Mensajes de alerta -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
         <span th:text="${success}"></span>
@@ -53,8 +63,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <!-- Formulario de búsqueda -->
-    <div class="card mb-4">
+    <!-- Formulario de búsqueda  - ocultar en modo cotización -->
+    <div th:unless="${modoCotizacion}" class="card mb-4">
         <div class="card-body">
             <form method="post" action="/scraper/buscar" id="searchForm">
                 <div class="row">
@@ -66,7 +76,7 @@
                                placeholder="Ej: cemento argos, varilla corrugada, ladrillo tolete..."
                                required>
                     </div>
-                    <div class="col-md-2">
+                    <div>
                         <button type="submit" class="btn btn-primary btn-lg w-100" id="searchBtn">
                             🔍 Buscar
                         </button>
@@ -112,12 +122,25 @@
                             </div>
 
                             <!-- Checkbox para seleccionar/deseleccionar -->
-                            <div class="form-check mb-2">
+                            <div th:unless="${modoCotizacion}" class="form-check mb-2">
                                 <input class="form-check-input material-checkbox" type="checkbox"
                                        th:id="'check-' + ${iterStat.index}" checked>
                                 <label class="form-check-label" th:for="'check-' + ${iterStat.index}">
                                     Seleccionar para importar
                                 </label>
+                            </div>
+
+                            <div th:if="${modoCotizacion}">
+                                <button type="button"
+                                        class="btn btn-success w-100 mt-2"
+                                        onclick="seleccionarParaCotizacion(this)"
+                                        th:data-nombre="${material.nombre}"
+                                        th:data-descripcion="${material.descripcion}"
+                                        th:data-unidad="${material.unidad}"
+                                        th:data-precio="${material.precio}"
+                                        th:data-proveedor="${material.proveedorNombre}">
+                                    <i class="fas fa-check-circle"></i> Usar este material
+                                </button>
                             </div>
 
                             <!-- Campos ocultos que se habilitan/deshabilitan con el checkbox -->
@@ -135,16 +158,16 @@
                 </div>
             </div>
 
-            <div class="mt-4 text-center">
+            <div th:unless="${modoCotizacion}" class="mt-4 text-center">
                 <button type="submit" class="btn btn-success btn-lg">
-                    📥 Importar materiales seleccionados
+                    Importar materiales seleccionados
                 </button>
             </div>
         </form>
     </div>
 
     <!-- Sugerencias de búsqueda -->
-    <div class="card mt-4">
+    <div th:unless="${modoCotizacion}" class="card mt-4">
         <div class="card-header">
             <strong>💡 Sugerencias de búsqueda</strong>
         </div>
@@ -189,50 +212,63 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Mostrar loading al enviar el formulario
-    document.getElementById('searchForm').addEventListener('submit', function() {
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('searchBtn').disabled = true;
-        document.getElementById('searchBtn').innerHTML = '⏳ Buscando...';
-    });
+    // Mostrar loading al enviar el formulario (solo si existe en modo normal)
+    const searchForm = document.getElementById('searchForm');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('searchBtn').disabled = true;
+            document.getElementById('searchBtn').innerHTML = '⏳ Buscando...';
+        });
+    }
 
-    // Sugerencias de búsqueda
+    // Sugerencias de búsqueda (solo en modo normal)
     document.querySelectorAll('.suggestion-link').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const termino = this.textContent;
-            document.querySelector('input[name="termino"]').value = termino;
-            document.getElementById('searchForm').submit();
+            const terminoInput = document.querySelector('input[name="termino"]');
+            if (terminoInput) {
+                terminoInput.value = termino;
+                const searchFormExisting = document.getElementById('searchForm');
+                if (searchFormExisting) {
+                    searchFormExisting.submit();
+                }
+            }
         });
     });
 </script>
+
 <script>
-    document.getElementById('importForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+    const importForm = document.getElementById('importForm');
+    if (importForm) {
+        importForm.addEventListener('submit', function(e) {
+            e.preventDefault();
 
-        const form = this;
-        const checkboxes = document.querySelectorAll('.material-checkbox:checked');
+            const form = this;
+            const checkboxes = document.querySelectorAll('.material-checkbox:checked');
 
-        // Limpiar campos ocultos existentes
-        form.querySelectorAll('input[type="hidden"][name]').forEach(el => el.remove());
+            // Limpiar campos ocultos existentes
+            form.querySelectorAll('input[type="hidden"][name]').forEach(el => el.remove());
 
-        // Agregar solo los materiales seleccionados
-        checkboxes.forEach((checkbox, index) => {
-            const data = checkbox.closest('.card-body')
-                .querySelector('.material-data').dataset;
+            // Agregar solo los materiales seleccionados
+            checkboxes.forEach((checkbox, index) => {
+                const data = checkbox.closest('.card-body')
+                    .querySelector('.material-data').dataset;
 
-            form.appendChild(createHiddenInput('nombres', data.nombre));
-            form.appendChild(createHiddenInput('descripciones', data.descripcion));
-            form.appendChild(createHiddenInput('unidades', data.unidad));
-            form.appendChild(createHiddenInput('precios', data.precio));
-            form.appendChild(createHiddenInput('proveedores', data.proveedor));
-            form.appendChild(createHiddenInput('nits', data.nit));
-            form.appendChild(createHiddenInput('correos', data.correo));
-            form.appendChild(createHiddenInput('telefonos', data.telefono));
+                form.appendChild(createHiddenInput('nombres', data.nombre));
+                form.appendChild(createHiddenInput('descripciones', data.descripcion));
+                form.appendChild(createHiddenInput('unidades', data.unidad));
+                form.appendChild(createHiddenInput('precios', data.precio));
+                form.appendChild(createHiddenInput('proveedores', data.proveedor));
+                form.appendChild(createHiddenInput('nits', data.nit));
+                form.appendChild(createHiddenInput('correos', data.correo));
+                form.appendChild(createHiddenInput('telefonos', data.telefono));
+            });
+
+            form.submit();
         });
-
-        form.submit();
-    });
+    }
 
     function createHiddenInput(name, value) {
         const input = document.createElement('input');
@@ -241,6 +277,51 @@
         input.value = value;
         return input;
     }
+</script>
+
+<script>
+    // Función para seleccionar material en modo cotización
+    window.seleccionarParaCotizacion = function(button) {
+        const materialData = {
+            success: true,
+            nombre: button.getAttribute('data-nombre'),
+            descripcion: button.getAttribute('data-descripcion'),
+            unidad: button.getAttribute('data-unidad'),
+            precio: button.getAttribute('data-precio'),
+            proveedorNombre: button.getAttribute('data-proveedor')
+        };
+
+        // Guardar en sessionStorage para comunicar con la pestaña original
+        sessionStorage.setItem('materialCotizado', JSON.stringify(materialData));
+
+        // Mostrar mensaje
+        alert('✓ Material seleccionado: ' + materialData.nombre + '\nPuedes cerrar esta pestaña.');
+
+        // Cerrar o redirigir
+        if (window.opener) {
+            window.close();
+        } else {
+            window.location.href = '/material/crearMaterial';
+        }
+    };
+
+    // Al cargar la página en modo cotización
+    document.addEventListener('DOMContentLoaded', function() {
+        const modoCotizacion = /*[[${modoCotizacion}]]*/ false;
+        if (modoCotizacion && !window.opener) {
+            const container = document.querySelector('.container');
+            if (container && !document.querySelector('.back-button-manual')) {
+                const backButton = document.createElement('div');
+                backButton.className = 'mb-3 back-button-manual';
+                backButton.innerHTML = `
+                    <a href="/material/crearMaterial" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver sin seleccionar
+                    </a>
+                `;
+                container.insertBefore(backButton, container.firstChild);
+            }
+        }
+    });
 </script>
 </body>
 </html>

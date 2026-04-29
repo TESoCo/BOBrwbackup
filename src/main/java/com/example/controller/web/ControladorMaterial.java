@@ -60,6 +60,9 @@ public class ControladorMaterial {
     @Autowired
     private EnhancedAgentAIService enhancedAgentAIService;
 
+    @Autowired
+    private OllamaService ollamaService;
+
     @GetMapping("/inicioMaterial")
     public String inicioMaterial(Model model, Authentication authentication) {
         model.addAttribute("materiales", materialServicio.listarTodos());
@@ -274,7 +277,7 @@ public class ControladorMaterial {
             Model model) {
 
         try {
-            //  USAR SERVICIO HÍBRIDO EN LUGAR DE DEEPSEEK
+            //  USAR SERVICIO HÍBRIDO
             List<Map<String, String>> materialesGenerados =
                     aiService.generarMateriales(descripcionApu);
 
@@ -612,9 +615,108 @@ public class ControladorMaterial {
         return response;
     }
 
+
+//++++++++++++++++++++++++++++++LLM LOCAL+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // Endpoint para pruebas LLM local OLLAMA
+// Endpoint para probar Ollama
+    @GetMapping("/probarOllama")
+    @ResponseBody
+    public Map<String, Object> probarOllama(@RequestParam(required = false) String descripcion) {
+        Map<String, Object> resultado = new HashMap<>();
+
+        try {
+            if (descripcion == null || descripcion.isEmpty()) {
+                descripcion = "Muro de contención en gaviones";
+            }
+
+            resultado.put("test_descripcion", descripcion);
+
+            // Probar conexión básica
+            Map<String, Object> testConexion = ollamaService.probarModelos();
+            resultado.put("conexion", testConexion);
+
+            // Probar generación
+            long startTime = System.currentTimeMillis();
+            List<Map<String, String>> materiales = ollamaService.generarMaterialesDesdeDescripcion(descripcion);
+            long elapsed = System.currentTimeMillis() - startTime;
+
+            resultado.put("success", true);
+            resultado.put("tiempo_ms", elapsed);
+            resultado.put("cantidad_materiales", materiales.size());
+            resultado.put("materiales", materiales);
+
+        } catch (Exception e) {
+            resultado.put("success", false);
+            resultado.put("error", e.getMessage());
+        }
+
+        return resultado;
+    }
+
+    // Endpoint para probar el orden completo de fallbacks
+    @GetMapping("/probarFallbacksCompletos")
+    @ResponseBody
+    public String probarFallbacksCompletos() {
+        StringBuilder resultado = new StringBuilder();
+        resultado.append("=== PRUEBA DE FALLBACKS COMPLETOS ===\n\n");
+
+        String descripcionPrueba = "Construcción de muro de contención en concreto reforzado";
+        resultado.append("Descripción: ").append(descripcionPrueba).append("\n\n");
+
+        // Esta llamada probará todo el orden: OpenRouter -> Gemini -> DeepSeek -> Ollama -> Local
+        try {
+            long startTime = System.currentTimeMillis();
+            List<Map<String, String>> materiales = aiService.generarMateriales(descripcionPrueba);
+            long elapsed = System.currentTimeMillis() - startTime;
+
+            resultado.append("✅ GENERACIÓN EXITOSA\n");
+            resultado.append("⏱️ Tiempo total: ").append(elapsed).append("ms\n");
+            resultado.append("📦 Materiales generados: ").append(materiales.size()).append("\n\n");
+
+            for (Map<String, String> m : materiales) {
+                resultado.append("  - ").append(m.get("nombre"))
+                        .append(" (").append(m.get("unidad")).append(")\n");
+                resultado.append("    ").append(m.get("descripcion")).append("\n\n");
+            }
+
+        } catch (Exception e) {
+            resultado.append("❌ ERROR: ").append(e.getMessage()).append("\n");
+        }
+
+        return resultado.toString().replace("\n", "<br>");
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+//WEB SCRAPER +++++++++++++++++++++++++++++++
+//TODO: probar el modo cotización (integración webscraper)
+    @PostMapping("/recibirMaterialCotizado")
+    @ResponseBody
+    public Map<String, Object> recibirMaterialCotizado(@RequestBody Map<String, Object> materialData, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // Validar datos
+            String nombre = (String) materialData.get("nombre");
+            if (nombre != null && !nombre.trim().isEmpty()) {
+                response.put("success", true);
+                response.put("nombre", nombre);
+                response.put("descripcion", materialData.getOrDefault("descripcion", nombre));
+                response.put("unidad", materialData.getOrDefault("unidad", "und"));
+                response.put("precio", materialData.getOrDefault("precio", "1000.00"));
+                response.put("proveedorNombre", materialData.getOrDefault("proveedorNombre", "Seleccionado"));
 
+                // Opcional: guardar temporalmente en sesión
+                session.setAttribute("ultimoMaterialCotizado", response);
+            } else {
+                response.put("success", false);
+                response.put("error", "Datos de material inválidos");
+            }
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+        }
+        return response;
+    }
 
 
     //Endpoint auxiliar para frontend

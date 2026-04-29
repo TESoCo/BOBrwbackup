@@ -3,6 +3,7 @@ package com.example.controller.web;
 import com.example.dto.MaterialScrapedDTO;
 import com.example.servicio.MaterialServicio;
 import com.example.servicio.WebScraperService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/scraper")
@@ -40,6 +42,32 @@ public class ControladorScraper {
         } catch (Exception e) {
             model.addAttribute("error", "Error en la búsqueda: " + e.getMessage());
         }
+
+        return "scraper/panel";
+    }
+
+    @PostMapping("/buscar-con-redireccion")
+    public String buscarConRedireccion(
+            @RequestParam String termino,
+            @RequestParam(required = false) Integer filaIndex,
+            @RequestParam(required = false) String returnUrl,
+            Model model,
+            HttpSession session) {
+
+        // Guardar en sesión el contexto de la cotización
+        session.setAttribute("cotizacionContexto", Map.of(
+                "termino", termino,
+                "filaIndex", filaIndex,
+                "returnUrl", returnUrl != null ? returnUrl : "/material/crearMaterial"
+        ));
+
+        // Ejecutar búsqueda
+        List<MaterialScrapedDTO> resultados = webScraperService.buscarMaterialesSincrono(termino);
+
+        model.addAttribute("resultados", resultados);
+        model.addAttribute("terminoBusqueda", termino);
+        model.addAttribute("modoCotizacion", true);  // Indicar modo cotización
+        model.addAttribute("filaIndex", filaIndex);
 
         return "scraper/panel";
     }

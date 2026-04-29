@@ -2,11 +2,9 @@ package com.example.servicio;
 
 import com.example.dao.InformacionComercialDao;
 import com.example.dao.MaterialDao;
+import com.example.dao.PrecioMaterialDao;
 import com.example.dao.ProveedorDao;
-import com.example.domain.InformacionComercial;
-import com.example.domain.Material;
-import com.example.domain.Persona;
-import com.example.domain.Proveedor;
+import com.example.domain.*;
 import com.example.dto.MaterialScrapedDTO;
 import com.example.scraper.EasyConScraper;
 import com.example.scraper.HomecenterScraper;
@@ -16,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +36,10 @@ public class WebScraperServiceImp implements WebScraperService {
     private InfoComServicio infoComServicio;
     @Autowired
     private PersonaServicio personaServicio;
+    @Autowired
+    private PrecioMaterialDao precioMaterialDao;
+    @Autowired
+    private MaterialServicio materialServicio;
 
     public WebScraperServiceImp() {
         this.fuentes = new ArrayList<>();
@@ -92,15 +95,15 @@ public class WebScraperServiceImp implements WebScraperService {
                     material.setNombreMaterial(dto.getNombre());
                     material.setDescripcionMaterial(dto.getDescripcion());
                     material.setUnidadMaterial(dto.getUnidad());
-                    material.setPrecioMaterial(dto.getPrecio());
 
                     // Buscar o crear proveedor
                     Proveedor proveedor = encontrarOCrearProveedor(dto);
 
                     // Agregar material al proveedor (según relación)
-                    // Revisar relación Material-Proveedor
-                    // Si es ManyToMany, sería proveedor.getMaterialList().add(material)
                     proveedor.getMaterialList().add(material);
+
+                    // Agregar precio activo (relacionado a proveedor)
+                    materialServicio.asignarPrecioAProveedor(material.getIdMaterial(), proveedor.getIdProveedor(), dto.getPrecio(),dto.getPrecio());
 
                     // Guardar usando tu DAO
                     materialDao.save(material);
