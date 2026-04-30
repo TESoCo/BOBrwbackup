@@ -24,7 +24,7 @@ public class OpenRouterService {
 
     // Lista de modelos a intentar en orden
     private final String[] modelos = {
-            "google/gemini-2.0-flash-exp:free",        // 1er intento
+            "google/gemini-3-flash:free",        // 1er intento
             "meta-llama/llama-3.2-3b-instruct:free",   // 2do intento
             "huggingfaceh4/zephyr-7b-beta:free",  // 3er intento
             "mistralai/mistral-7b-instruct:free",      // 4to intento

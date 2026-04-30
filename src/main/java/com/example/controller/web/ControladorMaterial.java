@@ -1,13 +1,7 @@
 package com.example.controller.web;
 
-import com.example.domain.Apu;
-import com.example.domain.Material;
-import com.example.domain.PrecioMaterial;
-import com.example.domain.Usuario;
-import com.example.servicio.APUServicio;
-import com.example.servicio.APUServicioImp;
-import com.example.servicio.MaterialServicio;
-import com.example.servicio.UsuarioServicio;
+import com.example.domain.*;
+import com.example.servicio.*;
 import com.example.servicioWeb.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -62,6 +56,8 @@ public class ControladorMaterial {
 
     @Autowired
     private OllamaService ollamaService;
+    @Autowired
+    private ProveedorServicio proveedorServicio;
 
     @GetMapping("/inicioMaterial")
     public String inicioMaterial(Model model, Authentication authentication) {
@@ -300,8 +296,8 @@ public class ControladorMaterial {
             @RequestParam List<String> descripciones,
             @RequestParam List<String> unidades,
             @RequestParam List<String> precios,
-            @RequestParam(required = false) List<String> seleccionados,// Hacerlo opcional
-            @RequestParam(required = false) Long proveedorId,
+            @RequestParam(required = false) List<String> seleccionados,
+            @RequestParam(required = false) List<String> proveedores,
             RedirectAttributes redirectAttributes,
             Authentication authentication) {
 
@@ -309,6 +305,7 @@ public class ControladorMaterial {
         System.out.println("Nombres recibidos: " + nombres.size());
         System.out.println("Descripciones: " + descripciones.size());
         System.out.println("Unidades: " + unidades.size());
+        System.out.println("Proveedores recibidos: " + (proveedores != null ? proveedores.size() : 0));
         System.out.println("Precios: " + precios.size());
         System.out.println("Seleccionados: " + (seleccionados != null ? seleccionados.size() : "null"));
 
@@ -318,47 +315,94 @@ public class ControladorMaterial {
             // Obtener usuario actual para asociar proveedores si es necesario
             String username = authentication.getName();
             Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
-
+            // Recorrer cada material enviado desde el formulario
             for (int i = 0; i < nombres.size(); i++) {
-                // Si no hay seleccionados, guardar todos
-                boolean guardar = seleccionados == null ||
-                        i >= seleccionados.size() ||
-                        "true".equals(seleccionados.get(i));
+                // PASO 1: Decidir si este material debe guardarse
 
+                /* boolean guardar = seleccionados == null || // Caso 1: No hay checkboxes en el formulario
+                        i >= seleccionados.size() || // Caso 2: El índice excede la lista de seleccionados
+                        "true".equals(seleccionados.get(i)); // Caso 3: Verificar el estado del checkbox
+                */
+                boolean guardar;
+                if (seleccionados == null) {
+                    // Caso 1: No hay checkboxes en el formulario
+                    // → Guardar TODOS los materiales
+                    guardar = true;
+                    System.out.println("→ Material " + i + ": Sin checkboxes, se guardará");
+                } else if (i >= seleccionados.size()) {
+                    // Caso 2: El índice excede la lista de seleccionados
+                    // → Guardar por seguridad (no debería ocurrir)
+                    guardar = true;
+                    System.out.println("→ Material " + i + ": Índice fuera de rango, se guardará por seguridad");
+                } else {
+                    // Caso 3: Verificar el estado del checkbox
+                    // seleccionados.get(i) = "true" (marcado) o "false" (no marcado)
+                    guardar = "true".equals(seleccionados.get(i));
+                    System.out.println("→ Material " + i + ": Checkbox = " + seleccionados.get(i) + " → " + (guardar ? "Guardar" : "Saltar"));
+                }
+
+                // PASO 2: Si NO se debe guardar, saltar este material
+                if (!guardar) {
+                    continue;  // Pasa al siguiente material
+                }
+
+                // PASO 3: Obtener datos del material actual
                 if (guardar) {
                     String nombre = nombres.get(i);
-                    if (nombre != null && !nombre.trim().isEmpty()) {
+                    if (nombre != null && !nombre.trim().isEmpty()) { // Si el nombre es válido...
+                        // PASO 4: Crear y guardar el material en la base de datos
                         Material material = new Material();
                         material.setNombreMaterial(nombre.trim());
                         material.setDescripcionMaterial(descripciones.get(i).trim());
                         material.setUnidadMaterial(unidades.get(i).trim());
 
-                        // TODO: corregir la forma de Manejar el precio, adaptar a los precios relacionados con proveedor
-
                         // Guardar el material primero
                         materialServicio.guardar(material);
+                        System.out.println("✅ Material guardado: " + material.getNombreMaterial());
 
-                        // Si hay un proveedor asociado, asignar el precio
-                        if (proveedorId != null && precios != null && i < precios.size()) {
-                            try {
-                                BigDecimal precio = new BigDecimal(precios.get(i).trim());
-                                materialServicio.asignarPrecioAProveedor(
-                                        material.getIdMaterial(),
-                                        proveedorId,
-                                        precio,
-                                        null
-                                );
-                                System.out.println(" Precio asignado para proveedor: " + precio);
-                            } catch (NumberFormatException e) {
-                                System.out.println("⚠️ Precio inválido para " + nombre);
+                        // Si el formulario envió proveedores:
+                        // PASO 5: Asociar proveedor y precio (si existen)
+                        if(proveedores != null && i < proveedores.size()){
+                            String nombreProveedor = proveedores.get(i);
+                            if (nombreProveedor != null && !nombreProveedor.trim().isEmpty()) {
+                                // PASO 5: Asociar proveedor y precio (si existen)
+                                Proveedor proveedor = proveedorServicio.buscarPorNombre(nombreProveedor);
+                                if (proveedor == null) {
+                                    // Crear proveedor si no existe
+                                    proveedor = new Proveedor();
+                                    proveedor.setNombreProveedor(nombreProveedor);
+                                    proveedorServicio.guardar(proveedor);
+                                    System.out.println("Nuevo proveedor: " + nombreProveedor);
+                                } else {
+                                    System.out.println("Proveedor existente: " + nombreProveedor);
+                                }
+                                // crear relación material-proveedor-precio
+                                if (precios != null && i < precios.size()) {
+                                    try {
+                                        BigDecimal precio = new BigDecimal(precios.get(i).trim());
+                                        materialServicio.asignarPrecioAProveedor(
+                                                material.getIdMaterial(),
+                                                proveedor.getIdProveedor(),
+                                                precio,
+                                                null
+                                        );
+                                        System.out.println(" Precio asignado para proveedor: " + precio);
+                                    } catch (NumberFormatException e) {
+                                        System.out.println("⚠️ Precio inválido para " + nombre);
+                                    }
+                                } else {
+                                    System.out.println("Nombre de proveedor vacío para material: " + nombre);
+                                }
+                            } else {
+                                System.out.println("Material sin proveedor asociado: " + nombre);
                             }
                         }
-
+                        // PASO 6: Incrementar contador de materiales guardados
                         materialesGuardados++;
                     }
                 }
             }
-
+            // PASO 7: Mostrar resumen y redirigir
             System.out.println("Materiales guardados exitosamente: " + materialesGuardados);
             redirectAttributes.addFlashAttribute("success",
                     materialesGuardados + " materiales guardados exitosamente");

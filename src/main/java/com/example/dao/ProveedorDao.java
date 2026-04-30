@@ -17,6 +17,8 @@ public interface ProveedorDao extends JpaRepository<Proveedor, Long> {
         // Útil si quieres cargar por NIT
         Proveedor findByInformacionComercial_NitRut(String nitRut);
 
+        List<Proveedor> findByNombreProveedorContainingIgnoreCase(String nombreProveedor);
+        
         // Búsqueda por persona
         List<Proveedor> findByIdPersona_NombreContainingIgnoreCase(String nombre);
         List<Proveedor> findByIdPersona_CorreoContainingIgnoreCase(String correo);

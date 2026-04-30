@@ -297,7 +297,7 @@ public class ControladorAPU {
         BigDecimal total = BigDecimal.ZERO;
         for (MaterialesApu materialesApu : apu.getMaterialesApus()) {
             if (materialesApu.getMaterial() != null && materialesApu.getCantidad() != null) {
-                BigDecimal precio = materialesApu.getMaterial().getPrecioMaterial();
+                BigDecimal precio = materialesApu.getMaterial().getPrecioActual();
                 BigDecimal cantidad = BigDecimal.valueOf(materialesApu.getCantidad());
                 if (precio != null) {
                     total = total.add(precio.multiply(cantidad));

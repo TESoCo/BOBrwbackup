@@ -41,7 +41,7 @@ public class ProveedorServicioImp implements ProveedorServicio {
     @Override
     public Proveedor buscarPorNombre(String Nombre){
         List<Proveedor> resultados = proveedorDao
-                .findByIdPersona_NombreContainingIgnoreCase(Nombre);
+                .findByNombreProveedorContainingIgnoreCase(Nombre);
         return resultados.isEmpty() ? null : resultados.get(0);
     }
 

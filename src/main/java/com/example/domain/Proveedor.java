@@ -22,6 +22,8 @@ public class Proveedor implements Serializable {
     @Column(name = "id_Proveedor")
     private Long idProveedor;
 
+    @Column(name = "nombre_Proveedor")
+    private String nombreProveedor;
 
     // One Proveedor has One primary contact Persona
     @ManyToOne

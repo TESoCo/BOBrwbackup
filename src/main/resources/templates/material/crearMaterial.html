@@ -278,7 +278,6 @@
                         <!--  Asegúrate de que este formulario se muestre -->
                         <form th:action="@{/material/guardarGenerados}" method="post" id="guardarMaterialesForm">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-
                             <div class="table-container" style="margin-bottom: 1.5rem;">
                                 <table class="data-table">
                                     <thead>
