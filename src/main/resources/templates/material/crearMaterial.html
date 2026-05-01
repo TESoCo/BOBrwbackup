@@ -362,35 +362,28 @@
 
                 <!-- AQUÍ VA EL CÓDIGO DEL AGENTE IA -->
 
-                <!-- Interfaz del Agente IA Conversacional (COMPLEMENTARIO) -->
-                <div class="agent-interface" style="margin-top: 2rem; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden;">
-                    <div class="agent-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.75rem 1rem;">
-                        <i class="fas fa-robot"></i> Asistente IA - Refinar Materiales
-                        <span class="agent-status" style="float: right; font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 0.2rem 0.5rem; border-radius: 20px;">
-            💡 Da feedback para ajustar la lista
-        </span>
+                <div class="agent-interface" style="margin-top: 2rem; border: 1px solid #e0e0e0; border-radius: 10px; background: #f9fafb;">
+                    <div class="agent-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.75rem 1rem; border-radius: 10px 10px 0 0;">
+                        <i class="fas fa-magic"></i> Editor Rápido de Materiales
                     </div>
-
-                    <div class="agent-conversation" id="agentConversation" style="height: 200px; overflow-y: auto; padding: 0.75rem; background: #f9fafb; font-size: 0.9rem;">
-                        <div class="message agent-message" style="margin-bottom: 0.5rem;">
-                            <div style="background: white; padding: 0.5rem 0.75rem; border-radius: 10px; display: inline-block; max-width: 85%; border-left: 3px solid #667eea;">
-                                🤖 ¡Hola! Genera materiales con el botón de arriba y luego dame feedback para ajustarlos.<br>
-                                <small>Ej: "Agrega cemento extra" o "Elimina la madera"</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="agent-input" style="padding: 0.75rem; background: white; border-top: 1px solid #e0e0e0;">
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="text" id="agentFeedback" class="form-input"
-                                   placeholder="Ej: 'Agrega cemento' o 'Elimina la madera'"
-                                   style="flex: 1; font-size: 0.9rem;">
-                            <button onclick="enviarFeedback()" class="btn btn-primary" style="padding: 0.5rem 1rem;">
-                                <i class="fas fa-paper-plane"></i> Refinar
+                    <div style="padding: 1rem;">
+                        <p style="margin-bottom: 1rem; color: #666;">
+                            <i class="fas fa-info-circle"></i> Edita los materiales directamente en la tabla.
+                            También puedes usar estos atajos:
+                        </p>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-sm" onclick="ajustarPrecios(0.9)" style="background: #e8f5e9; border: 1px solid #4caf50;">
+                                <i class="fas fa-percent"></i> -10% a todos
                             </button>
-                        </div>
-                        <div id="sugerenciasRapidas" style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <!-- Sugerencias dinámicas -->
+                            <button type="button" class="btn btn-sm" onclick="ajustarPrecios(1.1)" style="background: #fff3e0; border: 1px solid #ff9800;">
+                                <i class="fas fa-percent"></i> +10% a todos
+                            </button>
+                            <button type="button" class="btn btn-sm" onclick="eliminarSeleccionados()" style="background: #ffebee; border: 1px solid #f44336;">
+                                <i class="fas fa-trash"></i> Eliminar seleccionados
+                            </button>
+                            <button type="button" class="btn btn-sm" onclick="agregarFilaVacia()" style="background: #e3f2fd; border: 1px solid #2196f3;">
+                                <i class="fas fa-plus"></i> Agregar material
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -867,6 +860,77 @@
         return div.innerHTML;
     }
 
+</script>
+<script>
+    function ajustarPrecios(factor) {
+        const precios = document.querySelectorAll('#guardarMaterialesForm input[name="precios"]');
+        precios.forEach(input => {
+            let valor = parseFloat(input.value);
+            if (!isNaN(valor)) {
+                input.value = (valor * factor).toFixed(2);
+            }
+        });
+        mostrarNotificacion('✅ Precios ajustados en ' + ((factor - 1) * 100) + '%');
+    }
+
+    function eliminarSeleccionados() {
+        const checkboxes = document.querySelectorAll('#guardarMaterialesForm input[name="seleccionados"]:checked');
+        if (checkboxes.length === 0) {
+            mostrarNotificacion('⚠️ No hay materiales seleccionados', 'warning');
+            return;
+        }
+
+        if (confirm(`¿Eliminar ${checkboxes.length} material(es) seleccionado(s)?`)) {
+            checkboxes.forEach(cb => {
+                const row = cb.closest('tr');
+                if (row) row.remove();
+            });
+            actualizarContador();
+            mostrarNotificacion(`🗑️ ${checkboxes.length} material(es) eliminado(s)`);
+        }
+    }
+
+    function agregarFilaVacia() {
+        const tbody = document.querySelector('#guardarMaterialesForm tbody');
+        if (!tbody) return;
+
+        const row = tbody.insertRow();
+        row.innerHTML = `
+        <td><input type="text" name="nombres" class="form-input" placeholder="Nombre del material" style="padding: 0.5rem;"></td>
+        <td><input type="text" name="descripciones" class="form-input" placeholder="Descripción" style="padding: 0.5rem;"></td>
+        <td>
+            <select name="unidades" class="form-select" style="padding: 0.5rem;">
+                <option value="und">und</option><option value="m³">m³</option>
+                <option value="kg">kg</option><option value="l">l</option>
+                <option value="m">m</option><option value="m²">m²</option>
+            </select>
+        </td>
+        <td><input type="number" name="precios" value="0" min="0" step="0.01" class="form-input" style="padding: 0.5rem;"></td>
+        <td><input type="text" name="proveedor" class="form-input" placeholder="Proveedor" style="padding: 0.5rem;"></td>
+        <td style="text-align: center;"><input type="checkbox" name="seleccionados" value="true" checked style="transform: scale(1.2);"></td>
+    `;
+        mostrarNotificacion('✨ Nueva fila agregada. Completa los datos.');
+    }
+
+    function actualizarContador() {
+        const rows = document.querySelectorAll('#guardarMaterialesForm tbody tr');
+        const contador = document.querySelector('#import-tab .table-container span');
+        if (contador) contador.textContent = rows.length;
+    }
+
+    function mostrarNotificacion(mensaje, tipo = 'success') {
+        // Implementación simple de notificación
+        const notif = document.createElement('div');
+        notif.textContent = mensaje;
+        notif.style.cssText = `
+        position: fixed; bottom: 20px; right: 20px; padding: 10px 20px;
+        background: ${tipo === 'success' ? '#4caf50' : '#ff9800'};
+        color: white; border-radius: 5px; z-index: 1000;
+        animation: fadeOut 3s forwards;
+    `;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 3000);
+    }
 </script>
 </body>
 </html>

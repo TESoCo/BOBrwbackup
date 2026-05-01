@@ -183,36 +183,7 @@ public class ControladorMaterial {
         return response;
     }
 
-    // Endpoint para calcular APU con proveedor específico
-    @GetMapping("/apu/{apuId}/calcularConProveedor")
-    @ResponseBody
-    public Map<String, Object> calcularAPUConProveedor(
-            @PathVariable Long apuId,
-            @RequestParam Long proveedorId,
-            @Autowired APUServicioImp apuServicioImp) {
 
-        Map<String, Object> response = new HashMap<>();
-        try {
-            BigDecimal costoMateriales = apuServicioImp.calcularCostoMaterialesConProveedor(apuId, proveedorId);
-            Apu apu = apuServicio.obtenerPorId(apuId);
-
-            response.put("success", true);
-            response.put("apuId", apuId);
-            response.put("proveedorId", proveedorId);
-            response.put("costoMateriales", costoMateriales);
-            response.put("costoManoObra", apu.getVManoDeObraAPU());
-            response.put("costoTransporte", apu.getVTransporteAPU());
-            response.put("costoMisc", apu.getVMiscAPU());
-            response.put("costoTotal", costoMateriales
-                    .add(apu.getVManoDeObraAPU() != null ? apu.getVManoDeObraAPU() : BigDecimal.ZERO)
-                    .add(apu.getVTransporteAPU() != null ? apu.getVTransporteAPU() : BigDecimal.ZERO)
-                    .add(apu.getVMiscAPU() != null ? apu.getVMiscAPU() : BigDecimal.ZERO));
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("error", e.getMessage());
-        }
-        return response;
-    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////
     //ENDPOINTS PARA IA
