@@ -157,7 +157,8 @@ public class AIService {
         material.put("nombre", nombre);
         material.put("descripcion", descripcion);
         material.put("unidad", unidad);
-
+        material.put("precio", "1000.00");
+        material.put("proveedor", "");
         return material;
     }
 

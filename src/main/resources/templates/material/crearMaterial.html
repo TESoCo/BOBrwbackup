@@ -299,15 +299,15 @@
                                         <td>
                                             <input type="text" name="nombres"
                                                    th:value="${material.nombre}"
-                                                   class="form-input" style="padding: 0.5rem;" readonly>
+                                                   class="form-input material-nombre" style="padding: 0.5rem;" readonly>
                                         </td>
                                         <td>
                                             <input type="text" name="descripciones"
                                                    th:value="${material.descripcion}"
-                                                   class="form-input" style="padding: 0.5rem;" readonly>
+                                                   class="form-input material-descripcion" style="padding: 0.5rem;" readonly>
                                         </td>
                                         <td>
-                                            <select name="unidades" class="form-select" style="padding: 0.5rem;">
+                                            <select name="unidades" class="form-select material-unidad" style="padding: 0.5rem;">
                                                 <option th:value="${material.unidad}" th:text="${material.unidad}" selected></option>
                                                 <option value="m³">m³</option>
                                                 <option value="kg">kg</option>
@@ -335,22 +335,11 @@
                                         <td>
                                             <input type="number" name="precios"
                                                    value="1000.00" min="0" step="0.01"
-                                                   class="form-input" style="padding: 0.5rem;" required>
+                                                   class="form-input material-precio" style="padding: 0.5rem;" required>
                                         </td>
                                         <td>
-                                            <input type="text" name="proveedor"
-                                                   th:value="${material.proveedor}"
-                                                   class="form-input" style="padding: 0.5rem;" required>
-                                        </td>
-                                        <!-- NUEVA COLUMNA: Botón de cotización -->
-                                        <td style="text-align: center;">
-                                            <button type="button"
-                                                    class="btn btn-sm btn-primary cotizar-btn"
-                                                    th:data-nombre="${material.nombre}"
-                                                    th:data-fila-index="${stat.index}"
-                                                    onclick="cotizarMaterial(this)">
-                                                <i class="fas fa-search-dollar"></i> Cotizar
-                                            </button>
+                                            <input type="text" name="proveedor" th:value="${material.proveedor != null ? material.proveedor : ''}"
+                                                   class="form-input material-proveedor" style="padding: 0.5rem;">
                                         </td>
                                         <td style="text-align: center;">
                                             <input type="checkbox" name="seleccionados" value="true"
@@ -369,12 +358,7 @@
                         </form>
                     </div>
                 </div>
-                <!-- Formulario oculto para pasar datos al scraper -->
-                <form id="cotizarForm" method="post" action="/scraper/buscar-con-redireccion" target="_blank">
-                    <input type="hidden" name="termino" id="cotizarTermino">
-                    <input type="hidden" name="filaIndex" id="cotizarFilaIndex">
-                    <input type="hidden" name="returnUrl" value="/material/crearMaterial">
-                </form>
+
 
                 <!-- AQUÍ VA EL CÓDIGO DEL AGENTE IA -->
 
@@ -699,94 +683,105 @@
     };
 
         function actualizarTablaExistente(materiales) {
-        const tbody = document.querySelector('#guardarMaterialesForm tbody');
-        if (!tbody) {
-        agregarMensajeAgente('⚠️ No se encontró la tabla. Genera materiales primero.');
-        return;
-    }
 
-        if (!materiales || materiales.length === 0) {
-        agregarMensajeAgente('⚠️ No se generaron materiales.');
-        return;
-    }
+            console.log('actualizarTablaExistente iniciando con', materiales?.length, 'materiales');
+            const tbody = document.querySelector('#guardarMaterialesForm tbody');
+            if (!tbody) {
+                agregarMensajeAgente('⚠️ No se encontró la tabla. Genera materiales primero.');
+                return;
+            }
 
-        tbody.innerHTML = '';
+            if (!materiales || materiales.length === 0) {
+                agregarMensajeAgente('⚠️ No se generaron materiales.');
+                return;
+            }
 
-        materiales.forEach((material) => {
-        const row = tbody.insertRow();
-        row.innerHTML = `
-                    <td>
-                        <input type="text" name="nombres"
-                               value="${escapeHtml(material.nombre)}"
-                               class="form-input" style="padding: 0.5rem; width: 100%;" readonly>
-                    </td>
-                    <td>
-                        <input type="text" name="descripciones"
-                               value="${escapeHtml(material.descripcion)}"
-                               class="form-input" style="padding: 0.5rem; width: 100%;" readonly>
-                    </td>
-                    <td>
-                        <select name="unidades" class="form-select" style="padding: 0.5rem; width: 100%;">
-                            <option value="${escapeHtml(material.unidad)}" selected>${escapeHtml(material.unidad)}</option>
-                            <option value="m³">m³</option>
-                            <option value="kg">kg</option>
-                            <option value="l">l</option>
-                            <option value="m">m</option>
-                            <option value="m²">m²</option>
-                            <option value="und">und</option>
-                        </select>
-                    </td>
-                    <td>
-                        <input type="number" name="precios"
-                               value="${material.precio || '1000.00'}"
-                               min="0" step="0.01"
-                               class="form-input" style="padding: 0.5rem; width: 100%;" required>
-                    </td>
-                    <td style="text-align: center;">
-                        <input type="checkbox" name="seleccionados" value="true" checked style="transform: scale(1.2);">
-                    </td>
-                `;
-    });
+            tbody.innerHTML = '';
 
-        const contadorSpan = document.querySelector('#import-tab .table-container span');
-        if (contadorSpan) {
-        contadorSpan.textContent = materiales.length;
-    }
+            materiales.forEach((material, idx) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                            <td>
+                                <input type="text" name="nombres"
+                                       value="${escapeHtml(material.nombre)}"
+                                       class="form-input material-nombre" style="padding: 0.5rem; width: 100%;" readonly>
+                            </td>
+                            <td>
+                                <input type="text" name="descripciones"
+                                       value="${escapeHtml(material.descripcion)}"
+                                       class="form-input material-descripcion" style="padding: 0.5rem; width: 100%;" readonly>
+                            </td>
+                            <td>
+                                <select name="unidades" class="form-select material-unidad" style="padding: 0.5rem; width: 100%;">
+                                    <option value="${escapeHtml(material.unidad)}" selected>${escapeHtml(material.unidad)}</option>
+                                    <option value="m³">m³</option>
+                                    <option value="kg">kg</option>
+                                    <option value="l">l</option>
+                                    <option value="m">m</option>
+                                    <option value="m²">m²</option>
+                                    <option value="und">und</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" name="precios"
+                                       value="${material.precio || '1000.00'}"
+                                       min="0" step="0.01"
+                                       class="form-input material-precio" style="padding: 0.5rem; width: 100%;" required>
+                            </td>
+                            <td>
+                                <input type="text" name="proveedor" value="${escapeHtml(material.proveedor || '')}"
+                                    class="form-input material-proveedor" style="padding: 0.5rem; width: 100%;">
+                            </td>
+                            <td style="text-align: center;">
+                                <input type="checkbox" name="seleccionados" value="true" checked style="transform: scale(1.2);">
+                            </td>
+                        `;
+                // Actualizar el data-fila-index para que coincida con la posición real
+                // (importante si hay filas previas o si se reorganizan)
+                row.querySelectorAll('.cotizar-btn').forEach((btn, idx) => {
+                btn.setAttribute('data-fila-index', idx);
+                });
+            });
 
-        const resultadosDiv = document.querySelector('#import-tab .table-container')?.closest('div[style*="margin-top: 2rem"]');
-        if (resultadosDiv) {
-        resultadosDiv.style.display = 'block';
-    }
+            const contadorSpan = document.querySelector('#import-tab .table-container span');
+            if (contadorSpan) {
+            contadorSpan.textContent = materiales.length;
+            }
 
-        console.log(`✅ Tabla actualizada con ${materiales.length} materiales`);
-    }
+            const resultadosDiv = document.querySelector('#import-tab .table-container')?.closest('div[style*="margin-top: 2rem"]');
+            if (resultadosDiv) {
+            resultadosDiv.style.display = 'block';
+            }
 
-    window.enviarFeedback = function() {
-        const feedback = document.getElementById('agentFeedback').value;
-        if (!feedback.trim()) {
-        alert('Escribe tu feedback (ej: "Agrega cemento" o "Elimina la madera")');
-        return;
+            console.log(` Tabla actualizada con ${materiales.length} materiales`);
         }
 
-        // Obtener el APU actual
-        let apuId = currentApuId || document.getElementById('apuId').value;
+        window.enviarFeedback = function() {
+            const feedback = document.getElementById('agentFeedback').value;
+            if (!feedback.trim()) {
+            alert('Escribe tu feedback (ej: "Agrega cemento" o "Elimina la madera")');
+            return;
+            }
 
-        if (!apuId) {
-        agregarMensajeAgente('⚠️ Primero selecciona un APU y haz clic en "Generar Materiales"');
-        return;
-        }
+            // Obtener el APU actual
+            let apuId = currentApuId || document.getElementById('apuId').value;
 
-        const materialesActuales = obtenerMaterialesDeTabla();
-        if (materialesActuales.length === 0) {
-        agregarMensajeAgente('⚠️ Primero genera materiales usando el botón "Generar Materiales"');
-        return;
-        }
+            if (!apuId) {
+            agregarMensajeAgente('⚠️ Primero selecciona un APU y haz clic en "Generar Materiales"');
+            return;
+            }
 
-        agregarMensajeUsuario(feedback);
-        document.getElementById('agentFeedback').value = '';
-        const sessionId = obtenerSessionId();
-        generarConAgente(apuId, feedback, sessionId);
-    };
+            const materialesActuales = obtenerMaterialesDeTabla();
+            if (materialesActuales.length === 0) {
+            agregarMensajeAgente('⚠️ Primero genera materiales usando el botón "Generar Materiales"');
+            return;
+            }
+
+            agregarMensajeUsuario(feedback);
+            document.getElementById('agentFeedback').value = '';
+            const sessionId = obtenerSessionId();
+            generarConAgente(apuId, feedback, sessionId);
+        };
 
         function obtenerSessionId() {
             // Opción 1: Leer de una cookie (Spring Boot la crea automáticamente)
@@ -806,131 +801,72 @@
 
 
         function agregarMensajeUsuario(texto) {
-        const container = document.getElementById('agentConversation');
-        if (!container) return;
-        container.innerHTML += `
-                <div class="message user-message" style="margin-bottom: 0.75rem; text-align: right;">
-                    <div style="background: #667eea; color: white; padding: 0.5rem 0.75rem; border-radius: 15px 15px 0 15px; display: inline-block; max-width: 85%; font-size: 0.9rem;">
-                        <strong>Tú:</strong> ${escapeHtml(texto)}
+            const container = document.getElementById('agentConversation');
+            if (!container) return;
+            container.innerHTML += `
+                    <div class="message user-message" style="margin-bottom: 0.75rem; text-align: right;">
+                        <div style="background: #667eea; color: white; padding: 0.5rem 0.75rem; border-radius: 15px 15px 0 15px; display: inline-block; max-width: 85%; font-size: 0.9rem;">
+                            <strong>Tú:</strong> ${escapeHtml(texto)}
+                        </div>
                     </div>
-                </div>
-            `;
-        container.scrollTop = container.scrollHeight;
-    }
+                `;
+            container.scrollTop = container.scrollHeight;
+        }
 
         function agregarMensajeAgente(texto) {
-        const container = document.getElementById('agentConversation');
-        if (!container) return;
-        container.innerHTML += `
-                <div class="message agent-message" style="margin-bottom: 0.75rem;">
-                    <div style="background: white; padding: 0.5rem 0.75rem; border-radius: 15px 15px 15px 0; display: inline-block; max-width: 85%; border-left: 3px solid #667eea; font-size: 0.9rem;">
-                        <strong>🤖 Asistente:</strong> ${escapeHtml(texto)}
+            const container = document.getElementById('agentConversation');
+            if (!container) return;
+            container.innerHTML += `
+                    <div class="message agent-message" style="margin-bottom: 0.75rem;">
+                        <div style="background: white; padding: 0.5rem 0.75rem; border-radius: 15px 15px 15px 0; display: inline-block; max-width: 85%; border-left: 3px solid #667eea; font-size: 0.9rem;">
+                            <strong>🤖 Asistente:</strong> ${escapeHtml(texto)}
+                        </div>
                     </div>
-                </div>
-            `;
-        container.scrollTop = container.scrollHeight;
-    }
+                `;
+            container.scrollTop = container.scrollHeight;
+        }
 
         function mostrarSugerencias(sugerencias) {
-        const container = document.getElementById('sugerenciasRapidas');
-        if (!container) return;
+            const container = document.getElementById('sugerenciasRapidas');
+            if (!container) return;
 
-        if (!sugerencias || sugerencias.length === 0) {
-        container.innerHTML = '';
-        return;
-    }
+            if (!sugerencias || sugerencias.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
 
-        container.innerHTML = sugerencias.map(sug => `
+            container.innerHTML = sugerencias.map(sug => `
                 <button onclick="document.getElementById('agentFeedback').value = '${escapeHtml(sug)}';"
                         style="background: #f0f0f0; border: none; padding: 0.25rem 0.75rem; border-radius: 15px; cursor: pointer; font-size: 0.8rem; margin: 0.25rem;">
                     💡 ${escapeHtml(sug)}
                 </button>
             `).join('');
-    }
+        }
 
-        function escapeHtml(text) {
+
+
+        // Inicializar: verificar si ya hay materiales en la tabla
+        setTimeout(() => {
+            const materiales = obtenerMaterialesDeTabla();
+            if (materiales.length > 0) {
+                currentApuId = document.getElementById('apuId')?.value;
+                agregarMensajeAgente(`👋 Veo que ya hay ${materiales.length} materiales en la tabla. ¿Necesitas ajustar algo?`);
+            }
+        }, 2000);
+
+    });
+
+</script>
+<script>
+
+    // Función auxiliar para escapar HTML
+    function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
-        // Inicializar: verificar si ya hay materiales en la tabla
-        setTimeout(() => {
-        const materiales = obtenerMaterialesDeTabla();
-        if (materiales.length > 0) {
-        currentApuId = document.getElementById('apuId')?.value;
-        agregarMensajeAgente(`👋 Veo que ya hay ${materiales.length} materiales en la tabla. ¿Necesitas ajustar algo?`);
-    }
-    }, 2000);
-
-    });
-
-</script>
-<script>
-    //JAVASCRIPT PARA COTIZADOR
-    // Variable global para almacenar datos temporales del material a cotizar
-    let pendingCotizacion = null;
-
-    window.cotizarMaterial = function(button) {
-        const row = button.closest('tr');
-        const nombreMaterial = row.querySelector('.material-nombre').value;
-        const filaIndex = button.getAttribute('data-fila-index');
-
-        // Guardar datos pendientes
-        pendingCotizacion = {
-            filaIndex: filaIndex,
-            nombreOriginal: nombreMaterial
-        };
-
-        // Guardar en sessionStorage para persistencia entre pestañas
-        sessionStorage.setItem('pendingCotizacion', JSON.stringify(pendingCotizacion));
-
-        // Configurar y enviar formulario
-        document.getElementById('cotizarTermino').value = nombreMaterial;
-        document.getElementById('cotizarFilaIndex').value = filaIndex;
-        document.getElementById('cotizarForm').submit();
-    };
-
-    // Recibir datos cuando se vuelva de la cotización
-    function recibirMaterialCotizado() {
-        const materialData = sessionStorage.getItem('materialCotizado');
-        if (materialData) {
-            sessionStorage.removeItem('materialCotizado');
-            const material = JSON.parse(materialData);
-            const pending = JSON.parse(sessionStorage.getItem('pendingCotizacion') || 'null');
-
-            if (pending && material.success) {
-                actualizarFilaMaterial(pending.filaIndex, material);
-            }
-
-            if (pending) {
-                sessionStorage.removeItem('pendingCotizacion');
-            }
-        }
-    }
-
-    function actualizarFilaMaterial(filaIndex, material) {
-        const tbody = document.querySelector('#guardarMaterialesForm tbody');
-        const rows = tbody.querySelectorAll('tr');
-
-        if (rows[filaIndex]) {
-            const row = rows[filaIndex];
-            row.querySelector('.material-nombre').value = material.nombre;
-            row.querySelector('.material-descripcion').value = material.descripcion || material.nombre;
-            row.querySelector('.material-unidad').value = material.unidad;
-            row.querySelector('.material-precio').value = material.precio;
-            row.querySelector('.material-proveedor').value = material.proveedorNombre;
-
-            // Mostrar notificación
-            mostrarNotificacion('Material actualizado con datos de ' + material.proveedorNombre, 'success');
-        }
-    }
-
-    // Verificar al cargar la página si venimos de una cotización
-    document.addEventListener('DOMContentLoaded', function() {
-        recibirMaterialCotizado();
-    });
 </script>
 </body>
 </html>

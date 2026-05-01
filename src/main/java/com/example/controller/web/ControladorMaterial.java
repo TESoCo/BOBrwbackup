@@ -61,7 +61,18 @@ public class ControladorMaterial {
 
     @GetMapping("/inicioMaterial")
     public String inicioMaterial(Model model, Authentication authentication) {
-        model.addAttribute("materiales", materialServicio.listarTodos());
+
+        List<Material> materiales = materialServicio.listarTodos();
+
+        // Crear un mapa con los precios actuales pre-calculados
+        Map<Long, BigDecimal> preciosActuales = new HashMap<>();
+        for (Material material : materiales) {
+            BigDecimal precio = materialServicio.getPrecioActual(material.getIdMaterial());
+            preciosActuales.put(material.getIdMaterial(), precio);
+        }
+
+        model.addAttribute("materiales", materiales);
+        model.addAttribute("preciosActuales", preciosActuales);
         model.addAttribute("apus",apuServicio.listarElementos());
 
         return "material/inicioMaterial";

@@ -146,14 +146,14 @@ public class OllamaService {
             
             INSTRUCCIONES:
             1. Responde SOLO con un array JSON válido
-            2. Cada objeto debe tener: nombre, descripcion, unidad
-            3. Genera entre 4 y 8 materiales
-            4. Unidades permitidas: m³, m², m, kg, und, gl, l, hr
+            2. Cada objeto debe tener exactamente: nombre, descripcion, unidad, precio, proveedor.
+            3. Genera entre 4 y 10 materiales
+            4. Unidades permitidas: m³, m², m, kg, und, gl, l, hr, día, viaje, juego
             
             FORMATO DE RESPUESTA (SOLO EL JSON, sin texto extra):
             [
-              {"nombre": "Cemento", "descripcion": "Cemento gris para construcción", "unidad": "kg"},
-              {"nombre": "Arena", "descripcion": "Arena lavada para mezcla", "unidad": "m³"}
+              {"nombre": "Cemento", "descripcion": "Cemento gris para construcción", "unidad": "kg", precio: 10000.00, proveedor: Alkosto},
+              {"nombre": "Arena", "descripcion": "Arena lavada para mezcla", "unidad": "m³", "precio": 45000.00}
             ]
             
             AHORA GENERA TU RESPUESTA (SOLO JSON):
@@ -200,6 +200,8 @@ public class OllamaService {
                 String nombre = item.path("nombre").asText();
                 String descripcion = item.path("descripcion").asText();
                 String unidad = item.path("unidad").asText();
+                String precio = item.has("precio") ? item.path("precio").asText() : "1000.00";
+                String proveedor = item.has("proveedor") ? item.path("proveedor").asText() : "";
 
                 // Validar y limpiar valores
                 if (nombre == null || nombre.isEmpty()) continue;
@@ -207,8 +209,11 @@ public class OllamaService {
                 material.put("nombre", nombre.trim());
                 material.put("descripcion", (descripcion != null && !descripcion.isEmpty()) ? descripcion.trim() : nombre.trim());
                 material.put("unidad", (unidad != null && !unidad.isEmpty()) ? unidad.trim() : "und");
+                material.put("precio", precio);
+                material.put("proveedor", proveedor);
 
                 materiales.add(material);
+                System.out.println("Material generado en ollama " + material.get("nombre") + " (" + material.get("unidad") + ") - $" + material.get("precio"));
             }
 
             return materiales;

@@ -92,13 +92,13 @@ public class OpenRouterService {
                 "DESCRIPCIÓN DE LA ACTIVIDAD: " + descripcion + "\n\n" +
                 "INSTRUCCIONES:\n" +
                 "1. Genera SOLO un array JSON\n" +
-                "2. Cada elemento debe tener: nombre, descripcion, unidad, precio.\n" +
+                "2. Cada elemento debe tener: nombre, descripcion, unidad, precio, proveedor.\n" +
                 "3. Genera entre 5 y 9 materiales\n" +
                 "4. La unidad debe ser: kg, m³, m², m, gl, und (abreviado)\n" +
                 "5. NO agregues explicaciones ni texto extra\n" +
                 "6. NO incluyas etiquetas como ```json\n\n" +
                 "EJEMPLO DE RESPUESTA VÁLIDA:\n" +
-                "[{\"nombre\": \"Cemento\", \"descripcion\": \"Cemento gris para mezcla\", \"unidad\": \"kg\"}]\n\n" +
+                "[{\"nombre\": \"Cemento\", \"descripcion\": \"Cemento gris para mezcla\", \"unidad\": \"kg\", \"precio\": \"10000.00\", \"proveedor\": \"Alkosto\"}]\n\n" +
                 "RESPONDE SOLO CON EL ARRAY JSON:";
 
         Map<String, Object> requestBody = new HashMap<>();
@@ -175,6 +175,8 @@ public class OpenRouterService {
                 material.put("nombre", item.path("nombre").asText());
                 material.put("descripcion", item.path("descripcion").asText());
                 material.put("unidad", item.path("unidad").asText());
+                material.put("precio", item.has("precio") ? item.path("precio").asText() : "1000.00");
+                material.put("proveedor", "");
                 materiales.add(material);
                 System.out.println("📦 " + material.get("nombre") + " (" + material.get("unidad") + ")");
             }

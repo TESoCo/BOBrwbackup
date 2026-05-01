@@ -280,48 +280,52 @@
 </script>
 
 <script>
-    // Función para seleccionar material en modo cotización
     window.seleccionarParaCotizacion = function(button) {
-        const materialData = {
-            success: true,
-            nombre: button.getAttribute('data-nombre'),
-            descripcion: button.getAttribute('data-descripcion'),
-            unidad: button.getAttribute('data-unidad'),
+        const materialId = new URLSearchParams(window.location.search).get('materialId');
+        const nombreOriginal = new URLSearchParams(window.location.search).get('nombreMaterialOriginal');
+
+        if (!materialId) {
+            alert('Error: No se pudo identificar el material');
+            return;
+        }
+
+        // Crear formulario para enviar la cotización
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/scraper/aplicar-cotizacion';
+
+        const datos = {
+            materialId: materialId,
+            nombreMaterial: button.getAttribute('data-nombre'),
+            proveedorNombre: button.getAttribute('data-proveedor'),
             precio: button.getAttribute('data-precio'),
-            proveedorNombre: button.getAttribute('data-proveedor')
+            unidad: button.getAttribute('data-unidad'),
+            descripcion: button.getAttribute('data-descripcion')
         };
 
-        // Guardar en sessionStorage para comunicar con la pestaña original
-        sessionStorage.setItem('materialCotizado', JSON.stringify(materialData));
+        // Agregar CSRF token
+        const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
 
-        // Mostrar mensaje
-        alert('✓ Material seleccionado: ' + materialData.nombre + '\nPuedes cerrar esta pestaña.');
+        Object.entries(datos).forEach(([key, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
+        });
 
-        // Cerrar o redirigir
-        if (window.opener) {
-            window.close();
-        } else {
-            window.location.href = '/material/crearMaterial';
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_csrf';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
         }
+
+        document.body.appendChild(form);
+        form.submit();
     };
-
-    // Al cargar la página en modo cotización
-    document.addEventListener('DOMContentLoaded', function() {
-        const modoCotizacion = /*[[${modoCotizacion}]]*/ false;
-        if (modoCotizacion && !window.opener) {
-            const container = document.querySelector('.container');
-            if (container && !document.querySelector('.back-button-manual')) {
-                const backButton = document.createElement('div');
-                backButton.className = 'mb-3 back-button-manual';
-                backButton.innerHTML = `
-                    <a href="/material/crearMaterial" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Volver sin seleccionar
-                    </a>
-                `;
-                container.insertBefore(backButton, container.firstChild);
-            }
-        }
-    });
 </script>
+
 </body>
 </html>

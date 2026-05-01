@@ -97,10 +97,10 @@ public class DeepSeekService {
 
     private String crearPrompt(String descripcionApu) {
         return "Eres un experto en construcción. Analiza esta descripción y genera una lista de materiales necesarios. " +
-                "Responde SOLO con un array JSON. Cada objeto debe tener: nombre, descripcion, unidad, precio.\n\n" +
+                "Responde SOLO con un array JSON. Cada objeto debe tener: nombre, descripcion, unidad, precio, proveedor.\n\n" +
                 "Unidades permitidas: m³, m², m, kg, und, gl, l, hr, día\n\n" +
                 "Descripción: " + descripcionApu + "\n\n" +
-                "Ejemplo: [{\"nombre\": \"Cemento\", \"descripcion\": \"Cemento gris para construcción\", \"unidad\": \"kg\"}]";
+                "Ejemplo: [{\"nombre\": \"Cemento\", \"descripcion\": \"Cemento gris para construcción\", \"unidad\": \"kg\", \"precio\": \"10000.00\", \"proveedor\": \"Alkosto\"}]";
     }
 
     private List<Map<String, String>> parsearRespuesta(String respuesta) throws Exception {
@@ -122,6 +122,8 @@ public class DeepSeekService {
                 material.put("nombre", materialNode.path("nombre").asText());
                 material.put("descripcion", materialNode.path("descripcion").asText());
                 material.put("unidad", materialNode.path("unidad").asText());
+                material.put("precio", "1000.00");
+                material.put("proveedor", "");
                 materiales.add(material);
             }
 
@@ -140,6 +142,8 @@ public class DeepSeekService {
         material.put("nombre", nombre);
         material.put("descripcion", descripcion);
         material.put("unidad", unidad);
+        material.put("precio", "1000.00");
+        material.put("proveedor", "");
         return material;
     }
 }
