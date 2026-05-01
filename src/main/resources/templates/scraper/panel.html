@@ -45,17 +45,23 @@
 <div class="container mt-4">
     <h1 class="mb-4">Web Scraper - Materiales de Construcción</h1>
     <!-- Agregar al inicio, después del título -->
-    <div th:if="${modoCotizacion}" class="alert alert-info mb-3">
+    <div th:if="${modoCotizacion}" class="alert alert-info mb-3" th:data-material-id="${materialId}">
         <i class="fas fa-shopping-cart"></i>
         <strong>Cotizar material de IA:</strong> Buscando "<span th:text="${terminoBusqueda}"></span>"
         <button type="button" class="btn btn-sm btn-secondary float-end" onclick="window.close()">
             <i class="fas fa-times"></i> Cancelar
         </button>
     </div>
+
     <!-- Mensajes de alerta -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
         <span th:text="${success}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Material para cotizar (backup) -->
+    <div th:if="${modoCotizacion}" style="display: none;">
+        <input type="hidden" id="materialIdHidden" th:data-material-id="${materialId}" th:value="${materialId}">
     </div>
 
     <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -281,13 +287,45 @@
 
 <script>
     window.seleccionarParaCotizacion = function(button) {
-        const materialId = new URLSearchParams(window.location.search).get('materialId');
-        const nombreOriginal = new URLSearchParams(window.location.search).get('nombreMaterialOriginal');
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let materialId = urlParams.get('materialId');
+
+        console.log('Debug - materialId desde URL:', materialId);
+
+        const materialOriginal = urlParams.get('nombreMaterialOriginal');
+        const returnUrl = urlParams.get('returnUrl');
+
+        console.log('Debug - materialId:', materialId);
+        console.log('Debug - materialOriginal:', materialOriginal);
+        console.log('Debug - returnUrl:', returnUrl);
 
         if (!materialId) {
-            alert('Error: No se pudo identificar el material');
+            // Intentar obtener materialId desde el div de cotización
+            const cotizacionDiv = document.querySelector('.alert-info');
+            if (cotizacionDiv) {
+                materialId = cotizacionDiv.getAttribute('data-material-id');
+                console.log('Debug - materialId desde div:', materialId);
+            }
+        }
+
+        // Si aún no hay materialId, intentar con otros elementos
+        if (!materialId) {
+            const materialIdHidden = document.getElementById('materialIdHidden');
+            if (materialIdHidden) {
+                materialId = materialIdHidden.value;
+                console.log('Debug - materialId desde hidden:', materialId);
+            }
+        }
+
+        // Verificación final
+        if (!materialId) {
+            alert('Error: No se pudo identificar el material. Por favor, intenta nuevamente.');
+            console.error('materialId no encontrado en URL ni en DOM');
             return;
         }
+
+        console.log('Material ID final a usar:', materialId);
 
         // Crear formulario para enviar la cotización
         const form = document.createElement('form');

@@ -382,14 +382,42 @@
                 return;
             }
 
-            // Construir URL para abrir en nueva pestaña
-            const url = '/scraper/buscar-con-redireccion?' +
-                'termino=' + encodeURIComponent(materialNombre) +
-                '&materialId=' + materialId +
-                '&nombreMaterial=' + encodeURIComponent(materialNombre);
+            // Create a form and submit as POST
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/scraper/buscar-con-redireccion';
+            form.target = '_self'; // Navegar a cotizador
 
-            // Abrir en nueva pestaña
-            window.open(url, '_blank');
+            // Add parameters
+            const params = {
+                termino: materialNombre,
+                materialId: materialId,
+                nombreMaterial: materialNombre,
+                returnUrl: '/material/inicioMaterial'
+            };
+
+            // Add CSRF token if you're using Spring Security
+            const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+
+            Object.entries(params).forEach(([key, value]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            });
+
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_csrf';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         });
     });
 
