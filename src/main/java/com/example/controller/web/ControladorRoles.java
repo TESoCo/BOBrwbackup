@@ -32,7 +32,7 @@ public class ControladorRoles {
     public String listarRoles(Model model) {
         List<Rol> roles = rolServicio.listarRoles();
         model.addAttribute("roles", roles);
-        return "roles/lista"; //TODO: Crear pantallas de control de roles y permisos
+        return "roles/lista";
     }
 
 

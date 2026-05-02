@@ -332,7 +332,7 @@ public class ControladorProveedores {
             for (Material material : proveedor.getMaterialList()) {
                 row = hoja.createRow(fila++);
                 row.createCell(0).setCellValue(material.getNombreMaterial());
-                row.createCell(1).setCellValue(material.getPrecioMaterial().longValue());
+                row.createCell(1).setCellValue(material.getPrecioActual().longValue());
                 row.createCell(3).setCellValue(material.getUnidadMaterial());
             }
         }
@@ -367,7 +367,7 @@ public class ControladorProveedores {
             for (Material material : proveedor.getMaterialList()) {
                 Row materialRow = hoja.createRow(fila++);
                 materialRow.createCell(0).setCellValue("Material: " + material.getNombreMaterial());
-                materialRow.createCell(1).setCellValue("Precio: " + material.getPrecioMaterial());
+                materialRow.createCell(1).setCellValue("Precio: " + material.getPrecioActual());
                 materialRow.createCell(2).setCellValue("Unidad: " + material.getUnidadMaterial());
             }
         }

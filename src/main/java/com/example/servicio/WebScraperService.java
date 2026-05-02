@@ -10,4 +10,5 @@ public interface WebScraperService {
 
     // Metodo que usa tus DAOs existentes para guardar
     int importarMateriales(List<MaterialScrapedDTO> materiales);
+    boolean actualizarPrecioMaterialDesdeScraper(Long materialId, MaterialScrapedDTO dto);
 }

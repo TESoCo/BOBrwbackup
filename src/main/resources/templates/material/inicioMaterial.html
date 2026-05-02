@@ -135,6 +135,17 @@
             </div>
         </div>
 
+        <!-- Mostrar mensajes flash -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <!-- 1. Statistics Cards (MOVIDO ARRIBA) -->
         <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem; margin-bottom: 2rem;">
             <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); text-align: center;">
@@ -195,10 +206,12 @@
                             <th>Nombre</th>
                             <th>Descripción</th>
                             <th>Unidades</th>
+                            <th>Precio Actual</th>
                             <th>Acciones</th>
                         </tr>
                         </thead>
                         <tbody>
+                        <!-- cuerpo de la tabla -->
                         <tr th:each="material : ${materiales}">
                             <td th:text="${material.idMaterial}"></td>
                             <td>
@@ -211,7 +224,21 @@
                             <td>
                                 <span class="status-badge badge-active" th:text="${material.unidadMaterial}"></span>
                             </td>
-
+                            <!-- NUEVA CELDA DE PRECIO -->
+                            <td>
+                                <span th:with="precioActual=${preciosActuales.get(material.idMaterial)}">
+                                    <span th:if="${precioActual != null and precioActual > 0}">
+                                        <strong style="color: #2c7da0;">
+                                            $ <span th:text="${#numbers.formatDecimal(precioActual, 1, 2)}"></span>
+                                        </strong> COP
+                                    </span>
+                                    <span th:unless="${precioActual != null and precioActual > 0}"
+                                          class="text-muted" style="color: #999;">
+                                        <i class="fas fa-minus-circle"></i> Sin precio
+                                    </span>
+                                </span>
+                            </td>
+                            <!-- columnas de acciones -->
                             <td class="actions">
                                 <a th:href="@{/material/editar/} + ${material.idMaterial}"
                                    class="btn btn-warning btn-sm"
@@ -222,6 +249,13 @@
                                    class="btn btn-primary btn-sm">
                                     <i class="fas fa-eye"></i> Ver
                                 </a>
+                                <!-- NUEVO BOTÓN DE COTIZAR -->
+                                <button type="button"
+                                        class="btn btn-info btn-sm cotizar-precio-btn"
+                                        th:data-id="${material.idMaterial}"
+                                        th:data-nombre="${material.nombreMaterial}">
+                                    <i class="fas fa-search-dollar"></i> Cotizar
+                                </button>
                                 <a th:href="@{/material/eliminar/} + ${material.idMaterial}"
                                    class="btn btn-danger btn-sm"
                                    sec:authorize="hasAuthority('ELIMINAR_MATERIAL')"
@@ -321,13 +355,86 @@
             });
         }
 
-        const successMessage = document.querySelector('.alert-success');
-        if (successMessage) {
-            setTimeout(() => {
-                successMessage.style.display = 'none';
-            }, 5000);
-        }
+
     });
+</script>
+<script>
+    // ==========================================================
+    // FUNCIÓN PARA COTIZAR PRECIO DESDE SCRAPER
+    // ==========================================================
+
+    // Agregar event listeners a los botones de cotización
+    const botonesCotizar = document.querySelectorAll('.cotizar-precio-btn');
+    botonesCotizar.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const materialId = this.getAttribute('data-id');
+            const materialNombre = this.getAttribute('data-nombre');
+
+            if (!materialId || !materialNombre) {
+                alert('Error: No se pudo identificar el material');
+                return;
+            }
+
+            if (materialNombre.trim() === '') {
+                alert('El material no tiene un nombre válido para cotizar');
+                return;
+            }
+
+            // Create a form and submit as POST
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/scraper/buscar-con-redireccion';
+            form.target = '_self'; // Navegar a cotizador
+
+            // Add parameters
+            const params = {
+                termino: materialNombre,
+                materialId: materialId,
+                nombreMaterial: materialNombre,
+                returnUrl: '/material/inicioMaterial'
+            };
+
+            // Add CSRF token if you're using Spring Security
+            const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+
+            Object.entries(params).forEach(([key, value]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            });
+
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_csrf';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        });
+    });
+
+    // Mostrar mensajes de éxito/error si existen
+    const successMsg = document.querySelector('.alert-success');
+    if (successMsg) {
+        setTimeout(() => {
+            successMsg.style.display = 'none';
+        }, 5000);
+    }
+
+    const errorMsg = document.querySelector('.alert-danger');
+    if (errorMsg) {
+        setTimeout(() => {
+            errorMsg.style.display = 'none';
+        }, 5000);
+    }
 </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 package com.example.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -21,6 +22,8 @@ public class Proveedor implements Serializable {
     @Column(name = "id_Proveedor")
     private Long idProveedor;
 
+    @Column(name = "nombre_Proveedor")
+    private String nombreProveedor;
 
     // One Proveedor has One primary contact Persona
     @ManyToOne
@@ -33,8 +36,9 @@ public class Proveedor implements Serializable {
     @JoinColumn(name = "id_Info_Comerc", referencedColumnName = "id_Info_Comerc")
     private InformacionComercial informacionComercial;
 
-    // From proveedores_material (proveedor ID)
-    @ManyToMany(fetch = FetchType.EAGER)//  Tipo de relación y carga
+
+    // From proveedores_material (proveedor ID) Relación ManyToMany con materiales
+    @ManyToMany(fetch = FetchType.LAZY)//  Tipo de relación y carga
     @JoinTable(//  Define la tabla intermedia
             name = "proveedores_material", //  Nombre de la tabla junction
             joinColumns = @JoinColumn(name = "id_Proveedor"),//  Columna de esta entidad
@@ -43,7 +47,10 @@ public class Proveedor implements Serializable {
     @JsonBackReference("proveedor-material")
     private List<Material> materialList  = new ArrayList<>();
 
-
+    //Precios que este proveedor ofrece
+    @OneToMany(mappedBy = "proveedor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference("proveedor-precios")
+    private List<PrecioMaterial> preciosOfrecidos = new ArrayList<>();
 
 
 }

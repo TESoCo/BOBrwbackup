@@ -483,6 +483,77 @@ public class ControladorUsuarios {
         }
     }
 
+    public List<Usuario> ListarUsuariosPorRol(Rol rol){
+        return usuarioServicio.encontrarPorRol(rol.getNombreRol());
+    }
 
+    /**
+     * Filtrar usuarios por rol
+     */
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasAuthority('CREAR_USUARIO') or hasAuthority('EDITAR_USUARIO') or hasRole('ADMIN')")
+    public String filtrarUsuariosPorRol(
+            @RequestParam(name = "rol", defaultValue = "todos") String rol,
+            Model model) {
 
+        try {
+            System.out.println("=== START filtrarUsuariosPorRol ===");
+            System.out.println("Rol seleccionado: " + rol);
+
+            // Obtener todos los usuarios
+            List<Usuario> todosUsuarios = usuarioServicio.listarUsuarios();
+            List<Rol> roles = rolServicio.listarRoles();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+            // Filtrar usuarios por rol seleccionado
+            // Obtener usuarios filtrados
+            List<Usuario> usuariosFiltrados;
+
+            if (rol == null || "todos".equalsIgnoreCase(rol)) {
+                usuariosFiltrados = todosUsuarios;
+            } else {
+                // Usar el  existente que ya filtra por rol
+                usuariosFiltrados = ListarUsuariosPorRol(rolServicio.buscarPorNombre(rol).get(0));
+            }
+            System.out.println("Usuarios filtrados: " + usuariosFiltrados.size());
+
+            // Agregar datos al modelo
+            model.addAttribute("usuarios", todosUsuarios);
+            model.addAttribute("filteredUsers", usuariosFiltrados);
+            model.addAttribute("selectedRol", rol);
+            model.addAttribute("roles", roles);
+            model.addAttribute("totalUsuarios", todosUsuarios != null ? todosUsuarios.size() : 0);
+            model.addAttribute("usuarioActual", auth);
+
+            // Estadísticas por rol (mismo código que en mostrarGestionUsuarios)
+            if (todosUsuarios != null && roles != null) {
+                List<java.util.Map<String, Object>> resumenRoles = roles.stream().map(r -> {
+                    long count = todosUsuarios.stream()
+                            .filter(u -> u.getRol() != null && u.getRol().getIdRol().equals(r.getIdRol()))
+                            .count();
+
+                    java.util.Map<String, Object> info = new java.util.HashMap<>();
+                    info.put("nombre", r.getNombreRol());
+                    info.put("cantidad", count);
+                    return info;
+                }).collect(java.util.stream.Collectors.toList());
+
+                model.addAttribute("resumenRoles", resumenRoles);
+            } else {
+                model.addAttribute("resumenRoles", java.util.List.of());
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error al filtrar usuarios: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("usuarios", java.util.List.of());
+            model.addAttribute("filteredUsers", java.util.List.of());
+            model.addAttribute("roles", java.util.List.of());
+            model.addAttribute("totalUsuarios", 0);
+            model.addAttribute("resumenRoles", java.util.List.of());
+            model.addAttribute("selectedRol", rol);
+        }
+
+        return "usuarios/usuarios";
+    }
 }

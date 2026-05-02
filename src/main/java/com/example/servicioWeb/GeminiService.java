@@ -16,10 +16,10 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
-    @Value("${gemini.api.key:}")
+    @Value("${gemini.api.key}")
     private String apiKey;
 
-    @Value("${gemini.api.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}")
+    @Value("${gemini.api.url}")
     private String apiUrl;
 
     private final RestTemplate restTemplate;
@@ -91,11 +91,11 @@ public class GeminiService {
 
     private String crearPrompt(String descripcionApu) {
         return "Eres un experto en construcción. Analiza esta descripción y genera una lista de materiales necesarios. " +
-                "Responde SOLO con un array JSON válido. Cada objeto debe tener exactamente: nombre, descripcion, unidad.\n\n" +
+                "Responde SOLO con un array JSON válido. Cada objeto debe tener exactamente: nombre, descripcion, unidad, precio, proveedor.\n\n" +
                 "Unidades permitidas: m³, m², m, kg, und, gl, l, hr, día, viaje, juego\n\n" +
                 "Descripción: " + descripcionApu + "\n\n" +
                 "Ejemplo de formato:\n" +
-                "[{\"nombre\": \"Cemento\", \"descripcion\": \"Cemento gris para construcción\", \"unidad\": \"kg\"}]\n\n" +
+                "[{\"nombre\": \"Cemento\", \"descripcion\": \"Cemento gris para construcción\", \"unidad\": \"kg\", \"precio\": \"10000.00\", \"proveedor\": \"Alkosto\"}]\n\n" +
                 "Genera entre 5-8 materiales relevantes para la actividad descrita.";
     }
 
@@ -115,6 +115,8 @@ public class GeminiService {
                 material.put("nombre", item.path("nombre").asText());
                 material.put("descripcion", item.path("descripcion").asText());
                 material.put("unidad", item.path("unidad").asText());
+                material.put("precio", "1000.00");
+                material.put("proveedor", "");
                 materiales.add(material);
                 System.out.println("📦 " + material.get("nombre") + " (" + material.get("unidad") + ")");
             }

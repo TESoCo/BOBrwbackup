@@ -2,11 +2,9 @@ package com.example.servicio;
 
 import com.example.dao.InformacionComercialDao;
 import com.example.dao.MaterialDao;
+import com.example.dao.PrecioMaterialDao;
 import com.example.dao.ProveedorDao;
-import com.example.domain.InformacionComercial;
-import com.example.domain.Material;
-import com.example.domain.Persona;
-import com.example.domain.Proveedor;
+import com.example.domain.*;
 import com.example.dto.MaterialScrapedDTO;
 import com.example.scraper.EasyConScraper;
 import com.example.scraper.HomecenterScraper;
@@ -16,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +36,10 @@ public class WebScraperServiceImp implements WebScraperService {
     private InfoComServicio infoComServicio;
     @Autowired
     private PersonaServicio personaServicio;
+    @Autowired
+    private PrecioMaterialDao precioMaterialDao;
+    @Autowired
+    private MaterialServicio materialServicio;
 
     public WebScraperServiceImp() {
         this.fuentes = new ArrayList<>();
@@ -78,7 +81,6 @@ public class WebScraperServiceImp implements WebScraperService {
         for (MaterialScrapedDTO dto : materialesDTO) {
             try {
                 System.out.println("Procesando: " + dto.getNombre());
-                System.out.println("Procesando: " + dto.getNombre());
                 System.out.println("Proveedor: " + dto.getProveedorNombre());
                 System.out.println("Correo: " + dto.getProveedorCorreo());
                 System.out.println("NIT: " + dto.getProveedorNit());
@@ -92,15 +94,16 @@ public class WebScraperServiceImp implements WebScraperService {
                     material.setNombreMaterial(dto.getNombre());
                     material.setDescripcionMaterial(dto.getDescripcion());
                     material.setUnidadMaterial(dto.getUnidad());
-                    material.setPrecioMaterial(dto.getPrecio());
 
                     // Buscar o crear proveedor
                     Proveedor proveedor = encontrarOCrearProveedor(dto);
 
                     // Agregar material al proveedor (según relación)
-                    // Revisar relación Material-Proveedor
-                    // Si es ManyToMany, sería proveedor.getMaterialList().add(material)
                     proveedor.getMaterialList().add(material);
+                    material.getProveedorList().add(proveedor);
+
+                    // Agregar precio activo (relacionado a proveedor)
+                    materialServicio.asignarPrecioAProveedor(material.getIdMaterial(), proveedor.getIdProveedor(), dto.getPrecio(),dto.getPrecio());
 
                     // Guardar usando tu DAO
                     materialDao.save(material);
@@ -248,4 +251,99 @@ public class WebScraperServiceImp implements WebScraperService {
         personaProveedor.setCorreo(dto.getProveedorCorreo());
         return personaProveedor;
     }
+
+    @Override
+    public boolean actualizarPrecioMaterialDesdeScraper(Long materialId, MaterialScrapedDTO dto) {
+        try {
+            System.out.println("\n=== ACTUALIZANDO PRECIO DESDE SCRAPER ===");
+            System.out.println("Material ID: " + materialId);
+            System.out.println("Nombre: " + dto.getNombre());
+            System.out.println("Proveedor: " + dto.getProveedorNombre());
+            System.out.println("Precio: " + dto.getPrecio());
+
+            // 1. Buscar el material existente
+            Optional<Material> materialOpt = materialDao.findById(materialId);
+            if (materialOpt.isEmpty()) {
+                System.err.println("❌ Material no encontrado con ID: " + materialId);
+                return false;
+            }
+
+            Material material = materialOpt.get();
+
+
+
+            // 2. Buscar o crear el proveedor
+            Proveedor proveedor = encontrarOCrearProveedor(dto);
+
+            // Verificar si el proveedor ya está asociado al material
+            boolean proveedorAsociado = material.getProveedorList().stream()
+                    .anyMatch(p -> p.getIdProveedor().equals(proveedor.getIdProveedor()));
+
+            if (!proveedorAsociado) {
+                material.getProveedorList().add(proveedor);
+                proveedor.getMaterialList().add(material);
+                materialDao.save(material);
+                System.out.println("  Proveedor asociado al material");
+            }
+
+            // 3. Crear NUEVO precio (manteniendo historial)
+            PrecioMaterial nuevoPrecio = new PrecioMaterial();
+            nuevoPrecio.setMaterial(material);
+            nuevoPrecio.setProveedor(proveedor);
+            nuevoPrecio.setPrecioUnitario(dto.getPrecio());
+            nuevoPrecio.setFechaVigenciaDesde(LocalDateTime.now());
+            nuevoPrecio.setActivo(true);
+
+            // 4. Desactivar precios anteriores de este proveedor
+            List<PrecioMaterial> preciosAnteriores = material.getPreciosPorProveedor();
+            for (PrecioMaterial p : preciosAnteriores) {
+                if (p.getProveedor().getIdProveedor().equals(proveedor.getIdProveedor()) &&
+                        p.getActivo() && p.getFechaVigenciaHasta() == null) {
+                    p.setFechaVigenciaHasta(LocalDateTime.now());
+                    p.setActivo(false);
+                    precioMaterialDao.save(p);
+                }
+            }
+
+            // 5. Guardar nuevo precio
+            precioMaterialDao.save(nuevoPrecio);
+
+            // 6. Actualizar unidad del material si es diferente
+            if (dto.getUnidad() != null && !dto.getUnidad().isEmpty() &&
+                    !dto.getUnidad().equals(material.getUnidadMaterial())) {
+                material.setUnidadMaterial(dto.getUnidad());
+                materialDao.save(material);
+            }
+
+            // ACTUALIZAR NOMBRE si es diferente
+            if (dto.getNombre() != null && !dto.getNombre().isEmpty() &&
+                    !dto.getNombre().equals(material.getNombreMaterial())) {
+                material.setNombreMaterial(dto.getNombre());
+                System.out.println("  Nombre actualizado: " + dto.getNombre());
+            }
+
+            // ACTUALIZAR DESCRIPCIÓN si es diferente
+            if (dto.getDescripcion() != null && !dto.getDescripcion().isEmpty() &&
+                    (material.getDescripcionMaterial() == null ||
+                            !dto.getDescripcion().equals(material.getDescripcionMaterial()))) {
+                material.setDescripcionMaterial(dto.getDescripcion());
+                System.out.println("  Descripción actualizada");
+            }
+
+            // Guardar cambios
+            materialDao.save(material);
+
+            System.out.println("✅ Precio actualizado correctamente");
+            System.out.println("   Nuevo precio: $" + dto.getPrecio());
+            System.out.println("   Proveedor: " + proveedor.getNombreProveedor());
+
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("❌ Error actualizando precio: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }
