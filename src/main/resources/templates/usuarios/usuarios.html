@@ -146,7 +146,10 @@
                 <div class="card-footer">Usuarios registrados en el sistema</div>
             </div>
 
-            <div th:each="rolInfo : ${resumenRoles}" class="card">
+            <div th:each="rolInfo : ${resumenRoles}" class="card rol-card" 
+                 th:data-rol="${rolInfo.nombre}" 
+                 style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
+                 onclick="filtrarUsuariosPorRol(this.getAttribute('data-rol'))">
                 <div class="card-header">
                     <h3 class="card-title" th:text="${rolInfo.nombre}">Nombre Rol</h3>
                     <div class="card-icon"
@@ -166,6 +169,12 @@
             <a th:href="@{/usuarios/registrar}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nuevo Usuario
             </a>
+            <button id="limpiar-filtro" class="btn btn-secondary" style="display: none;" onclick="limpiarFiltro()">
+                <i class="fas fa-times"></i> Limpiar Filtro
+            </button>
+            <div id="filtro-activo" style="display: none; margin-left: 1rem; padding: 0.5rem 1rem; background: #e3f2fd; border-radius: 4px; color: #1976d2;">
+                <i class="fas fa-filter"></i> Mostrando usuarios con rol: <strong id="nombre-filtro"></strong>
+            </div>
         </div>
 
         <!-- Users Table -->
@@ -186,7 +195,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="usuario : ${usuarios}">
+                <tr th:each="usuario : ${usuarios}" th:data-rol-usuario="${usuario.rol.nombreRol}">
                     <td>
                         <div class="user-info-table">
                             <img th:if="${usuario.fotoPerfil != null}"
@@ -270,6 +279,63 @@
 
 
 <script>
+    // Función para filtrar usuarios por rol
+    function filtrarUsuariosPorRol(rol) {
+        const filas = document.querySelectorAll('tbody tr[data-rol-usuario]');
+        let usuariosVisibles = 0;
+        
+        filas.forEach(fila => {
+            const rolUsuario = fila.getAttribute('data-rol-usuario');
+            if (rolUsuario === rol) {
+                fila.style.display = '';
+                usuariosVisibles++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+        
+        // Actualizar UI del filtro
+        document.getElementById('filtro-activo').style.display = 'inline-block';
+        document.getElementById('nombre-filtro').textContent = rol;
+        document.getElementById('limpiar-filtro').style.display = 'inline-block';
+        
+        // Actualizar título de la tabla
+        document.querySelector('.section-title span').textContent = `Usuarios con rol ${rol} (${usuariosVisibles})`;
+        
+        // Resaltar la card seleccionada
+        document.querySelectorAll('.rol-card').forEach(card => {
+            card.style.border = '';
+            card.style.transform = '';
+        });
+        document.querySelector(`[data-rol="${rol}"]`).style.border = '3px solid #1976d2';
+        document.querySelector(`[data-rol="${rol}"]`).style.transform = 'scale(1.05)';
+        
+        // Scroll a la tabla
+        document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Función para limpiar el filtro
+    function limpiarFiltro() {
+        const filas = document.querySelectorAll('tbody tr[data-rol-usuario]');
+        
+        filas.forEach(fila => {
+            fila.style.display = '';
+        });
+        
+        // Ocultar UI del filtro
+        document.getElementById('filtro-activo').style.display = 'none';
+        document.getElementById('limpiar-filtro').style.display = 'none';
+        
+        // Restaurar título original
+        document.querySelector('.section-title span').textContent = 'Lista de Usuarios';
+        
+        // Quitar resaltado de cards
+        document.querySelectorAll('.rol-card').forEach(card => {
+            card.style.border = '';
+            card.style.transform = '';
+        });
+    }
+    
     // Cerrar modal al hacer clic fuera
     window.onclick = function(event) {
         const modals = document.querySelectorAll('.modal');
