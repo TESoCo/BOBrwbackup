@@ -125,7 +125,6 @@ public class ControladorAvance
     @PostMapping("/salvar")
     public String salvarAvance(
             //Authentication auth, // Add this parameter to get the logged-in user
-            @RequestParam Long idUsuario,
             @RequestParam Long idObra,
             @RequestParam String fecha,
             @RequestParam Long idApu,
@@ -221,7 +220,6 @@ public class ControladorAvance
     }
 
     // MÉTOD0 PARA PROCESAR BASE64 (SIMPLIFICADO)
-    // Reemplaza el mét0do procesarFotoBase64 con este código corregido:
     private void procesarFotoBase64(FotoDato fotoDato, String base64Data) {
         try {
             if (base64Data == null || base64Data.isEmpty()) {
@@ -302,7 +300,7 @@ public class ControladorAvance
     }
 
     //funcionalidad para guardar cambios
-    @PostMapping("/actualizar/{idAvance}")
+    @PostMapping("/actualizar")
     public String actualizarAvance(
         @PathVariable Long idAvance,
         @ModelAttribute Avance avance,

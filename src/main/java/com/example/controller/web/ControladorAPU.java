@@ -68,17 +68,22 @@ public class ControladorAPU {
 
     @GetMapping("/crearAPU")
     public String mostrarFormularioCrear(Model model, Authentication authentication) {
-        // Obtener todos los materiales disponibles
-        List<Material> materiales = materialServicio.listarTodos();
-        // Debug para verificar que los materiales se cargan
+        // Lista de materiales y precios
+        List<Material> materiales = materialServicio.listarTodosConPrecios();
+        List<BigDecimal> precios = new ArrayList<>();
+
+        // Debug para verificar que los materiales y pecios se cargan
         System.out.println("Materiales cargados para crear APU: " + (materiales != null ? materiales.size() : 0));
         if (materiales != null) {
             for (Material material : materiales) {
                 System.out.println("Material: " + material.getNombreMaterial() + " - ID: " + material.getIdMaterial());
+                precios.add(materialServicio.getPrecioActual(material.getIdMaterial()));
+                System.out.println("Precio Actual: " + materialServicio.getPrecioActual(material.getIdMaterial()) + " - ID: " + material.getIdMaterial());
             }
         }
         model.addAttribute("apu", new Apu());
         model.addAttribute("materiales", materiales);
+        model.addAttribute("precios", precios);
         return "apus/crearAPU";
     }
 

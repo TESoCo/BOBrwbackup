@@ -42,8 +42,13 @@ public class ControladorInv {
 
     @GetMapping
     public String inventario(Model model) {
+        //Lista de inventarios
         List<Inventario> inventarios = inventarioServicio.listaInventarios();
+        //Materiales con precios actuales
+        List<Material> materiales = materialServicio.listarTodosConPrecios();
+
         model.addAttribute("inventarios", inventarios);
+        model.addAttribute("materiales", materiales);
         return "inventarios/inventario";
     }
 
@@ -187,8 +192,12 @@ public class ControladorInv {
             inventarios = inventarioServicio.listaInventarios();
         }
 
+        //Materiales con precios actuales
+        List<Material> materiales = materialServicio.listarTodosConPrecios();
+
 
         // Pasar datos a la vista
+        model.addAttribute("materiales", materiales);
         model.addAttribute("inventarios", inventarios);
         if (error != null) {
             model.addAttribute("error", error);

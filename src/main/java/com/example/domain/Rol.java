@@ -48,4 +48,5 @@ public class Rol implements Serializable {
     private List<Usuario> usuarios;
 
 
+
 }

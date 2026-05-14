@@ -299,7 +299,7 @@ public class ControladorContratistas {
     @PostMapping("/enviarReporteCorreo")
     @PreAuthorize("hasAuthority('ENVIAR_REPORTE')")
     public String enviarReporteContratistasCorreo(
-            @RequestParam List<String> recipients,
+            @RequestParam(required = false) List<String> recipients,
             @RequestParam(required = false) String customEmail,
             @RequestParam String subject,
             @RequestParam String message,
@@ -307,17 +307,32 @@ public class ControladorContratistas {
 
         try {
             // Procesar correos personalizados
-            List<String> allRecipients = new ArrayList<>(recipients);
-            if (customEmail != null && !customEmail.trim().isEmpty()) {
-                // Separar por comas y limpiar
-                String[] customEmails = customEmail.split(",");
-                for (String email : customEmails) {
-                    String trimmed = email.trim();
-                    if (!trimmed.isEmpty() && !allRecipients.contains(trimmed)) {
-                        allRecipients.add(trimmed);
+            List<String> allRecipients = new ArrayList<>();
+            if (recipients != null && !recipients.isEmpty()){
+                allRecipients = new ArrayList<>(recipients);
+                if (customEmail != null && !customEmail.trim().isEmpty()) {
+                    // Separar por comas y limpiar
+                    String[] customEmails = customEmail.split(",");
+                    for (String email : customEmails) {
+                        String trimmed = email.trim();
+                        if (!trimmed.isEmpty() && !allRecipients.contains(trimmed)) {
+                            allRecipients.add(trimmed);
+                        }
+                    }
+                }
+            }else {
+                if (customEmail != null && !customEmail.trim().isEmpty()) {
+                    // Separar por comas y limpiar
+                    String[] customEmails = customEmail.split(",");
+                    for (String email : customEmails) {
+                        String trimmed = email.trim();
+                        if (!trimmed.isEmpty() && !allRecipients.contains(trimmed)) {
+                            allRecipients.add(trimmed);
+                        }
                     }
                 }
             }
+
 
             // Validar que haya destinatarios
             if (allRecipients.isEmpty()) {
