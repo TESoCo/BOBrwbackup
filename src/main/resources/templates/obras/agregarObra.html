@@ -179,15 +179,46 @@
                     </div>
                 </div>
 
+                <!-- Bloque de sugerencia de ubicación -->
+                <div class="location-suggestion">
+                    <div class="location-suggestion-header">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h4 style="margin: 0;">📍 Ubicación del dispositivo</h4>
+                    </div>
+
+                    <div class="location-status" id="locationStatus">
+                        <i class="fas fa-spinner fa-spin"></i> Obteniendo ubicación...
+                    </div>
+
+                    <div class="location-buttons">
+                        <button type="button" id="getLocationBtn" class="btn btn-primary btn-sm">
+                            <i class="fas fa-location-dot"></i> Obtener mi ubicación actual
+                        </button>
+                        <button type="button" id="useCurrentLocationBtn" class="btn btn-success btn-sm" style="display: none;">
+                            <i class="fas fa-check"></i> Usar esta ubicación
+                        </button>
+                    </div>
+
+                    <div id="coordsPreview" class="coords-preview" style="display: none;">
+                        <i class="fas fa-crosshairs"></i> Ubicación obtenida:<br>
+                        <strong>Coordenada N (Latitud):</strong> <span id="previewLat">-</span><br>
+                        <strong>Coordenada E (Longitud):</strong> <span id="previewLng">-</span>
+                    </div>
+                </div>
+
                 <!-- Coordenadas -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="cooNObra" class="form-label required">Coordenada N</label>
-                        <input type="number" id="cooNObra" step="0.000001" name="cooNObra" class="form-input" required>
+                        <label for="cooNObra" class="form-label required">Coordenada N (Latitud)</label>
+                        <input type="number" id="cooNObra" step="0.000001" name="cooNObra" class="form-input" required
+                               placeholder="Ej: 4.710989">
+                        <small class="text-muted">Formato: grados decimales (ej: 4.710989)</small>
                     </div>
                     <div class="form-group">
-                        <label for="cooEObra" class="form-label required">Coordenada E</label>
-                        <input type="number" id="cooEObra" step="0.000001" name="cooEObra" class="form-input" required>
+                        <label for="cooEObra" class="form-label required">Coordenada E (Longitud)</label>
+                        <input type="number" id="cooEObra" step="0.000001" name="cooEObra" class="form-input" required
+                               placeholder="Ej: -74.072092">
+                        <small class="text-muted">Formato: grados decimales (ej: -74.072092)</small>
                     </div>
                 </div>
 
@@ -244,9 +275,138 @@
 
 <!-- Lógica JavaScript (Mantenida de tu código original, compatible con la nueva estructura) -->
 <script>
-    // Store activities as an array of objects for better management
+    // ========== VARIABLES GLOBALES ==========
     let activities = [];
+    let currentLocation = null;
+    let lastLocationData = null;
 
+    // ========== ELEMENTOS DOM ==========
+    // Elementos de geolocalización
+    const locationStatus = document.getElementById('locationStatus');
+    const getLocationBtn = document.getElementById('getLocationBtn');
+    const useCurrentLocationBtn = document.getElementById('useCurrentLocationBtn');
+    const coordsPreview = document.getElementById('coordsPreview');
+    const previewLat = document.getElementById('previewLat');
+    const previewLng = document.getElementById('previewLng');
+    const cooNObraInput = document.getElementById('cooNObra');
+    const cooEObraInput = document.getElementById('cooEObra');
+
+    // ========== FUNCIONES DE GEOLOCALIZACIÓN ==========
+    function getCurrentLocation() {
+        if (!navigator.geolocation) {
+            locationStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #dc2626;"></i> ' +
+                '<strong>Error:</strong> Tu navegador no soporta geolocalización.';
+            return;
+        }
+
+        locationStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Solicitando permiso de ubicación...';
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                currentLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                };
+
+                lastLocationData = currentLocation;
+
+                previewLat.textContent = currentLocation.latitude.toFixed(6);
+                previewLng.textContent = currentLocation.longitude.toFixed(6);
+                coordsPreview.style.display = 'block';
+                useCurrentLocationBtn.style.display = 'inline-flex';
+
+                let accuracyMsg = '';
+                if (currentLocation.accuracy < 50) {
+                    accuracyMsg = '📍 Precisión excelente (±' + Math.round(currentLocation.accuracy) + 'm)';
+                } else if (currentLocation.accuracy < 200) {
+                    accuracyMsg = '📍 Precisión buena (±' + Math.round(currentLocation.accuracy) + 'm)';
+                } else {
+                    accuracyMsg = '📍 Precisión moderada (±' + Math.round(currentLocation.accuracy) + 'm)';
+                }
+
+                locationStatus.innerHTML = '<i class="fas fa-check-circle" style="color: #10b981;"></i> ' +
+                    '<strong>Ubicación obtenida correctamente</strong><br>' +
+                    '<small>' + accuracyMsg + '</small>';
+            },
+            (error) => {
+                console.error('Error de geolocalización:', error);
+                let errorMessage = '';
+
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Permiso de ubicación denegado. Permite el acceso en tu navegador.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'No se pudo obtener la ubicación. Verifica tu GPS.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Tiempo de espera agotado. Intenta nuevamente.';
+                        break;
+                    default:
+                        errorMessage = 'Error desconocido.';
+                }
+
+                locationStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #dc2626;"></i> ' +
+                    '<strong>Error:</strong> ' + errorMessage;
+                coordsPreview.style.display = 'none';
+                useCurrentLocationBtn.style.display = 'none';
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 30000
+            }
+        );
+    }
+
+    function useCurrentLocation() {
+        if (currentLocation) {
+            cooNObraInput.value = currentLocation.latitude.toFixed(6);
+            cooEObraInput.value = currentLocation.longitude.toFixed(6);
+
+            cooNObraInput.style.backgroundColor = '#ecfdf5';
+            cooEObraInput.style.backgroundColor = '#ecfdf5';
+
+            setTimeout(() => {
+                cooNObraInput.style.backgroundColor = '';
+                cooEObraInput.style.backgroundColor = '';
+            }, 1000);
+
+            const originalBtnText = useCurrentLocationBtn.innerHTML;
+            useCurrentLocationBtn.innerHTML = '<i class="fas fa-check"></i> ¡Ubicación usada!';
+            setTimeout(() => {
+                useCurrentLocationBtn.innerHTML = originalBtnText;
+            }, 2000);
+        } else {
+            alert('Primero obtén la ubicación');
+            getCurrentLocation();
+        }
+    }
+
+    function validateCoordinate(input, type) {
+        let value = parseFloat(input.value);
+        if (!isNaN(value)) {
+            if (type === 'lat' && (value < -90 || value > 90)) {
+                input.setCustomValidity('La latitud debe estar entre -90 y 90 grados');
+                input.style.borderColor = '#dc2626';
+            } else if (type === 'lng' && (value < -180 || value > 180)) {
+                input.setCustomValidity('La longitud debe estar entre -180 y 180 grados');
+                input.style.borderColor = '#dc2626';
+            } else {
+                input.setCustomValidity('');
+                input.style.borderColor = '#cbd5e1';
+            }
+        } else if (input.value !== '') {
+            input.setCustomValidity('Ingrese un número válido');
+            input.style.borderColor = '#dc2626';
+        } else {
+            input.setCustomValidity('');
+            input.style.borderColor = '#cbd5e1';
+        }
+    }
+
+    // ========== FUNCIONES DE ACTIVIDADES (APU) ==========
     function addActivity() {
         const dropdown = document.getElementById('activityDropdown');
         const quantityInput = document.getElementById('activityQuantity');
@@ -257,11 +417,9 @@
         const activityUnits = selectedOption.getAttribute('data-unidades');
         const quantity = parseFloat(quantityInput.value);
 
-        // Reset errors
         dropdown.classList.remove('error');
         quantityInput.classList.remove('error');
 
-        // Validate inputs
         if (isNaN(activityId) || activityId <= 0) {
             alert("Por favor seleccione una actividad válida");
             dropdown.classList.add('error');
@@ -274,14 +432,12 @@
             return;
         }
 
-        // Check for duplicates
         if (activities.some(act => act.id === activityId)) {
             alert("Esta actividad ya fue agregada");
             resetFormInputs();
             return;
         }
 
-        // Add activity to visible list
         activities.push({
             id: activityId,
             name: activityName,
@@ -302,34 +458,35 @@
         const selectedActivitiesDiv = document.getElementById('selectedActivities');
         const hiddenInputsDiv = document.getElementById('hiddenInputs');
 
-        // Clear UI
         selectedActivitiesDiv.innerHTML = '';
         hiddenInputsDiv.innerHTML = '';
 
-        // Rebuild UI and hidden inputs
         if (activities.length === 0) {
             selectedActivitiesDiv.innerHTML = '<p class="no-activities"><i class="fas fa-info-circle"></i> No hay actividades agregadas a esta obra aún.</p>';
         }
 
         activities.forEach((activity) => {
-            // Visible UI element
             const activityDiv = document.createElement('div');
             activityDiv.className = 'selected-activity';
             activityDiv.innerHTML = `
                 <div class="activity-info">
-                    <span>${activity.name}</span>
-                    <span class="activity-units-qty">(${activity.units}) &mdash; Cantidad: <strong>${activity.quantity}</strong></span>
+                    <span>${escapeHtml(activity.name)}</span>
+                    <span class="activity-units-qty">(${escapeHtml(activity.units)}) &mdash; Cantidad: <strong>${activity.quantity}</strong></span>
                 </div>
                 <span class="btn-remove" onclick="removeActivity(${activity.id})">
                     <i class="fas fa-times-circle"></i> Eliminar
                 </span>
             `;
             selectedActivitiesDiv.appendChild(activityDiv);
-
-            // Hidden inputs for form submission
             addHiddenInput(hiddenInputsDiv, 'apuIds', activity.id);
             addHiddenInput(hiddenInputsDiv, 'cantidades', activity.quantity);
         });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     function addHiddenInput(container, name, value) {
@@ -345,39 +502,64 @@
         document.getElementById('activityQuantity').value = '';
     }
 
-    // Initialize the form when page loads
+    // ========== EVENT LISTENERS ==========
+    if (getLocationBtn) getLocationBtn.addEventListener('click', getCurrentLocation);
+    if (useCurrentLocationBtn) useCurrentLocationBtn.addEventListener('click', useCurrentLocation);
+
+    if (cooNObraInput) {
+        cooNObraInput.addEventListener('input', function() {
+            validateCoordinate(this, 'lat');
+        });
+    }
+
+    if (cooEObraInput) {
+        cooEObraInput.addEventListener('input', function() {
+            validateCoordinate(this, 'lng');
+        });
+    }
+
+    // ========== INICIALIZACIÓN ==========
     document.addEventListener('DOMContentLoaded', function() {
         updateActivityUI();
 
-        // --- Lógica de Control del Menú Móvil (Replicada de tu APU HTML) ---
+        // ✅ INICIAR GEOLOCALIZACIÓN AUTOMÁTICAMENTE
+        getCurrentLocation();
+
+        // Validación de fechas
+        const fechaIni = document.getElementById('fechaIni');
+        const fechaFin = document.getElementById('fechaFin');
+
+        if (fechaIni && fechaFin) {
+            fechaFin.addEventListener('change', function() {
+                if (fechaIni.value && fechaFin.value && fechaFin.value < fechaIni.value) {
+                    alert('La fecha de fin no puede ser menor a la fecha de inicio');
+                    fechaFin.value = '';
+                }
+            });
+        }
+
+        // Lógica del menú móvil
         const menuToggle = document.getElementById('menu-toggle');
         const appContainer = document.getElementById('app-container');
         const sidebar = document.querySelector('.sidebar');
         const menuIcon = menuToggle ? menuToggle.querySelector('i') : null;
 
         if (menuToggle && appContainer && sidebar && menuIcon) {
-            // 1. Alternar la clase y el ícono al hacer clic
             menuToggle.addEventListener('click', function() {
                 appContainer.classList.toggle('sidebar-active');
-
-                // Cambiar el ícono (fa-bars <-> fa-times)
                 if (appContainer.classList.contains('sidebar-active')) {
                     menuIcon.classList.remove('fa-bars');
-                    menuIcon.classList.add('fa-times'); // Ícono de cerrar
+                    menuIcon.classList.add('fa-times');
                 } else {
                     menuIcon.classList.remove('fa-times');
-                    menuIcon.classList.add('fa-bars'); // Ícono de menú
+                    menuIcon.classList.add('fa-bars');
                 }
             });
 
-            // 2. Cerrar el menú al hacer clic fuera (incluye restaurar el ícono)
             document.addEventListener('click', (e) => {
-                // Solo para pantallas pequeñas
                 if (window.innerWidth <= 768 && appContainer.classList.contains('sidebar-active')) {
                     if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
                         appContainer.classList.remove('sidebar-active');
-
-                        // Asegura que el ícono vuelva a 'bars'
                         menuIcon.classList.remove('fa-times');
                         menuIcon.classList.add('fa-bars');
                     }
@@ -386,5 +568,6 @@
         }
     });
 </script>
+
 </body>
 </html>

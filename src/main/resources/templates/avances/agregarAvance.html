@@ -191,7 +191,8 @@
                         <option value="">Seleccione una obra...</option>
                         <option th:each="obra : ${obras}"
                                 th:value="${obra.idObra}"
-                                th:text="${obra.nombreObra}">
+                                th:text="${obra.nombreObra}"
+                                th:attr="data-coon=${obra.cooNObra}, data-cooe=${obra.cooEObra}, data-etapa=${obra.etapa}">
                         </option>
                     </select>
                 </div>
