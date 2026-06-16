@@ -6,6 +6,7 @@ import com.example.domain.Obra;
 import com.example.servicio.ProyectoServicio;
 import com.example.servicio.EquipoServicio;
 import com.example.servicio.ObraServicio;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -185,6 +186,11 @@ public class ControladorProyectos {
             if (proyecto == null) {
                 redirectAttributes.addFlashAttribute("error", "Proyecto no encontrado");
                 return "redirect:/proyectos";
+            }
+
+            // Inicializar usuarios del equipo para evitar LazyInitializationException
+            if (proyecto.getEquipo() != null) {
+                Hibernate.initialize(proyecto.getEquipo().getUsuarios());
             }
 
             List<Equipo> equipos = equipoServicio.listarEquipos();

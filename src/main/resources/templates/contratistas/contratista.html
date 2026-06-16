@@ -224,11 +224,11 @@
         <!-- Pagination -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
             <div>
-                <button class="btn btn-secondary" disabled>
+                <button class="btn btn-secondary" id="btnAnterior">
                     <i class="fas fa-chevron-left"></i> Anterior
                 </button>
-                <span style="margin: 0 1rem;">Página 1 de 3</span>
-                <button class="btn btn-secondary">
+                <span style="margin: 0 1rem;">Página <span id="paginaActual">1</span> de <span id="totalPaginas">1</span></span>
+                <button class="btn btn-secondary" id="btnSiguiente">
                     Siguiente <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
@@ -640,6 +640,58 @@
             });
         }
     });
+
+    // Variables para paginación
+    let pagina = 1;
+    let totalPaginas = 1;
+
+    // Función para actualizar la tabla según la página
+    function actualizarTabla() {
+        // Obtener todas las filas de la tabla
+        const tabla = document.querySelector('.table-container table tbody');
+        const filas = Array.from(tabla.querySelectorAll('tr'));
+
+        // Calcular cuántas filas mostrar por página
+        const filasPorPagina = 5;
+        totalPaginas = Math.ceil(filas.length / filasPorPagina);
+
+        // Ocultar todas las filas
+        filas.forEach(fila => fila.style.display = 'none');
+
+        // Mostrar solo las filas de la página actual
+        const inicio = (pagina - 1) * filasPorPagina;
+        const fin = inicio + filasPorPagina;
+        filas.slice(inicio, fin).forEach(fila => fila.style.display = '');
+
+        // Actualizar el texto del contador
+        document.getElementById('paginaActual').textContent = pagina;
+        document.getElementById('totalPaginas').textContent = totalPaginas;
+
+        // Habilitar/deshabilitar botones
+        document.getElementById('btnAnterior').disabled = (pagina === 1);
+        document.getElementById('btnSiguiente').disabled = (pagina === totalPaginas);
+    }
+
+    // Eventos de los botones
+    document.getElementById('btnAnterior').addEventListener('click', () => {
+        if (pagina > 1) {
+            pagina--;
+            actualizarTabla();
+        }
+    });
+
+    document.getElementById('btnSiguiente').addEventListener('click', () => {
+        if (pagina < totalPaginas) {
+            pagina++;
+            actualizarTabla();
+        }
+    });
+
+    // Inicializar la paginación cuando cargue la página
+    document.addEventListener('DOMContentLoaded', () => {
+        actualizarTabla();
+    });
+
 </script>
 </body>
 </html>

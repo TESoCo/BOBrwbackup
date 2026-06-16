@@ -1,5 +1,6 @@
 package com.example.controller.web;
 
+import com.example.dao.PrecioMaterialDao;
 import com.example.domain.*;
 import com.example.servicio.InventarioServicio;
 import com.example.servicio.MaterialServicio;
@@ -21,8 +22,11 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/inventarios")
@@ -39,6 +43,8 @@ public class ControladorInv {
 
     @Autowired
     private UsuarioServicio usuarioServicio;
+    @Autowired
+    private PrecioMaterialDao precioMaterialDao;
 
     @GetMapping
     public String inventario(Model model) {
@@ -276,12 +282,27 @@ public class ControladorInv {
             Model model) {
 
         Inventario inventario = inventarioServicio.localizarInventarioPorId(id);
+        // Cargar materiales con sus precios actuales
+        List<Material> materialesConPrecios = materialServicio.listarTodosConPrecios();
+
+        // Crear un mapa de materialId -> precioActual para acceso rápido en la vista
+        Map<Long, BigDecimal> preciosActualesMap = new HashMap<>();
+        for (Material material : materialesConPrecios) {
+            preciosActualesMap.put(material.getIdMaterial(), material.getPrecioActual());
+        }
+
         model.addAttribute("inventario", inventario);
 
         List<Inventario> inventarios = inventarioServicio.listaInventarios();
         model.addAttribute("inventarios", inventarios);
 
+        model.addAttribute("preciosActualesMap", preciosActualesMap);
+
         model.addAttribute("obras", obraServicio.listaObra());
+
+        model.addAttribute("materiales", materialesConPrecios);
+
+        model.addAttribute("precios", precioMaterialDao.findAll());
 
         return "inventarios/cambiarInv";
     }

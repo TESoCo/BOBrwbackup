@@ -42,19 +42,23 @@ public class ControladorAPU {
     // ========== MÉTODOS PRINCIPALES ==========
     @GetMapping("/inicioAPU")
     public String inicioAPU(
-            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String busqueda,
             Model model,
             Authentication authentication) {
         List<Apu> apus;
+
+        // Logs para depuración
+        System.out.println("Parámetro busqueda recibido: " + busqueda);
+
         // Aplicar filtro de búsqueda si se proporciona
-        if (getSearch(search) != null && !search.trim().isEmpty()) {
-            apus = apuServicio.buscarPorNombre(search);
+        if (getSearch(busqueda) != null && !busqueda.trim().isEmpty()) {
+            apus = apuServicio.buscarPorNombre(busqueda);
         } else {
             apus = apuServicio.listarElementos();
         }
         model.addAttribute("apus", apus);
         model.addAttribute("materiales", materialServicio.listarTodos());
-        model.addAttribute("searchTerm", search);
+        model.addAttribute("searchTerm", busqueda);
         return "apus/inicioAPU";
     }
 

@@ -35,8 +35,8 @@ public class InformacionComercial implements Serializable {
     private String numCuenta;
 
     @Pattern(
-            regexp = "^(Calle|Carrera|Avenida|Diagonal|Transversal)\\s+\\d+[A-Za-z]?\\s+#\\s*\\d+-\\d+.*$",
-            message = "Formato de dirección inválido. Use: Calle/Carrera/Avenida + Número + # + Número-Número"
+            regexp = "^[A-Za-zÁÉÍÓÚÑáéíóúñ\\d\\s,.#-]+$",
+            message = "La dirección contiene caracteres no permitidos. Use solo letras, números, espacios, comas, puntos, # y guiones"
     )
     @NotEmpty
     @Column(name = "direccion")

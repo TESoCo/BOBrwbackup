@@ -196,25 +196,31 @@
       </div>
     </div>
 
-    <!-- Map Section - MEJORADO -->
-    <div class="map-section">
-      <h3 class="section-title">Mapa de Obras</h3>
+
+  <!-- Map Section - MEJORADO -->
+
+    <!--<div class="map-section">
+      <h3 class="section-title">Mapa de Obras</h3>-->
 
       <!-- Mensaje cuando no hay obras -->
-      <div th:if="${!hayObrasConCoordenadas}" class="no-data-message">
-        <i class="fas fa-map-marker-alt"></i>
-        <h4>No hay obras con coordenadas registradas</h4>
-        <p>Para ver el mapa, asegúrate de que las obras tengan coordenadas norte y este.</p>
-        <a th:href="@{/obras/inicioObra}" class="btn btn-primary">
-          <i class="fas fa-plus"></i> Crear Nueva Obra
-        </a>
-      </div>
 
-      <!-- Mapa (solo mostrar si hay obras con coordenadas) -->
+    <!--<div th:if="${!hayObrasConCoordenadas}" class="no-data-message">
+      <i class="fas fa-map-marker-alt"></i>
+      <h4>No hay obras con coordenadas registradas</h4>
+      <p>Para ver el mapa, asegúrate de que las obras tengan coordenadas norte y este.</p>
+      <a th:href="@{/obras/inicioObra}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Crear Nueva Obra
+      </a>
+    </div>-->
+
+    <!-- Mapa (solo mostrar si hay obras con coordenadas) -->
+
       <div id="map" th:if="${hayObrasConCoordenadas}"></div>
-    </div>
 
-    <!-- Progress Section -->
+    <!--</div> -->
+
+
+    <!-- Progress Section
     <div class="recent-activities" sec:authorize="hasAnyAuthority('EDITAR_AVANCE', 'CREAR_AVANCE')">
       <h3 class="section-title">Avance por Obra</h3>
       <div th:each="estadistica : ${estadisticasAvance}" class="progress-container">
@@ -229,7 +235,7 @@
       <div th:if="${estadisticasAvance == null or estadisticasAvance.empty}">
         <p>No hay datos de avance disponibles</p>
       </div>
-    </div>
+    </div>-->
 
     <!-- Recent Activities Section -->
     <div class="recent-activities">
