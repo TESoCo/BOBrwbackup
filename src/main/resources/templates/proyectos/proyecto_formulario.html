@@ -205,7 +205,7 @@
                         <li th:each="usuario : ${proyecto.equipo.usuarios}">
                             <i class="fas fa-user"></i>
                             <span th:text="${usuario.nombreUsuario}"></span>
-                            <small class="text-muted" th:text="'(' + ${usuario.correoUsuario} + ')'"></small>
+                            <small class="text-muted" th:text="'(' + ${usuario.cargo} + ')'"></small>
                         </li>
                     </ul>
                 </div>

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import lombok.ToString;
+
 import java.io.Serializable;
 import java.time.LocalDate;
 
@@ -46,6 +48,7 @@ public class Usuario implements Serializable {
     @ManyToOne
     @JoinColumn(name = "id_Rol", referencedColumnName = "id_Rol")
     @JsonBackReference("usuario-rol")
+    @ToString.Exclude
     private Rol rol;
 
     //Relacion  con persona

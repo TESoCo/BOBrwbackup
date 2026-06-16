@@ -140,25 +140,16 @@
                        class="clear-search">
                         <i class='bx bx-x'></i> Limpiar
                     </a>
-
                 </form>
-
                 <div th:if="${errorBusqueda}" class="alert alert-warning">
                     <p th:text="${errorBusqueda}"></p>
                 </div>
-
-                <div class="table-container" th:if="${errorBusqueda == null}">
-                    <table>
-                    </table>
-                </div>
-
                 <div class="no-records" th:if="${inventarios == null or inventarios.empty and errorBusqueda == null}">
                     <p>No hay registros de inventario para mostrar.</p>
                 </div>
-
             </div>
 
-            <div class="table-container">
+            <div class="table-container" th:if="${errorBusqueda == null}">
                 <table>
                     <thead>
                     <tr>
@@ -185,7 +176,7 @@
 
                         <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].cantidad}"></td>
                         <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].material.nombreMaterial}"></td>
-                        <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].material.precioMaterial}"></td>
+                        <td th:if="${!inv.materialesInventarios.empty}" th:text="${materiales[inv.materialesInventarios[0].material.idMaterial].getPrecioActual()}"></td>
 
                         <td th:unless="${!inv.materialesInventarios.empty}">-</td>
                         <td th:unless="${!inv.materialesInventarios.empty}">-</td>

@@ -42,19 +42,23 @@ public class ControladorAPU {
     // ========== MÉTODOS PRINCIPALES ==========
     @GetMapping("/inicioAPU")
     public String inicioAPU(
-            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String busqueda,
             Model model,
             Authentication authentication) {
         List<Apu> apus;
+
+        // Logs para depuración
+        System.out.println("Parámetro busqueda recibido: " + busqueda);
+
         // Aplicar filtro de búsqueda si se proporciona
-        if (getSearch(search) != null && !search.trim().isEmpty()) {
-            apus = apuServicio.buscarPorNombre(search);
+        if (getSearch(busqueda) != null && !busqueda.trim().isEmpty()) {
+            apus = apuServicio.buscarPorNombre(busqueda);
         } else {
             apus = apuServicio.listarElementos();
         }
         model.addAttribute("apus", apus);
         model.addAttribute("materiales", materialServicio.listarTodos());
-        model.addAttribute("searchTerm", search);
+        model.addAttribute("searchTerm", busqueda);
         return "apus/inicioAPU";
     }
 
@@ -68,17 +72,22 @@ public class ControladorAPU {
 
     @GetMapping("/crearAPU")
     public String mostrarFormularioCrear(Model model, Authentication authentication) {
-        // Obtener todos los materiales disponibles
-        List<Material> materiales = materialServicio.listarTodos();
-        // Debug para verificar que los materiales se cargan
+        // Lista de materiales y precios
+        List<Material> materiales = materialServicio.listarTodosConPrecios();
+        List<BigDecimal> precios = new ArrayList<>();
+
+        // Debug para verificar que los materiales y pecios se cargan
         System.out.println("Materiales cargados para crear APU: " + (materiales != null ? materiales.size() : 0));
         if (materiales != null) {
             for (Material material : materiales) {
                 System.out.println("Material: " + material.getNombreMaterial() + " - ID: " + material.getIdMaterial());
+                precios.add(materialServicio.getPrecioActual(material.getIdMaterial()));
+                System.out.println("Precio Actual: " + materialServicio.getPrecioActual(material.getIdMaterial()) + " - ID: " + material.getIdMaterial());
             }
         }
         model.addAttribute("apu", new Apu());
         model.addAttribute("materiales", materiales);
+        model.addAttribute("precios", precios);
         return "apus/crearAPU";
     }
 

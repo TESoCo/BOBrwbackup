@@ -167,39 +167,34 @@
                             <input type="submit" value="Buscar">
 
                             <!-- Botón para limpiar búsqueda (solo mostrar si hay búsqueda activa) -->
-                            <a th:if="${tipoBusquedaSeleccionado != null and valorBusquedaActual != null}"
+                            <a th:if="${tipoBusqueda != null and valorBusqueda != null}"
                                th:href="@{/inventarios/verInv}"
                                class="clear-search">
                                 <i class='bx bx-x'></i> Limpiar
                             </a>
                         </form>
 
-                        <div th:if="${errorBusqueda}" class="alert alert-warning">
-                            <p th:text="${errorBusqueda}"></p>
-                        </div>
-
-                        <div class="table-container" th:if="${errorBusqueda == null}">
-                            <table>
-                            </table>
+                        <div th:if="${error}" class="alert alert-warning">
+                            <p th:text="${error}"></p>
                         </div>
                     </div>
 
                 <!-- Tabla de Inventarios -->
-                    <div class="table-container">
+                    <div class="table-container" th:if="${error == null}">
                         <table>
                             <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre Gestor</th>
-                                <th>Nombre Obra</th>
-                                <th>Tipo Registro</th>
-                                <th>Fecha</th>
-                                <th>Unidad de Medida</th>
-                                <th>Cantidad</th>
-                                <th>Material</th>
-                                <th>Precio por Unidad</th>
-                                <th>Acciones</th>
-                            </tr>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre Gestor</th>
+                                    <th>Nombre Obra</th>
+                                    <th>Tipo Registro</th>
+                                    <th>Fecha</th>
+                                    <th>Unidad de Medida</th>
+                                    <th>Cantidad</th>
+                                    <th>Material</th>
+                                    <th>Precio por Unidad</th>
+                                    <th>Acciones</th>
+                                </tr>
                             </thead>
                             <tbody>
                             <tr th:each="inv : ${inventarios}">
@@ -212,7 +207,7 @@
 
                                 <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].cantidad}"></td>
                                 <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].material.nombreMaterial}"></td>
-                                <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].material.precioMaterial}"></td>
+                                <td th:if="${!inv.materialesInventarios.empty}" th:text="${materiales[inv.materialesInventarios[0].material.idMaterial].getPrecioActual() }"></td>
 
                                 <td th:unless="${!inv.materialesInventarios.empty}">-</td>
                                 <td th:unless="${!inv.materialesInventarios.empty}">-</td>
@@ -251,6 +246,7 @@
                         <p>No hay registros de inventario para mostrar.</p>
                     </div>
                 </div>
+            </div>
     </main>
 </div>
 

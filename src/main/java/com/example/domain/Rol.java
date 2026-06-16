@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.util.List;
@@ -42,10 +43,12 @@ public class Rol implements Serializable {
     @JsonBackReference("rol-permiso")
     private List<Permiso> permisoList;
 
-    // Agregar relación inversa con Usuario
+    // Relación inversa con Usuario
     @OneToMany(mappedBy = "rol")
     @JsonManagedReference("usuario-rol")
+    @ToString.Exclude //Esto debe curar el bucle de cargas
     private List<Usuario> usuarios;
+
 
 
 }

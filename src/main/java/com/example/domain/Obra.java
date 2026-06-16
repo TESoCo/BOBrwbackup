@@ -79,6 +79,7 @@ public class Obra implements Serializable {
     @ManyToOne
     @JoinColumn(name = "id_Proyecto", referencedColumnName = "id_Proyecto")
     @JsonBackReference("obra-proyecto")
+    @ToString.Exclude
     private Proyecto proyecto;
 }
 

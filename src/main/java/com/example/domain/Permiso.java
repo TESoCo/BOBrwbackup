@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.util.List;
@@ -29,5 +30,6 @@ public class Permiso implements Serializable {
     // LADO INVERSO - usar mappedBy
     @ManyToMany(mappedBy = "permisoList", fetch = FetchType.EAGER)
     @JsonManagedReference("rol-permiso")
+    @ToString.Exclude
     private List<Rol> rolList;
 }

@@ -7,6 +7,100 @@
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
     <link rel="stylesheet" th:href="@{/CSS/EQUIPOS/crearEquipos.css}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Estilos para el modal de confirmación */
+        .modal-warning {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-warning-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .modal-warning-header {
+            background-color: #ff9800;
+            color: white;
+            padding: 10px;
+            border-radius: 5px 5px 0 0;
+            margin: -20px -20px 20px -20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-warning-header i {
+            font-size: 24px;
+        }
+
+        .modal-warning-body {
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .modal-warning-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-warning-modal {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-warning-modal:hover {
+            background-color: #e68900;
+        }
+
+        .btn-secondary-modal {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-secondary-modal:hover {
+            background-color: #5a6268;
+        }
+
+        .project-warning {
+            border-left: 3px solid #ff9800 !important;
+            background-color: #fff3e0 !important;
+        }
+
+        .project-has-team {
+            position: relative;
+        }
+
+        .project-has-team::after {
+            content: "⚠️";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
 <button id="menu-toggle" class="menu-toggle">
@@ -200,7 +294,7 @@
                                  onclick="toggleProyecto(this)">
                                 <strong th:text="${proyecto.descProyecto}">Proyecto</strong><br>
                                 <small th:if="${proyecto.equipo != null}" class="text-muted">
-                                    Equipo actual: <span th:text="${proyecto.equipo.descEquipo}"></span>
+                                    ⚠️ Equipo actual: <span th:text="${proyecto.equipo.descEquipo}"></span>
                                 </small>
                                 <small th:if="${proyecto.equipo == null}" class="text-muted">
                                     Sin equipo asignado
@@ -227,55 +321,231 @@
     </main>
 </div>
 
+<!-- Modal de advertencia -->
+<div id="warningModal" class="modal-warning">
+    <div class="modal-warning-content">
+        <div class="modal-warning-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3 style="margin: 0;">Advertencia</h3>
+            <span onclick="cerrarModal()" style="cursor: pointer; font-size: 24px;">&times;</span>
+        </div>
+        <div class="modal-warning-body">
+            <p id="warningMessage"></p>
+            <p><strong>¿Deseas continuar con esta asignación?</strong></p>
+        </div>
+        <div class="modal-warning-footer">
+            <button onclick="cerrarModal()" class="btn-secondary-modal">Cancelar</button>
+            <button onclick="confirmarAsignacion()" class="btn-warning-modal">Continuar</button>
+        </div>
+    </div>
+</div>
+
 <script>
+
+    // Variables para controlar el proceso de confirmación
+    let proyectosPendientesConfirmacion = [];
+    let pendingFormSubmit = false;
+    let currentForm = null;
+
     document.addEventListener('DOMContentLoaded', function() {
-        const toggleButton = document.getElementById('menu-toggle');
-        const appContainer = document.getElementById('app-container');
+    const toggleButton = document.getElementById('menu-toggle');
+    const appContainer = document.getElementById('app-container');
 
-        if (toggleButton && appContainer) {
-            toggleButton.addEventListener('click', function() {
-                appContainer.classList.toggle('sidebar-active');
-            });
-        }
+    if (toggleButton && appContainer) {
+    toggleButton.addEventListener('click', function() {
+    appContainer.classList.toggle('sidebar-active');
+});
+}
 
-        // Inicializar los inputs ocultos con los valores seleccionados
-        actualizarInputUsuarios();
-        actualizarInputProyectos();
-    });
+    // Inicializar los inputs ocultos con los valores seleccionados
+    actualizarInputUsuarios();
+    actualizarInputProyectos();
+
+    // Aplicar estilos a los proyectos que ya tienen equipo
+    marcarProyectosConEquipo();
+});
 
     function toggleUsuario(element) {
-        element.classList.toggle('selected');
-        actualizarInputUsuarios();
-    }
+    element.classList.toggle('selected');
+    actualizarInputUsuarios();
+}
 
-    function toggleProyecto(element) {
-        element.classList.toggle('selected');
-        actualizarInputProyectos();
-    }
+    function toggleProyecto(element, event) {
+    event.stopPropagation();
+
+    // Verificar si el proyecto ya tiene un equipo asignado
+    const equipoAsignado = element.getAttribute('data-equipo-asignado');
+    const isSelected = element.classList.contains('selected');
+    const proyectoId = element.getAttribute('data-id');
+    const proyectoNombre = element.querySelector('strong').textContent;
+
+    // Si el proyecto tiene equipo asignado y NO está seleccionado actualmente (intenta seleccionarlo)
+    if (equipoAsignado && equipoAsignado !== '' && !isSelected) {
+    // Guardar la información del proyecto para confirmación
+    const proyectoInfo = {
+    id: proyectoId,
+    nombre: proyectoNombre,
+    equipoActual: equipoAsignado,
+    element: element
+};
+
+    // Mostrar modal de confirmación
+    mostrarModalConfirmacion(proyectoInfo);
+} else {
+    // Si el proyecto no tiene equipo o ya está seleccionado, proceder normalmente
+    element.classList.toggle('selected');
+    actualizarInputProyectos();
+}
+}
+
+    function marcarProyectosConEquipo() {
+    const proyectos = document.querySelectorAll('#proyectosList .selection-item');
+    proyectos.forEach(proyecto => {
+    const equipoAsignado = proyecto.getAttribute('data-equipo-asignado');
+    if (equipoAsignado && equipoAsignado !== '') {
+    proyecto.classList.add('project-has-team');
+}
+});
+}
+
+    function mostrarModalConfirmacion(proyectoInfo) {
+    const modal = document.getElementById('warningModal');
+    const message = document.getElementById('warningMessage');
+
+    message.innerHTML = `El proyecto "<strong>${proyectoInfo.nombre}</strong>" actualmente está asignado al equipo "<strong>${proyectoInfo.equipoActual}</strong>".<br><br>Si continúas, el proyecto será reasignado a este equipo.`;
+
+    // Guardar el proyecto pendiente de confirmación
+    proyectosPendientesConfirmacion = [proyectoInfo];
+
+    modal.style.display = 'block';
+}
+
+    function cerrarModal() {
+    const modal = document.getElementById('warningModal');
+    modal.style.display = 'none';
+    proyectosPendientesConfirmacion = [];
+
+    // Si había un envío de formulario pendiente, cancelarlo
+    if (pendingFormSubmit) {
+    pendingFormSubmit = false;
+    currentForm = null;
+}
+}
+
+    function confirmarAsignacion() {
+    // Procesar la confirmación del proyecto
+    if (proyectosPendientesConfirmacion.length > 0) {
+    proyectosPendientesConfirmacion.forEach(proyectoInfo => {
+    // Seleccionar el proyecto
+    proyectoInfo.element.classList.add('selected');
+});
+
+    // Limpiar proyectos pendientes
+    proyectosPendientesConfirmacion = [];
+
+    // Actualizar el input de proyectos seleccionados
+    actualizarInputProyectos();
+}
+
+    // Cerrar el modal
+    cerrarModal();
+
+    // Si había un envío de formulario pendiente, proceder
+    if (pendingFormSubmit && currentForm) {
+    pendingFormSubmit = false;
+    enviarFormulario(currentForm);
+}
+}
 
     function actualizarInputUsuarios() {
-        const selectedItems = document.querySelectorAll('#usuariosList .selection-item.selected');
-        const selectedIds = Array.from(selectedItems).map(item => item.getAttribute('data-id'));
-        document.getElementById('usuariosSeleccionados').value = selectedIds.join(',');
+    const selectedItems = document.querySelectorAll('#usuariosList .selection-item.selected');
+    const selectedIds = Array.from(selectedItems).map(item => item.getAttribute('data-id'));
+    document.getElementById('usuariosSeleccionados').value = selectedIds.join(',');
 
-        // Actualizar contador
-        const countSpan = document.querySelector('#selectedUsersCount span');
-        if (countSpan) {
-            countSpan.textContent = selectedIds.length;
-        }
-    }
+    // Actualizar contador
+    const countSpan = document.querySelector('#selectedUsersCount span');
+    if (countSpan) {
+    countSpan.textContent = selectedIds.length;
+}
+}
 
     function actualizarInputProyectos() {
-        const selectedItems = document.querySelectorAll('#proyectosList .selection-item.selected');
-        const selectedIds = Array.from(selectedItems).map(item => item.getAttribute('data-id'));
-        document.getElementById('proyectosSeleccionados').value = selectedIds.join(',');
+    const selectedItems = document.querySelectorAll('#proyectosList .selection-item.selected');
+    const selectedIds = Array.from(selectedItems).map(item => item.getAttribute('data-id'));
+    document.getElementById('proyectosSeleccionados').value = selectedIds.join(',');
 
-        // Actualizar contador
-        const countSpan = document.querySelector('#selectedProjectsCount span');
-        if (countSpan) {
-            countSpan.textContent = selectedIds.length;
-        }
-    }
+    // Actualizar contador
+    const countSpan = document.querySelector('#selectedProjectsCount span');
+    if (countSpan) {
+    countSpan.textContent = selectedIds.length;
+}
+}
+
+    function validarYEnviarFormulario() {
+    const form = document.getElementById('equipoForm');
+    const proyectosSeleccionados = document.querySelectorAll('#proyectosList .selection-item.selected');
+
+    // Verificar si hay proyectos seleccionados que tienen equipo asignado
+    const proyectosConEquipo = Array.from(proyectosSeleccionados).filter(proyecto => {
+    const equipoAsignado = proyecto.getAttribute('data-equipo-asignado');
+    const proyectoId = proyecto.getAttribute('data-id');
+
+    // En modo edición, si el proyecto ya estaba asignado a este equipo, no mostrar advertencia
+    if (equipoAsignado && equipoAsignado !== '') {
+    // Verificar si es modo edición y el proyecto ya pertenecía a este equipo
+    const modoEdicion = /*[[${modo}]]*/ 'crear';
+    const idsProyectosAsignadosStr = /*[[${idsProyectosAsignados}]]*/ '';
+
+    if (modoEdicion === 'editar' && idsProyectosAsignadosStr) {
+    const idsAsignados = idsProyectosAsignadosStr.split(',');
+    if (idsAsignados.includes(proyectoId)) {
+    return false; // No mostrar advertencia si ya estaba asignado
+}
+}
+
+    return true;
+}
+    return false;
+});
+
+    if (proyectosConEquipo.length > 0) {
+    // Construir mensaje con los proyectos que tienen equipo asignado
+    let proyectosLista = '';
+    proyectosConEquipo.forEach(proyecto => {
+    const nombreProyecto = proyecto.querySelector('strong').textContent;
+    const equipoActual = proyecto.getAttribute('data-equipo-asignado');
+    proyectosLista += `<li><strong>${nombreProyecto}</strong> (actualmente: ${equipoActual})</li>`;
+});
+
+    const modal = document.getElementById('warningModal');
+    const message = document.getElementById('warningMessage');
+
+    message.innerHTML = `Los siguientes proyectos ya tienen un equipo asignado:<br><ul>${proyectosLista}</ul><br>Si continúas, estos proyectos serán reasignados a este equipo.`;
+
+    // Guardar el formulario para enviarlo después de la confirmación
+    pendingFormSubmit = true;
+    currentForm = form;
+
+    modal.style.display = 'block';
+} else {
+    // No hay proyectos conflictivos, enviar directamente
+    enviarFormulario(form);
+}
+}
+
+    function enviarFormulario(form) {
+    // Validar que se haya ingresado una descripción
+    const descEquipo = document.getElementById('descEquipo').value.trim();
+    if (!descEquipo) {
+    alert('Por favor, ingrese una descripción para el equipo.');
+    document.getElementById('descEquipo').focus();
+    return;
+}
+
+    // Enviar el formulario
+    form.submit();
+}
 </script>
+
 </body>
 </html>

@@ -1,424 +1,243 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Materiales - Construction Optimization Baseline</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
-    <link rel="stylesheet" th:href="@{/CSS/AVANCES/editarAvance.css}">
-</head>
-<body>
-<button id="menu-toggle" class="menu-toggle">
-    <i class="fas fa-bars"></i>
-</button>
-<div class="app-container" id="app-container">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
-        </div>
-        <ul class="nav-links">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gestión de Materiales - Construction Optimization Baseline</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
+        <link rel="stylesheet" th:href="@{/CSS/AVANCES/editarAvance.css}">
+    </head>
+    <body>
+        <button id="menu-toggle" class="menu-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="app-container" id="app-container">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
+                </div>
+                <ul class="nav-links">
 
-            <!-- Dashboard - Para todos los usuarios autenticados -->
-            <div sec:authorize="isAuthenticated()">
-                <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-            </div>
+                    <!-- Dashboard - Para todos los usuarios autenticados -->
+                    <div sec:authorize="isAuthenticated()">
+                        <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+                    </div>
 
-            <!-- Gestión de Equipos -->
-            <div sec:authorize="hasAnyAuthority('CREAR_EQUIPO', 'EDITAR_EQUIPO')">
-                <li><a th:href="@{/equipos}"><i class="fas fa-users"></i> <span>Gestión de Equipos</span></a></li>
-            </div>
+                    <!-- Gestión de Equipos -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_EQUIPO', 'EDITAR_EQUIPO')">
+                        <li><a th:href="@{/equipos}"><i class="fas fa-users"></i> <span>Gestión de Equipos</span></a></li>
+                    </div>
 
-            <!-- Gestión de Proyectos -->
-            <div sec:authorize="hasAnyAuthority('CREAR_PROYECTO', 'EDITAR_PROYECTO')">
-                <li><a th:href="@{/proyectos}"><i class="fas fa-project-diagram"></i> <span>Gestión de Proyectos</span></a></li>
-            </div>
+                    <!-- Gestión de Proyectos -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_PROYECTO', 'EDITAR_PROYECTO')">
+                        <li><a th:href="@{/proyectos}"><i class="fas fa-project-diagram"></i> <span>Gestión de Proyectos</span></a></li>
+                    </div>
 
-            <!-- Gestión de Usuarios - Solo con permisos de usuario -->
-            <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
-                <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
-            </div>
+                    <!-- Gestión de Usuarios - Solo con permisos de usuario -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
+                        <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
+                    </div>
 
-            <div sec:authorize="hasAnyAuthority('CREAR_ROL', 'EDITAR_ROL', 'LEER_ROL')">
-                <li><a th:href="@{/roles}"><i class="fas fa-user-shield"></i> <span>Gestión de Roles</span></a></li>
-            </div>
+                    <div sec:authorize="hasAnyAuthority('CREAR_ROL', 'EDITAR_ROL', 'LEER_ROL')">
+                        <li><a th:href="@{/roles}"><i class="fas fa-user-shield"></i> <span>Gestión de Roles</span></a></li>
+                    </div>
 
-            <!-- Menu items for users with inventory permissions -->
-            <!-- Inventario - Con permisos de inventario -->
-            <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
-                <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
-            </div>
+                    <!-- Menu items for users with inventory permissions -->
+                    <!-- Inventario - Con permisos de inventario -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
+                        <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
+                    </div>
 
-            <!-- Materiales - Con permisos de material -->
-            <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
-                <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
-            </div>
+                    <!-- Materiales - Con permisos de material -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
+                        <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
+                    </div>
 
-            <!-- APUs - Con permisos de APU -->
-            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
-                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
-            </div>
+                    <!-- APUs - Con permisos de APU -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
+                        <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
+                    </div>
 
-            <!-- Menu items for users with progress permissions -->
-            <!-- Avances - Con permisos de avance -->
-            <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
-                <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
-            </div>
+                    <!-- Menu items for users with progress permissions -->
+                    <!-- Avances - Con permisos de avance -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
+                        <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
+                    </div>
 
-            <!-- Menu items for users with budget permissions -->
-            <!-- Obras - Con permisos de obra -->
-            <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
-                <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
-            </div>
+                    <!-- Menu items for users with budget permissions -->
+                    <!-- Obras - Con permisos de obra -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
+                        <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
+                    </div>
 
-            <!-- Supervisor and Admin menu items -->
-            <!-- Contratistas - Con permisos de contratista -->
-            <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
-                <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
-            </div>
-            <!-- Proveedores - Con permisos de proveedor -->
-            <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
-                <li><a href="/proveedores"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
-            </div>
+                    <!-- Supervisor and Admin menu items -->
+                    <!-- Contratistas - Con permisos de contratista -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
+                        <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+                    </div>
+                    <!-- Proveedores - Con permisos de proveedor -->
+                    <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
+                        <li><a href="/proveedores"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
+                    </div>
 
-            <!-- Menu items for users with report permissions -->
-            <!-- Reportes - Para roles ADMIN y SUPERVISOR
-            <div sec:authorize="hasAnyRole('ADMIN', 'SUPERVISOR')">
-              <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
-            </div> -->
+                    <!-- Menu items for users with report permissions -->
+                    <!-- Reportes - Para roles ADMIN y SUPERVISOR
+                    <div sec:authorize="hasAnyRole('ADMIN', 'SUPERVISOR')">
+                      <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
+                    </div> -->
 
-            <!-- Fotodatos - Con permisos de fotodato
-            <div sec:authorize="hasAnyAuthority('CREAR_FOTODATO', 'EDITAR_FOTODATO')">
-              <li><a href="#"><i class="fas fa-camera"></i> <span>Fotodatos</span></a></li>
-            </div> -->
+                    <!-- Fotodatos - Con permisos de fotodato
+                    <div sec:authorize="hasAnyAuthority('CREAR_FOTODATO', 'EDITAR_FOTODATO')">
+                      <li><a href="#"><i class="fas fa-camera"></i> <span>Fotodatos</span></a></li>
+                    </div> -->
 
-            <!-- Admin-only configuration -->
-            <!-- Configuración - Solo ADMIN
-            <div sec:authorize="hasRole('ADMIN')">
-              <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
-            </div> -->
+                    <!-- Admin-only configuration -->
+                    <!-- Configuración - Solo ADMIN
+                    <div sec:authorize="hasRole('ADMIN')">
+                      <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
+                    </div> -->
 
-            <li>
-                <form th:action="@{/logout}" method="post" id="logoutForm">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <a href="#" onclick="document.getElementById('logoutForm').submit()">
-                        <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                    <li>
+                        <form th:action="@{/logout}" method="post" id="logoutForm">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <a href="#" onclick="document.getElementById('logoutForm').submit()">
+                                <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                            </a>
+                        </form>
+                    </li>
+                </ul>
+            </aside>
+
+            <!-- Main content -->
+            <main class="main-content">
+                <!-- Header -->
+                <div class="header">
+                    <div>
+                        <h2>Editar un Avance de Obra</h2>
+                    </div>
+                    <div class="user-menu">
+                        <div>
+                            <div>
+                                <a th:href="@{/perfil}" class="user-name-link">
+                                    <span sec:authentication="name"></span>
+                                </a>
+                            </div>
+                            <div>
+                    <span class="role-badge">
+                        <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+                    </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Back button -->
+                <div class="mb-3">
+                    <a th:href="@{/avances/inicioAvances}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Regresar
                     </a>
-                </form>
-            </li>
-        </ul>
-    </aside>
-
-    <!-- Main content -->
-    <main class="main-content">
-        <!-- Header -->
-        <div class="header">
-            <div>
-                <h2>Editar un Avance de Obra</h2>
-            </div>
-            <div class="user-menu">
-                <div>
-                    <div>
-                        <a th:href="@{/perfil}" class="user-name-link">
-                            <span sec:authentication="name"></span>
-                        </a>
-                    </div>
-                    <div>
-            <span class="role-badge">
-                <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
-            </span>
-                    </div>
                 </div>
-            </div>
+
+                <br>
+
+                <!-- Edit Form -->
+                <div class="form-container">
+                    <form th:action="@{/avances/actualizar}" method="post" th:object="${avance}">
+                        <input type="hidden" name="idAvance" th:value="${avance.idAvance}">
+
+                        <!-- Work Name Input -->
+                        <div class="form-group">
+                            <label for="obraDropdown"><b>Nombre de la obra:</b></label>
+                            <select id="obraDropdown" name="idObra" class="form-control" required>
+                                <option value="">Seleccione...</option>
+                                <option th:each="pre : ${obras}"
+                                        th:value="${pre.idObra}"
+                                        th:selected="${pre.idObra == avance.idObra}"
+                                        th:text="${pre.nombreObra}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fecha"><b>Fecha:</b></label>
+                            <input type="date" name="fecha" id="fecha" class="form-control"
+                                   th:value="${avance.fechaAvance}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="activityDropdown"><b>Actividad:</b></label>
+                            <select id="activityDropdown" name="idAPU" class="form-control" required>
+                                <option value="">Seleccione...</option>
+                                <option th:each="apu : ${apus}"
+                                        th:value="${apu.idAPU}"
+                                        th:selected="${apu.idAPU == avance.idApu}"
+                                        th:text="${apu.nombreAPU} + ' (' + apu.unidadesAPU + ')'">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cantidad"><b>Cantidad:</b></label>
+                            <input type="number" id="cantidad" name="cantidad" step="0.01" min="0.01"
+                                   th:value="${avance.cantEjec}" class="form-control" required>
+                        </div>
+
+                        <!-- Hidden inputs that will be submitted -->
+                        <input type="hidden" name="idUsuario" th:value="${avance != null ? avance.idUsuario.idUsuario : ''}">
+
+                        <!-- Submit Button -->
+                        <div class="submit-btn" id="submitButton">
+                            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                                <i class="fas fa-save"></i> Actualizar Avance
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </main>
         </div>
-
-        <!-- Back button -->
-        <div class="mb-3">
-            <a th:href="@{/avances/inicioAvances}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Regresar
-            </a>
-        </div>
-
-        <br>
-
-        <!-- Edit Form -->
-        <div class="form-container">
-            <form th:action="@{/avances/actualizar}" method="post" th:object="${avance}">
-                <input type="hidden" name="idAvance" th:value="${avance.idAvance}">
-
-                <!-- Work Name Input -->
-                <div class="form-group">
-                    <label for="obraDropdown"><b>Nombre de la obra:</b></label>
-                    <select id="obraDropdown" name="idObra" class="form-control" required>
-                        <option value="">Seleccione...</option>
-                        <option th:each="pre : ${obras}"
-                                th:value="${pre.idObra}"
-                                th:selected="${pre.idObra == avance.idObra}"
-                                th:text="${pre.nombreObra}">
-                        </option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="fecha"><b>Fecha:</b></label>
-                    <input type="date" name="fecha" id="fecha" class="form-control"
-                           th:value="${avance.fechaAvance}" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="activityDropdown"><b>Actividad:</b></label>
-                    <select id="activityDropdown" name="idAPU" class="form-control" required>
-                        <option value="">Seleccione...</option>
-                        <option th:each="apu : ${apus}"
-                                th:value="${apu.idAPU}"
-                                th:selected="${apu.idAPU == avance.idApu}"
-                                th:text="${apu.nombreAPU} + ' (' + apu.unidadesAPU + ')'">
-                        </option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="cantidad"><b>Cantidad:</b></label>
-                    <input type="number" id="cantidad" name="cantidad" step="0.01" min="0.01"
-                           th:value="${avance.cantEjec}" class="form-control" required>
-                </div>
-
-                <!-- Hidden inputs that will be submitted -->
-                <input type="hidden" name="idUsuario" th:value="${avance.idUsuario}">
-
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Actualizar Avance
-                </button>
-            </form>
-        </div>
-    </main>
-</div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-
-        // --- 1. Lógica de Control del Menú Móvil ---
-        const menuToggle = document.getElementById('menu-toggle');
-        const appContainer = document.getElementById('app-container');
-        const sidebar = document.querySelector('.sidebar');
-        const menuIcon = menuToggle ? menuToggle.querySelector('i') : null;
-
-        if (menuToggle && appContainer && sidebar && menuIcon) {
-            // Alternar la clase y el ícono al hacer clic
-            menuToggle.addEventListener('click', function() {
-                appContainer.classList.toggle('sidebar-active');
-
-                // Cambiar el ícono (fa-bars <-> fa-times)
-                if (appContainer.classList.contains('sidebar-active')) {
-                    menuIcon.classList.remove('fa-bars');
-                    menuIcon.classList.add('fa-times'); // Ícono de cerrar
-                } else {
-                    menuIcon.classList.remove('fa-times');
-                    menuIcon.classList.add('fa-bars'); // Ícono de menú
-                }
-            });
-
-            // Cerrar el menú al hacer clic fuera (solo en móvil)
-            document.addEventListener('click', (e) => {
-                if (window.innerWidth <= 768 && appContainer.classList.contains('sidebar-active')) {
-                    if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-                        appContainer.classList.remove('sidebar-active');
-                        menuIcon.classList.remove('fa-times');
-                        menuIcon.classList.add('fa-bars');
-                    }
-                }
-            });
-        }
-
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
-        // Elementos de la cámara
-        const cameraSection = document.getElementById('cameraSection');
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const capturedImage = document.getElementById('capturedImage');
-        const startCameraBtn = document.getElementById('startCamera');
-        const capturePhotoBtn = document.getElementById('capturePhoto');
-        const retakePhotoBtn = document.getElementById('retakePhoto');
-        const photoPreview = document.getElementById('photoPreview');
-        const photoBase64 = document.getElementById('photoBase64');
-        const photoCooN = document.getElementById('photoCooN');
-        const photoCooE = document.getElementById('photoCooE');
-        const locationStatus = document.getElementById('locationStatus');
-        const currentCooN = document.getElementById('currentCooN');
-        const currentCooE = document.getElementById('currentCooE');
-        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
-        const resetPhotoBtn = document.getElementById('resetPhotoBtn');
-        const photoFile = document.getElementById('photoFile');
 
-        let stream = null;
-        let currentLocation = null;
-        let isCameraActive = false;
+            // --- 1. Lógica de Control del Menú Móvil ---
+            const menuToggle = document.getElementById('menu-toggle');
+            const appContainer = document.getElementById('app-container');
+            const sidebar = document.querySelector('.sidebar');
+            const menuIcon = menuToggle ? menuToggle.querySelector('i') : null;
 
-        // Función para obtener ubicación
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        currentLocation = {
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude
-                        };
+            if (menuToggle && appContainer && sidebar && menuIcon) {
+                // Alternar la clase y el ícono al hacer clic
+                menuToggle.addEventListener('click', function() {
+                    appContainer.classList.toggle('sidebar-active');
 
-                        locationStatus.innerHTML =
-                            `<strong>📍 Ubicación obtenida:</strong><br>
-                             Latitud: ${currentLocation.latitude.toFixed(6)}<br>
-                             Longitud: ${currentLocation.longitude.toFixed(6)}`;
-
-                        currentCooN.value = currentLocation.latitude;
-                        currentCooE.value = currentLocation.longitude;
-                        photoCooN.value = currentLocation.latitude;
-                        photoCooE.value = currentLocation.longitude;
-                    },
-                    error => {
-                        console.error('Error obteniendo ubicación:', error);
-                        locationStatus.innerHTML =
-                            '<strong>⚠️ No se pudo obtener la ubicación</strong><br>' +
-                            'La foto se guardará sin coordenadas GPS';
+                    // Cambiar el ícono (fa-bars <-> fa-times)
+                    if (appContainer.classList.contains('sidebar-active')) {
+                        menuIcon.classList.remove('fa-bars');
+                        menuIcon.classList.add('fa-times'); // Ícono de cerrar
+                    } else {
+                        menuIcon.classList.remove('fa-times');
+                        menuIcon.classList.add('fa-bars'); // Ícono de menú
                     }
-                );
-            } else {
-                locationStatus.innerHTML =
-                    '<strong>❌ Geolocalización no soportada</strong><br>' +
-                    'Su navegador no soporta geolocalización';
-            }
-        }
-
-        // Iniciar cámara
-        async function startCamera() {
-            try {
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
                 });
-                video.srcObject = stream;
-                capturePhotoBtn.disabled = false;
-                startCameraBtn.disabled = true;
-                isCameraActive = true;
-            } catch (err) {
-                console.error('Error al acceder a la cámara:', err);
-                alert('No se pudo acceder a la cámara: ' + err.message);
-                isCameraActive = false;
-            }
-        }
 
-        // Capturar foto
-        function capturePhoto() {
-            if (!isCameraActive) return;
-
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Convertir a Base64
-            const imageData = canvas.toDataURL('image/jpeg', 0.8);
-            capturedImage.src = imageData;
-            photoBase64.value = imageData;
-            photoPreview.style.display = 'block';
-
-            // Detener cámara
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                video.style.display = 'none';
-            }
-
-            capturePhotoBtn.disabled = true;
-            retakePhotoBtn.disabled = false;
-            isCameraActive = false;
-        }
-
-        // Volver a capturar
-        function retakePhoto() {
-            photoPreview.style.display = 'none';
-            photoBase64.value = '';
-            capturedImage.src = '';
-            video.style.display = 'block';
-            startCamera();
-            retakePhotoBtn.disabled = true;
-        }
-
-        // Resetear foto
-        function resetPhoto() {
-            photoBase64.value = '';
-            photoCooN.value = '';
-            photoCooE.value = '';
-            photoFile.value = '';
-            photoPreview.style.display = 'none';
-            cameraSection.style.display = 'none';
-
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                video.style.display = 'none';
-            }
-
-            // Resetear botones
-            capturePhotoBtn.disabled = true;
-            retakePhotoBtn.disabled = true;
-            startCameraBtn.disabled = false;
-            isCameraActive = false;
-        }
-
-        // Event listeners
-        startCameraBtn.addEventListener('click', startCamera);
-        capturePhotoBtn.addEventListener('click', capturePhoto);
-        retakePhotoBtn.addEventListener('click', retakePhoto);
-        resetPhotoBtn.addEventListener('click', resetPhoto);
-
-        // Toggle cámara
-        toggleCameraBtn.addEventListener('click', function() {
-            if (cameraSection.style.display === 'none') {
-                cameraSection.style.display = 'block';
-                getLocation();
-                startCamera();
-            } else {
-                cameraSection.style.display = 'none';
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
+                // Cerrar el menú al hacer clic fuera (solo en móvil)
+                document.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 768 && appContainer.classList.contains('sidebar-active')) {
+                        if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                            appContainer.classList.remove('sidebar-active');
+                            menuIcon.classList.remove('fa-times');
+                            menuIcon.classList.add('fa-bars');
+                        }
+                    }
+                });
             }
         });
 
-        // Manejar archivo subido
-        photoFile.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // Validar tamaño (8MB máximo)
-                if (file.size > 8 * 1024 * 1024) {
-                    alert('La imagen es demasiado grande. Máximo 8MB.');
-                    this.value = '';
-                    return;
-                }
 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    photoBase64.value = e.target.result;
-                    capturedImage.src = e.target.result;
-                    photoPreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-
-                // Obtener ubicación si no está disponible
-                if (!currentCooN.value || !currentCooE.value) {
-                    getLocation();
-                }
-            }
-        });
-
-        // Inicializar obtención de ubicación
-        getLocation();
-    });
-
-</script>
-</body>
+    </script>
+    </body>
 </html>

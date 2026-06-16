@@ -207,6 +207,7 @@
                                            class="form-input" style="padding: 0.5rem;">
                                 </div>
                                 <div style="width: 150px;">
+
                                     <select id="materialSort" class="form-select" style="padding: 0.5rem;">
                                         <option value="name">Ordenar por nombre</option>
                                         <option value="price">Ordenar por precio</option>
@@ -239,7 +240,7 @@
                             <div class="materials-grid" id="materialsGrid">
                                 <div th:each="material, status : ${materiales}" class="material-card"
                                      th:attr="data-id=${material.idMaterial}, data-name=${material.nombreMaterial},
-                                             data-price=${material.precioMaterial}, data-description=${material.descripcionMaterial}">
+                                             data-price=${precios[status.index]}, data-description=${material.descripcionMaterial}">
                                     <div class="material-card-header">
                                         <input type="checkbox"
                                                th:id="'material_' + ${material.idMaterial}"
@@ -254,7 +255,7 @@
                                     <div class="material-card-body">
                                         <div class="material-description" th:text="${material.descripcionMaterial}"></div>
                                         <div class="material-price">
-                                            $<span th:text="${#numbers.formatDecimal(material.precioMaterial, 1, 'COMMA', 2, 'POINT')}"></span>
+                                            $<span th:text="${#numbers.formatDecimal(precios[status.index], 1, 'COMMA', 2, 'POINT')}"></span>
                                         </div>
                                     </div>
 
