@@ -1,5 +1,7 @@
 package com.example.servicioWeb;
 
+import com.example.domain.Usuario;
+import com.example.servicio.UsuarioServicio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,6 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -20,6 +24,14 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+    @Autowired
+    private UsuarioServicio usuarioServicio;
+
+    @Autowired
+    private GoogleOAuthService googleService;
+
+    @Autowired
+    private EncryptionService encryptionService;
 
     // Métod0 existente para correo simple
     public boolean sendSimpleEmail(String to, String subject, String text) {
@@ -98,6 +110,7 @@ public class EmailService {
         return result;
     }
 
+    //Verificar resultados de intentos de envio
     public static class EmailResult {
         private int successCount;
         private int failedCount;
@@ -118,4 +131,28 @@ public class EmailService {
         public int getFailedCount() { return failedCount; }
         public List<String> getFailedEmails() { return failedEmails; }
     }
+
+
+    public void enviarCorreoDesdeCuentaUsuario(Long idUsuario, String asunto, String cuerpo) {
+        Usuario usuario = usuarioServicio.encontrarPorId(idUsuario);
+
+        if (usuario.getGoogleRefreshToken() == null) {
+            throw new IllegalStateException("El usuario no ha autorizado el envío de correos.");
+        }
+
+        try {
+            // Aquí manejamos la excepción que lanza el servicio
+            String accessToken = googleService.getAccessToken(usuario.getGoogleRefreshToken());
+
+            // ... continuar con la lógica de envío ...
+
+        } catch (Exception e) {
+            // LOGUEAR EL ERROR: Esto es vital para saber si falló por credenciales,
+            // por token revocado o por un error de encriptación.
+            e.printStackTrace();
+            throw new RuntimeException("Error al obtener el token de Google: " + e.getMessage());
+        }
+    }
+
+
 }

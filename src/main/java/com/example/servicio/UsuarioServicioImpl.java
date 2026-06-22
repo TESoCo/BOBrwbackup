@@ -2,6 +2,8 @@ package com.example.servicio;
 
 import com.example.dao.UsuarioDao;
 import com.example.domain.Usuario;
+import com.example.servicioWeb.EncryptionService;
+import com.example.servicioWeb.GoogleOAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +18,14 @@ public class UsuarioServicioImpl implements UsuarioServicio {
 
     @Autowired
     private UsuarioDao usuarioDao;
+
+    @Autowired
+    private GoogleOAuthService googleOAuthService;
+
+
+    /**
+     * OPERACIONES BASICAS
+     */
 
     @Override
     @Transactional(readOnly = true)
@@ -33,24 +43,6 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     @Transactional
     public void borrar(Usuario usuario) {
         usuarioDao.delete(usuario);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Usuario encontrarPorId(Long id) {
-        return usuarioDao.findById(id).orElse(null);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Usuario encontrarPorNombreUsuario(String nombreUsuario) {
-        return usuarioDao.findByNombreUsuario(nombreUsuario);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Usuario> encontrarPorRol(String rol) {
-        return usuarioDao.findByRol_NombreRol(rol);
     }
 
     @Override
@@ -75,6 +67,32 @@ public class UsuarioServicioImpl implements UsuarioServicio {
         }
     }
 
+
+    /**
+     * BUSQUEDAS ESPECIALES
+     */
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Usuario encontrarPorId(Long id) {
+        return usuarioDao.findById(id).orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Usuario encontrarPorNombreUsuario(String nombreUsuario) {
+        return usuarioDao.findByNombreUsuario(nombreUsuario);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> encontrarPorRol(String rol) {
+        return usuarioDao.findByRol_NombreRol(rol);
+    }
+
+
+
     /**
      * Verificar si el usuario tiene foto
      */
@@ -85,6 +103,10 @@ public class UsuarioServicioImpl implements UsuarioServicio {
         return usuario != null && usuario.getFotoPerfil() != null && usuario.getFotoPerfil().length > 0;
     }
 
+
+    /**
+     * LISTAR USUARIOS HUERFANOS
+     */
     @Override
     @Transactional
     public List <Usuario> listarUsuariosSinEquipo(){
@@ -98,6 +120,35 @@ public class UsuarioServicioImpl implements UsuarioServicio {
         return sinEquipo;
     }
 
+    /**
+     * APROBACIÓN DE USUARIOS
+     */
+    @Override
+    @Transactional
+    public void aprobarUsuario(Long idUsuario) {
+        Usuario usuario = usuarioDao.findById(idUsuario).orElseThrow();
+        usuario.setStatus("APPROVED");
+        usuarioDao.save(usuario);
+        // TODO Opcional: enviar email al usuario informando que ya puede entrar
+    }
+
+    /**
+     * Obtiene un access token para un usuario OAuth2
+     */
+    @Override
+    public String getAccessTokenForUser(Long userId) throws Exception {
+        Usuario usuario = usuarioDao.findById(userId).orElseThrow();
+        if (usuario == null || usuario.getGoogleRefreshToken() == null) {
+            throw new RuntimeException("Usuario o refresh token no encontrado");
+        }
+
+        if ("GOOGLE".equals(usuario.getAuthProvider())) {
+            return googleOAuthService.getAccessToken(usuario.getGoogleRefreshToken());
+        }
+        // Agregar otros proveedores aquí (Facebook, GitHub, etc.)
+
+        throw new RuntimeException("Proveedor no soportado");
+    }
 
 
 

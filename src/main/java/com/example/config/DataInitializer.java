@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
@@ -53,47 +55,73 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void crearPermisosBasicos() {
-        // Create basic permissions
+        // Crear permisos básicos
+
+        //APU
         Permiso crearApu = createAndSavePermisoIfNotExists("CREAR_APU");
         Permiso editarApu = createAndSavePermisoIfNotExists("EDITAR_APU");
+        Permiso leerApu = createAndSavePermisoIfNotExists("LEER_APU");
 
+        //AVANCES
         Permiso crearAvance = createAndSavePermisoIfNotExists("CREAR_AVANCE");
         Permiso editarAvance = createAndSavePermisoIfNotExists("EDITAR_AVANCE");
+        Permiso LeerAvance = createAndSavePermisoIfNotExists("LEER_AVANCE");
 
+        //CONTRATISTAS
         Permiso crearContratista = createAndSavePermisoIfNotExists("CREAR_CONTRATISTA");
         Permiso editarContratista = createAndSavePermisoIfNotExists("EDITAR_CONTRATISTA");
+        Permiso leerContratista = createAndSavePermisoIfNotExists("LEER_CONTRATISTA");
 
+        //FOTODATOS
         Permiso crearFotodato = createAndSavePermisoIfNotExists("CREAR_FOTODATO");
         Permiso editarFotodato = createAndSavePermisoIfNotExists("EDITAR_FOTODATO");
+        Permiso leerFotodato =         createAndSavePermisoIfNotExists("LEER_FOTODATO");
 
+        //INFORMACIÓN COMERCIAL
         Permiso crearInfoComercial = createAndSavePermisoIfNotExists("CREAR_INFOCOMERCIAL");
         Permiso editarInfoComercial = createAndSavePermisoIfNotExists("EDITAR_INFOCOMERCIAL");
+        Permiso leerInfoComercial = createAndSavePermisoIfNotExists("LEER_INFOCOMERCIAL");
 
+        //INVENTARIO
         Permiso crearInventario = createAndSavePermisoIfNotExists("CREAR_INVENTARIO");
         Permiso editarInventario = createAndSavePermisoIfNotExists("EDITAR_INVENTARIO");
+        Permiso leerInventario =         createAndSavePermisoIfNotExists("LEER_INVENTARIO");
 
+        //MATERIAL
         Permiso crearMaterial = createAndSavePermisoIfNotExists("CREAR_MATERIAL");
         Permiso editarMaterial = createAndSavePermisoIfNotExists("EDITAR_MATERIAL");
+        Permiso leerMaterial = createAndSavePermisoIfNotExists("LEER_MATERIAL");
 
+        //OBRA
         Permiso crearObra = createAndSavePermisoIfNotExists("CREAR_OBRA");
         Permiso editarObra = createAndSavePermisoIfNotExists("EDITAR_OBRA");
         Permiso leerObra = createAndSavePermisoIfNotExists("LEER_OBRA");
 
-        Permiso crearPermiso = createAndSavePermisoIfNotExists("CREAR_PERMISO");
-        Permiso editarPermiso = createAndSavePermisoIfNotExists("EDITAR_PERMISO");
 
+
+        //PROVEEDORES
         Permiso crearProveedor = createAndSavePermisoIfNotExists("CREAR_PROVEEDOR");
         Permiso editarProveedor = createAndSavePermisoIfNotExists("EDITAR_PROVEEDOR");
+        Permiso leerProveedor =         createAndSavePermisoIfNotExists("LEER_PROVEEDOR");
 
         // ADMIN ONLY permissions
+        //roles
         Permiso crearRol = createAndSavePermisoIfNotExists("CREAR_ROL");
         Permiso editarRol = createAndSavePermisoIfNotExists("EDITAR_ROL");
+        //Usuarios
         Permiso crearUsuario = createAndSavePermisoIfNotExists("CREAR_USUARIO");
         Permiso editarUsuario = createAndSavePermisoIfNotExists("EDITAR_USUARIO");
+        Permiso aprobarUsuario = createAndSavePermisoIfNotExists("APROBAR_USUARIO");
+        //Equipos
         Permiso crearEquipo = createAndSavePermisoIfNotExists("CREAR_EQUIPO");
         Permiso editarEquipo = createAndSavePermisoIfNotExists("EDITAR_EQUIPO");
+        //Proyectos
         Permiso crearProyecto= createAndSavePermisoIfNotExists("CREAR_PROYECTO");
         Permiso editarProyecto = createAndSavePermisoIfNotExists("EDITAR_PROYECTO");
+        //Permisos del sistema
+        Permiso crearPermiso = createAndSavePermisoIfNotExists("CREAR_PERMISO");
+        Permiso editarPermiso = createAndSavePermisoIfNotExists("EDITAR_PERMISO");
+        Permiso leerPermiso = createAndSavePermisoIfNotExists("LEER_PERMISO");
     }
 
     private void crearRolesConPermisos() {
@@ -122,7 +150,6 @@ public class DataInitializer implements CommandLineRunner {
             permiso.getNombrePermiso().contains("ROL") ||
             permiso.getNombrePermiso().contains("PERMISO")
         );
-
         crearRolSiNoExiste("SUPERVISOR", "Supervisor con permisos excepto gestión de usuarios, roles y permisos", permisosSupervisor);
 
 
@@ -137,7 +164,21 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
         crearRolSiNoExiste("OPERATIVO", "Rol operativo con permisos limitados", permisosOperativo);
+
+
+        // Invitado - Solo lectura
+        List<Permiso> permisosInvitado = new ArrayList<>();
+        for (Permiso permiso : todosLosPermisos) {
+            if (permiso.getNombrePermiso().contains("LEER_")) {
+                permisosInvitado.add(permiso);
+            }
+        }
+        crearRolSiNoExiste("INVITADO", "Rol invitado con permisos de solo lectura", permisosInvitado);
+
     }
+
+
+
 
     private Permiso createAndSavePermisoIfNotExists(String nombrePermiso) {
 
@@ -177,6 +218,21 @@ public class DataInitializer implements CommandLineRunner {
     private void crearUsuarioAdministrador() {
         try {
             if (usuarioServicio.encontrarPorNombreUsuario("admin") == null) {
+
+                Usuario adminExistente = usuarioServicio.encontrarPorNombreUsuario("admin");
+
+                if (adminExistente != null) {
+                    // Si existe pero no tiene el estado correcto, actualizarlo
+                    if (!"APPROVED".equals(adminExistente.getStatus())) {
+                        adminExistente.setStatus("APPROVED");
+                        adminExistente.setAuthProvider("LOCAL");
+                        usuarioServicio.guardar(adminExistente);
+                        System.out.println("Usuario admin actualizado a estado APPROVED");
+                    }
+                    System.out.println("✅ Usuario administrador ya existe");
+                    return;
+                }
+
                 // Buscar rol ADMIN
                 Rol rolAdmin = rolDao.findByNombreRolIgnoreCase("ADMIN")
                         .stream()
@@ -204,10 +260,21 @@ public class DataInitializer implements CommandLineRunner {
                 usuario.setPersona(personaGuardada);
                 usuario.setRol(rolAdmin);
 
+                //Autoaprobar el Adimn por defecto para que tenga acceso
+                usuario.setStatus("APPROVED");      // ✅ Aprobado automáticamente
+                usuario.setAuthProvider("LOCAL");   // 🔒 Autenticación local
+                usuario.setEmailVerified(true);     // ✅ Email verificado (admin local)
+                usuario.setGoogleRefreshToken(null); // Sin token de Google
+
                 usuarioServicio.guardar(usuario);
+
+                System.out.println("   👤 Usuario: admin");
+                System.out.println("   🔑 Contraseña: admin123");
+                System.out.println("   📌 Estado: APPROVED (aprobado automáticamente)");
 
                 System.out.println("Usuario administrador creado con rol ADMIN y " +
                         rolAdmin.getPermisoList().size() + " permisos");
+
             } else {
                 System.out.println("Usuario administrador ya existe");
             }
@@ -217,7 +284,54 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    /**
+     * Metod0 adicional: Verificar y corregir usuarios existentes
+     * Útil para migrar usuarios que ya existen en la base de datos
+     */
+    @Transactional
+    public void verificarYCorregirUsuariosExistentes() {
+        try {
+            List<Usuario> usuarios = usuarioServicio.listarUsuarios();
+            int corregidos = 0;
+
+            for (Usuario usuario : usuarios) {
+                boolean necesitaCorreccion = false;
+
+                // Verificar que todos los usuarios tengan un estado
+                if (usuario.getStatus() == null) {
+                    usuario.setStatus("PENDING");
+                    necesitaCorreccion = true;
+                }
+
+                // Verificar que todos tengan un authProvider
+                if (usuario.getAuthProvider() == null) {
+                    usuario.setAuthProvider("LOCAL");
+                    necesitaCorreccion = true;
+                }
+
+                // Verificar que el admin esté aprobado
+                if ("admin".equals(usuario.getNombreUsuario()) && !"APPROVED".equals(usuario.getStatus())) {
+                    usuario.setStatus("APPROVED");
+                    necesitaCorreccion = true;
+                }
+
+                if (necesitaCorreccion) {
+                    usuarioServicio.guardar(usuario);
+                    corregidos++;
+                }
+            }
+
+            if (corregidos > 0) {
+                System.out.println("🔄 " + corregidos + " usuarios corregidos/actualizados");
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Error verificando usuarios: " + e.getMessage());
+        }
+    }
+
 }
+
 
 
 

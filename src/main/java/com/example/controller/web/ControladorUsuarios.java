@@ -6,6 +6,7 @@ import com.example.domain.Usuario;
 import com.example.servicio.PersonaServicio;
 import com.example.servicio.RolServicio;
 import com.example.servicio.UsuarioServicio;
+import com.example.servicioWeb.EncryptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,9 @@ public class ControladorUsuarios {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EncryptionService encryptionService;
 
 
     /**
@@ -132,8 +136,12 @@ public class ControladorUsuarios {
             @RequestParam String cargo,
             @RequestParam String rolSeleccionado,
             @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
+            @RequestParam(value = "authProvider", defaultValue = "LOCAL") String authProvider,
+            @RequestParam(value = "refreshToken", required = false) String refreshToken,
             RedirectAttributes redirectAttributes) {
 
+        System.out.println("=== REGISTRO DE USUARIO ===");
+        System.out.println("Auth Provider: " + authProvider);
         System.out.println("Foto recibida: " + (fotoPerfil != null ? fotoPerfil.getOriginalFilename() : "null"));
         System.out.println("Tamaño: " + (fotoPerfil != null ? fotoPerfil.getSize() : "0"));
         System.out.println("Tipo: " + (fotoPerfil != null ? fotoPerfil.getContentType() : "null"));
@@ -151,6 +159,12 @@ public class ControladorUsuarios {
                     rolSeleccionado == null || rolSeleccionado.isEmpty()) {
 
                 redirectAttributes.addFlashAttribute("error", "Todos los campos son obligatorios");
+                return "redirect:/usuarios/registrar";
+            }
+
+            // Validar contraseña solo para registros LOCALES
+            if ("LOCAL".equals(authProvider) && (password == null || password.isEmpty())) {
+                redirectAttributes.addFlashAttribute("error", "La contraseña es obligatoria para registros locales");
                 return "redirect:/usuarios/registrar";
             }
 
@@ -204,12 +218,49 @@ public class ControladorUsuarios {
             // 3. CREAR EL NUEVO USUARIO
             Usuario usuario = new Usuario();
             usuario.setNombreUsuario(nombreUsuario);
-            usuario.setPass_usuario(passwordEncoder.encode(password));
+            //la contraseña se encripta y guarda más abajo
             usuario.setCargo(cargo);
             usuario.setPersona(persona);
             usuario.setRol(rol);
 
-            // 3. PROCESAR LA FOTO DE PERFIL (si se subió)
+
+            //Forzar estado inicial (sin aprobación)
+            usuario.setStatus("PENDING");
+
+            // Establecer el proveedor de autenticación
+            usuario.setAuthProvider(authProvider);
+
+            // Encriptación condicional según el proveedor
+            if ("LOCAL".equals(authProvider)) {
+                // Para usuarios locales: encriptar la contraseña
+                usuario.setPass_usuario(passwordEncoder.encode(password));
+                System.out.println("Usuario LOCAL con contraseña encriptada");
+            } else if ("GOOGLE".equals(authProvider) || "FACEBOOK".equals(authProvider)) {
+                // Para OAuth2: Generar una contraseña aleatoria para usuarios OAuth2
+                String randomPassword = java.util.UUID.randomUUID().toString();
+                usuario.setPass_usuario(passwordEncoder.encode(randomPassword));
+                System.out.println("Usuario OAuth2 con contraseña generada aleatoriamente");
+
+                // Encriptar el refresh token si existe
+                if (refreshToken != null && !refreshToken.isEmpty()) {
+                    try {
+                        // Encriptar el refresh token antes de guardarlo
+                        String encryptedRefreshToken = encryptionService.encrypt(refreshToken);
+                        usuario.setGoogleRefreshToken(encryptedRefreshToken);
+                        System.out.println("Refresh token encriptado guardado");
+                    } catch (Exception e) {
+                        System.err.println("Error al encriptar refresh token: " + e.getMessage());
+                        redirectAttributes.addFlashAttribute("error", "Error al procesar token de autenticación");
+                        return "redirect:/usuarios/registrar";
+                    }
+                }
+
+
+            }
+
+
+
+            // 4. PROCESAR LA FOTO DE PERFIL (si se subió)
             if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
                 // Validar tipo de archivo
                 String contentType = fotoPerfil.getContentType();
@@ -239,7 +290,16 @@ public class ControladorUsuarios {
                 usuarioServicio.guardar(usuario);
             }
 
-            redirectAttributes.addFlashAttribute("success", "Usuario registrado exitosamente");
+            // Mensaje de éxito según el tipo de registro
+            String mensajeExito;
+            if ("LOCAL".equals(authProvider)) {
+                mensajeExito = "¡Registro exitoso! Tu cuenta está a la espera de aprobación por un administrador.";
+            } else {
+                mensajeExito = "¡Registro con " + authProvider + " exitoso! Tu cuenta está a la espera de aprobación.";
+            }
+
+            redirectAttributes.addFlashAttribute("mensaje", mensajeExito);
+            redirectAttributes.addFlashAttribute("success", "Usuario registrado exitosamente. Pendiente de aprobación.");
             return "redirect:/usuarios?registroExitoso=true";
 
         } catch (Exception e) {
@@ -249,6 +309,221 @@ public class ControladorUsuarios {
             return "redirect:/usuarios/registrar";
         }
     }
+
+
+    /**
+     * Mostrar formulario de registro para usuarios de Google
+     */
+    @GetMapping("/registrar-google")
+    public String mostrarFormularioRegistroGoogle(Model model, RedirectAttributes redirectAttributes) {
+        try {
+            // Verificar si hay datos de Google en la sesión
+            if (!model.containsAttribute("googleData")) {
+                // Intentar recuperar de flash attributes
+                Object googleData = redirectAttributes.getFlashAttributes().get("googleData");
+                if (googleData != null) {
+                    model.addAttribute("googleData", googleData);
+                } else {
+                    // Si no hay datos, redirigir al login
+                    redirectAttributes.addFlashAttribute("error",
+                            "No se encontraron datos de autenticación. Por favor, intenta de nuevo.");
+                    return "redirect:/login";
+                }
+            }
+
+            // Obtener roles disponibles para el registro
+            List<Rol> roles = rolServicio.listarRoles();
+            model.addAttribute("roles", roles);
+
+            return "usuarios/registrarGoogle";
+
+        } catch (Exception e) {
+            System.err.println("Error al cargar formulario de registro Google: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al cargar el formulario");
+            return "redirect:/login";
+        }
+    }
+
+
+    /**
+     * Procesar registro de usuario desde Google (sin contraseña)
+     */
+    @PostMapping("/registrar-google")
+    public String registrarUsuarioGoogle(
+            @RequestParam String nombreUsuario,
+            @RequestParam String cargo,
+            @RequestParam String rolSeleccionado,
+            @RequestParam(required = false) String telefono,
+            @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
+            @ModelAttribute("googleData") ControladorOAuth2.GoogleUserData googleData,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            if (googleData == null) {
+                redirectAttributes.addFlashAttribute("error", "Datos de Google no encontrados");
+                return "redirect:/login";
+            }
+
+            // Validar campos
+            if (nombreUsuario == null || nombreUsuario.isEmpty() ||
+                    cargo == null || cargo.isEmpty() ||
+                    rolSeleccionado == null || rolSeleccionado.isEmpty()) {
+
+                redirectAttributes.addFlashAttribute("error", "Todos los campos son obligatorios");
+                redirectAttributes.addFlashAttribute("googleData", googleData);
+                return "redirect:/usuarios/registrar-google";
+            }
+
+            // Verificar si el nombre de usuario ya existe
+            Usuario usuarioExistente = usuarioServicio.encontrarPorNombreUsuario(nombreUsuario);
+            if (usuarioExistente != null) {
+                redirectAttributes.addFlashAttribute("error", "El nombre de usuario ya existe");
+                redirectAttributes.addFlashAttribute("googleData", googleData);
+                return "redirect:/usuarios/registrar-google";
+            }
+
+            // 1. CREAR PERSONA
+            Persona persona = new Persona();
+
+            // Verificar que los datos de Google no sean null
+            String nombre = googleData.givenName != null ? googleData.givenName : "";
+            if (nombre.isEmpty() && googleData.name != null) {
+                // Si givenName está vacío pero name tiene valor, intentar separar
+                String[] nameParts = googleData.name.split(" ");
+                nombre = nameParts.length > 0 ? nameParts[0] : googleData.name;
+            }
+
+            String apellido = googleData.familyName != null ? googleData.familyName : "";
+            if (apellido.isEmpty() && googleData.name != null && googleData.name.contains(" ")) {
+                String[] nameParts = googleData.name.split(" ");
+                if (nameParts.length > 1) {
+                    apellido = nameParts[nameParts.length - 1];
+                }
+            }
+
+            // Asignar valores por defecto como último recurso
+            persona.setNombre(nombre.isEmpty() ? "Usuario" : nombre);
+            persona.setApellido(apellido.isEmpty() ? "Google" : apellido);
+            persona.setTelefono(telefono != null && !telefono.isEmpty() ? telefono : "0000000000");
+            String email = googleData.email != null ? googleData.email : nombreUsuario + "@google.com";
+            persona.setCorreo(email);
+
+
+            personaServicio.salvar(persona);
+            System.out.println("Persona creada con ID: " + persona.getIdPersona());
+
+            // 2. BUSCAR ROL
+            Rol rol = rolServicio.listarRoles().stream()
+                    .filter(r -> r.getNombreRol().equalsIgnoreCase(rolSeleccionado))
+                    .findFirst()
+                    .orElse(null);
+
+            if (rol == null){
+                // Si no se encuentra, buscar rol por defecto
+                rol = rolServicio.listarRoles().stream()
+                        .filter(r -> "USER".equalsIgnoreCase(r.getNombreRol()) ||
+                                "OPERATIVO".equalsIgnoreCase(r.getNombreRol()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (rol == null && !rolServicio.listarRoles().isEmpty()) {
+                    rol = rolServicio.listarRoles().get(0);
+                }
+            }
+
+
+
+
+            // 3. CREAR USUARIO
+            Usuario usuario = new Usuario();
+            usuario.setNombreUsuario(nombreUsuario);
+            String randomPassword = java.util.UUID.randomUUID().toString();
+            usuario.setPass_usuario(passwordEncoder.encode(randomPassword)); // Contraseña al azar para OAuth2
+            usuario.setCargo(cargo);
+            usuario.setPersona(persona);
+            usuario.setRol(rol);
+            usuario.setStatus("PENDING");
+            usuario.setAuthProvider("GOOGLE");
+            usuario.setEmailVerified(googleData.emailVerified);
+
+            // Guardar refresh token encriptado
+            if (googleData.encryptedRefreshToken != null) {
+                usuario.setGoogleRefreshToken(googleData.encryptedRefreshToken);
+            }
+
+            // 4. PROCESAR FOTO (opcional)
+            if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+                String contentType = fotoPerfil.getContentType();
+                if (contentType.startsWith("image/") && fotoPerfil.getSize() <= 5 * 1024 * 1024) {
+                    usuario.setFotoPerfil(fotoPerfil.getBytes());
+                    usuario.setFotoTipo(contentType);
+                }
+            }
+
+            // Guardar usuario
+            usuarioServicio.guardar(usuario);
+
+            redirectAttributes.addFlashAttribute("success",
+                    "¡Registro completado! Tu cuenta está pendiente de aprobación por un administrador.");
+            return "redirect:/login?pending=true";
+
+        } catch (Exception e) {
+            System.err.println("Error al registrar usuario Google: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al registrar: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("googleData", googleData);
+            return "redirect:/usuarios/registrar-google";
+        }
+    }
+
+
+
+    /**
+     * Aprobar un usuario pendiente
+     */
+    @PostMapping("/aprobar/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_USUARIO') or hasRole('ADMIN')")
+    public String aprobarUsuario(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            usuarioServicio.aprobarUsuario(id);
+            redirectAttributes.addFlashAttribute("success", "Usuario aprobado exitosamente");
+        } catch (Exception e) {
+            System.err.println("Error al aprobar usuario: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al aprobar usuario: " + e.getMessage());
+        }
+        return "redirect:/usuarios";
+    }
+
+    /**
+     * Rechazar un usuario pendiente
+     */
+    @PostMapping("/rechazar/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_USUARIO') or hasRole('ADMIN')")
+    public String rechazarUsuario(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            Usuario usuario = usuarioServicio.encontrarPorId(id);
+            if (usuario != null) {
+                usuario.setStatus("REJECTED");
+                usuarioServicio.guardar(usuario);
+                redirectAttributes.addFlashAttribute("success", "Usuario rechazado");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al rechazar usuario: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al rechazar usuario: " + e.getMessage());
+        }
+        return "redirect:/usuarios";
+    }
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Eliminar usuario

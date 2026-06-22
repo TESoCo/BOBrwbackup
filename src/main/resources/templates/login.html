@@ -13,6 +13,96 @@
 </head>
 <body>
 
+<style>
+  /* Estilos para los mensajes de alerta */
+  .alert {
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .alert-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+  }
+
+  .alert-danger {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+  }
+
+  .alert-warning {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+  }
+
+  .alert i {
+    font-size: 18px;
+  }
+
+  /* Estilos para el separador y botón de Google */
+  .login-divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #666;
+  }
+
+  .login-divider::before,
+  .login-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .login-divider span {
+    padding: 0 15px;
+    font-size: 14px;
+    color: #999;
+  }
+
+  .google-login-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-top: 15px;
+    cursor: pointer;
+  }
+
+  .google-login-button:hover {
+    border-color: #4285f4;
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
+  }
+
+  .google-login-button i {
+    color: #4285f4;
+    font-size: 20px;
+  }
+
+  .google-login-button span {
+    color: #333;
+  }
+</style>
+
 <header>
   <nav class="menu">
     <div class="logo-container">
@@ -36,6 +126,36 @@
     <div class="login-header">
       <h2>Iniciar Sesión</h2>
       <p>Accede a tu cuenta para gestionar tus proyectos</p>
+    </div>
+
+    <!-- Mensaje de error general -->
+    <div th:if="${param.error}" class="alert alert-danger">
+      <i class="fas fa-exclamation-circle"></i>
+      <span th:if="${param.error[0] == 'true'}">Usuario o contraseña incorrectos</span>
+      <span th:unless="${param.error[0] == 'true'}" th:text="${param.error[0]}"></span>
+    </div>
+
+    <!-- Mensaje de éxito -->
+    <div th:if="${param.logout}" class="alert alert-success">
+      <i class="fas fa-check-circle"></i> Has cerrado sesión exitosamente
+    </div>
+
+    <!-- ===== NUEVO: Mensaje de cuenta pendiente ===== -->
+    <div th:if="${param.pending}" class="alert alert-warning">
+      <i class="fas fa-clock"></i>
+      <span>Tu cuenta está pendiente de aprobación. Un administrador revisará tu solicitud.</span>
+    </div>
+
+    <!-- ===== NUEVO: Mensaje de cuenta rechazada ===== -->
+    <div th:if="${param.rejected}" class="alert alert-danger">
+      <i class="fas fa-times-circle"></i>
+      <span>Tu cuenta ha sido rechazada. Contacta al administrador para más información.</span>
+    </div>
+
+    <!-- ===== NUEVO: Mensaje de cuenta aprobada ===== -->
+    <div th:if="${param.approved}" class="alert alert-success">
+      <i class="fas fa-check-circle"></i>
+      <span>Iniciando sesión...</span>
     </div>
 
     <form class="login-form" th:action="@{/login}" method="post">
@@ -65,6 +185,17 @@
       <button type="submit" class="login-button">Ingresar</button>
 
     </form>
+
+    <!-- ===== NUEVO: Separador y botón de Google ===== -->
+    <div class="login-divider">
+      <span>O</span>
+    </div>
+
+    <a th:href="@{/oauth2/login/google}" class="google-login-button">
+      <i class="fab fa-google"></i>
+      <span>Continuar con Google</span>
+    </a>
+
   </div>
 </main>
 

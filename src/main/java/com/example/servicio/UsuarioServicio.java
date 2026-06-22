@@ -13,4 +13,6 @@ public interface UsuarioServicio {
     public void eliminarUsuarioConValidaciones(Long idUsuario);
     public boolean tieneFoto(Long idUsuario);
     List <Usuario> listarUsuariosSinEquipo();
+    public void aprobarUsuario(Long idUsuario);
+    public String getAccessTokenForUser(Long userId) throws Exception;
 }

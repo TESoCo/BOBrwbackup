@@ -64,4 +64,21 @@ public class Usuario implements Serializable {
     @JsonBackReference("usuario-equipo")
     private Equipo equipo;
 
+    //NUEVAS COLUMNAS PARA REGISTRO DE USUARIOS CON GOOGLE
+
+    //Esta columna controla si el usuario ya ha sido autorizado para ingresar al sistema por un admin
+    @Column(name = "status")
+    private String status = "PENDING"; // Valores: PENDING, APPROVED, REJECTED
+
+    //Esta columna nos dice si el usuario fue creado con una cuenta de Google o si fue con el sistema manual
+    @Column(name = "auth_provider")
+    private String authProvider; // Valores: LOCAL, GOOGLE
+
+    //Esta columna es para guardar los tokens de seguridad que genera google para actuar en nombre del usuario (como en el sistema de envío de correos)
+    @Column(name = "google_refresh_token", columnDefinition = "TEXT")
+    private String googleRefreshToken; // Aquí guardaremos el token encriptado
+
+    @Column(name = "email_verified")
+    private Boolean emailVerified = false;
+
 }

@@ -17,19 +17,19 @@ public class Persona implements Serializable {
     @Column(name = "id_Persona")
     private Long idPersona;
 
-    @NotEmpty
-    @Column(name = "nombre")
+    @NotEmpty(message = "El nombre no puede estar vacío")
+    @Column(name = "nombre", nullable = false)
     private String nombre;
 
-    @NotEmpty
-    @Column(name = "apellido")
+    @NotEmpty(message = "El apellido no puede estar vacío")
+    @Column(name = "apellido", nullable = false)
     private String apellido;
 
-    @NotEmpty
-    @Column(name = "telefono")
+    @NotEmpty(message = "El teléfono no puede estar vacío")
+    @Column(name = "telefono", nullable = false)
     private String telefono;
 
-    @NotEmpty
-    @Column(name = "correo")
+    @NotEmpty(message = "El correo no puede estar vacío")
+    @Column(name = "correo", nullable = false, unique = true)
     private String correo;
 }

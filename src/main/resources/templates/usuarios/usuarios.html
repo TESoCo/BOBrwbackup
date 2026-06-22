@@ -231,6 +231,24 @@
                             </form>
                         </div>
                     </td>
+                    <!-- Agregar en la tabla de usuarios -->
+                    <td>
+                        <span th:if="${usuario.status == 'APPROVED'}" class="badge badge-success">Aprobado</span>
+                        <span th:if="${usuario.status == 'PENDING'}" class="badge badge-warning">Pendiente</span>
+                        <span th:if="${usuario.status == 'REJECTED'}" class="badge badge-danger">Rechazado</span>
+                    </td>
+                    <td>
+                        <div th:if="${usuario.status == 'PENDING'}">
+                            <form th:action="@{/usuarios/aprobar/{id}(id=${usuario.idUsuario})}" method="post" style="display:inline;">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-sm btn-success">Aprobar</button>
+                            </form>
+                            <form th:action="@{/usuarios/rechazar/{id}(id=${usuario.idUsuario})}" method="post" style="display:inline;">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-sm btn-danger">Rechazar</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
                 <tr th:if="${usuarios == null or usuarios.empty}">
                     <td colspan="6" class="no-data-message">
