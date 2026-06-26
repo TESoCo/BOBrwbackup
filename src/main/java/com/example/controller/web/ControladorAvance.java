@@ -15,16 +15,14 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -132,7 +130,8 @@ public class ControladorAvance
             @RequestParam(value = "photoBase64", required = false) String photoBase64,
             @RequestParam(value = "photoCooN", required = false) Double photoCooN,
             @RequestParam(value = "photoCooE", required = false) Double photoCooE,
-            @RequestParam(value = "photoFile", required = false) MultipartFile photoFile) {
+            @RequestParam(value = "photoFile", required = false) MultipartFile photoFile,
+            RedirectAttributes redirectAttributes) {
 
         try {
 
@@ -145,20 +144,73 @@ public class ControladorAvance
             System.out.println("   - PhotoFile: " + (photoFile != null && !photoFile.isEmpty() ? "SÍ (" + photoFile.getOriginalFilename() + ")" : "NO"));
             System.out.println("   - Coordenadas: N=" + photoCooN + ", E=" + photoCooE);
 
-            // Get the currently authenticated user
+            // Obtener usuario logueado
             org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String username = auth.getName();
-
             // Load the full user object from database
             Usuario usuarioLogeado = usuarioServicio.encontrarPorNombreUsuario(username) ;
-
-            // For now, let's just print it to verify it works
             System.out.println("Logged in username: " + username);
 
+            // Verificar etapa de la obra
+            Obra obra = obraServicio.localizarObra(idObra);
+            if (!Obra.ESTADO_EJECUCION.equals(obra.getEtapa())) {
+                redirectAttributes.addFlashAttribute("error",
+                        "Solo se pueden registrar avances en obras en etapa EJECUCIÓN. Etapa actual: " + obra.getEtapa());
+                return "redirect:/avances/agregarAvance";
+            }
 
+            // Verificar que la obra no esté anulada
+            if (obra.isAnular()) {
+                redirectAttributes.addFlashAttribute("error", "La obra está anulada");
+                return "redirect:/avances/agregarAvance";
+            }
 
+            // Verificar que la cantidad no sea negativa
+            if (cantidad <= 0) {
+                redirectAttributes.addFlashAttribute("error", "La cantidad debe ser mayor a cero");
+                return "redirect:/avances/agregarAvance";
+            }
+
+            // Verificar que la cantidad no exceda lo presupuestado
+            Obra presupuesto = obraServicio.obtenerPresupuestoDeObra(idObra);
+            if (presupuesto != null) {
+                ApusObra apusPresupuesto = presupuesto.getApusObraList().stream()
+                        .filter(ap -> ap.getApu().getIdAPU().equals(idApu))
+                        .findFirst()
+                        .orElse(null);
+
+                if (apusPresupuesto != null) {
+                    // Buscar cantidad actual ejecutada
+                    ApusObra apusEjecucion = obra.getApusObraList().stream()
+                            .filter(ap -> ap.getApu().getIdAPU().equals(idApu))
+                            .findFirst()
+                            .orElse(null);
+
+                    double ejecutadoActual = apusEjecucion != null && apusEjecucion.getCantidad() != null ?
+                            apusEjecucion.getCantidad() : 0.0;
+                    double nuevoTotal = ejecutadoActual + cantidad;
+
+                    if (nuevoTotal > apusPresupuesto.getCantidad()) {
+                        redirectAttributes.addFlashAttribute("error",
+                                String.format("La cantidad excede lo presupuestado. " +
+                                                "Presupuestado: %.2f, Ejecutado actual: %.2f, Nuevo total: %.2f",
+                                        apusPresupuesto.getCantidad(), ejecutadoActual, nuevoTotal));
+                        return "redirect:/avances/agregarAvance";
+                    }
+                } else {
+                    redirectAttributes.addFlashAttribute("error",
+                            "La actividad no está en el presupuesto de esta obra");
+                    return "redirect:/avances/agregarAvance";
+                }
+            } else {
+                redirectAttributes.addFlashAttribute("error",
+                        "No se encontró el presupuesto asociado a esta obra");
+                return "redirect:/avances/agregarAvance";
+            }
+
+            //Guardar el avance
             Avance avance = new Avance();
-            avance.setIdUsuario(usuarioLogeado );
+            avance.setIdUsuario(usuarioLogeado);
             avance.setIdObra(obraServicio.localizarObra(idObra));
             avance.setFechaAvance(LocalDate.parse(fecha));
             avance.setIdApu(apuServicio.obtenerPorId(idApu));
@@ -166,6 +218,27 @@ public class ControladorAvance
             avance.setAnular(false);
             avanceServicio.salvar(avance);
 
+
+            // ACTUALIZAR LA CANTIDAD EJECUTADA EN LA OBRA
+            // Buscar el ApusObra correspondiente en la obra en ejecución
+            ApusObra apusObra = obra.getApusObraList().stream()
+                    .filter(ap -> ap.getApu().getIdAPU().equals(idApu))
+                    .findFirst()
+                    .orElse(null);
+
+            if (apusObra != null) {
+                // Actualizar cantidad ejecutada sumando el nuevo avance
+                double nuevaCantidadEjecutada = (apusObra.getCantidad() != null ? apusObra.getCantidad() : 0.0) + cantidad;
+                apusObra.setCantidad(nuevaCantidadEjecutada);
+
+                // Guardar la relación actualizada
+                obraServicio.actualizar(obra);
+
+                System.out.println("Cantidad ejecutada actualizada para APU " + idApu +
+                        ": " + nuevaCantidadEjecutada);
+            } else {
+                System.err.println("❌ No se encontró ApusObra para APU " + idApu + " en la obra " + idObra);
+            }
 
 
             //PROCESAR FOTO SI SE PROPORCIONA
@@ -300,7 +373,7 @@ public class ControladorAvance
     }
 
     //funcionalidad para guardar cambios
-    @PostMapping("/actualizar")
+    @PostMapping("/actualizar/{idAvance}")
     public String actualizarAvance(
         @PathVariable Long idAvance,
         @ModelAttribute Avance avance,
@@ -506,6 +579,7 @@ public class ControladorAvance
 
     }
 
+    // Generar reporte de avances en excel apra correo electrónico
     @GetMapping("/excelCorreo")
     public byte[] generarReporteAvancesExcel(@RequestParam(required = false) Long idObraTexto,
                                              @RequestParam(required = false) Long idObraSelect,
@@ -635,6 +709,47 @@ public class ControladorAvance
             throw new RuntimeException("Error al generar reporte de avances con filtros: " + e.getMessage(), e);
         }
     }
+
+    //SISTEMA DE AVANCES PARA LAS OBRAS POR ETAPAS
+    // Endpoint para ver el progreso de una obra en ejecución
+    @GetMapping("/progreso/{idObra}")
+    @ResponseBody
+    public Map<String, Object> verProgreso(@PathVariable Long idObra) {
+        Map<String, Object> progreso = new HashMap<>();
+
+        Obra obra = obraServicio.localizarObra(idObra);
+        if (obra == null || !Obra.ESTADO_EJECUCION.equals(obra.getEtapa())) {
+            progreso.put("error", "La obra no está en etapa EJECUCIÓN");
+            return progreso;
+        }
+
+        Double porcentajeGlobal = obraServicio.calcularPorcentajeAvance(idObra);
+        progreso.put("porcentajeGlobal", porcentajeGlobal);
+        progreso.put("obra", obra);
+
+        // Detalle por APU
+        List<Map<String, Object>> detalles = new ArrayList<>();
+        Obra presupuesto = obraServicio.obtenerPresupuestoDeObra(idObra);
+
+        if (presupuesto != null) {
+            for (ApusObra apusEjecucion : obra.getApusObraList()) {
+                Map<String, Object> detalle = new HashMap<>();
+                detalle.put("apu", apusEjecucion.getApu().getNombreAPU());
+                detalle.put("ejecutado", apusEjecucion.getCantidad());
+                detalle.put("porcentaje", obraServicio.getPorcentajeAvance(apusEjecucion, presupuesto));
+                detalle.put("restante", obraServicio.getCantidadRestante(apusEjecucion, presupuesto));
+                detalles.add(detalle);
+            }
+        }
+        progreso.put("detalles", detalles);
+
+        return progreso;
+    }
+
+
+
+
+
 }
 
 

@@ -1,5 +1,7 @@
 package com.example.servicio;
 
+import com.example.domain.ApusObra;
+import com.example.domain.Obra;
 import com.example.domain.Proyecto;
 
 import java.util.List;
@@ -13,4 +15,8 @@ public interface ProyectoServicio {
     List<Proyecto> buscarPorEquipo(Long idEquipo);
     List<Proyecto> buscarProyectosSinEquipo();
     List<Proyecto> buscarProyectosConObras();
+
+
+
+
 }

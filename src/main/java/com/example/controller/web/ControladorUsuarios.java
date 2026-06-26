@@ -7,6 +7,7 @@ import com.example.servicio.PersonaServicio;
 import com.example.servicio.RolServicio;
 import com.example.servicio.UsuarioServicio;
 import com.example.servicioWeb.EncryptionService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -356,10 +357,15 @@ public class ControladorUsuarios {
             @RequestParam String rolSeleccionado,
             @RequestParam(required = false) String telefono,
             @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
-            @ModelAttribute("googleData") ControladorOAuth2.GoogleUserData googleData,
+            HttpSession session,
             RedirectAttributes redirectAttributes) {
 
+        ControladorOAuth2.GoogleUserData googleData = (ControladorOAuth2.GoogleUserData) session.getAttribute("googleData");
+
         try {
+
+
+
             if (googleData == null) {
                 redirectAttributes.addFlashAttribute("error", "Datos de Google no encontrados");
                 return "redirect:/login";
@@ -387,26 +393,105 @@ public class ControladorUsuarios {
             Persona persona = new Persona();
 
             // Verificar que los datos de Google no sean null
+            System.out.println("=== DATOS RECIBIDOS DE GOOGLE ===");
+            System.out.println("googleData.name: " + googleData.name);
+            System.out.println("googleData.givenName: " + googleData.givenName);
+            System.out.println("googleData.familyName: " + googleData.familyName);
+            System.out.println("googleData.email: " + googleData.email);
             String nombre = googleData.givenName != null ? googleData.givenName : "";
-            if (nombre.isEmpty() && googleData.name != null) {
-                // Si givenName está vacío pero name tiene valor, intentar separar
-                String[] nameParts = googleData.name.split(" ");
-                nombre = nameParts.length > 0 ? nameParts[0] : googleData.name;
-            }
 
-            String apellido = googleData.familyName != null ? googleData.familyName : "";
-            if (apellido.isEmpty() && googleData.name != null && googleData.name.contains(" ")) {
-                String[] nameParts = googleData.name.split(" ");
-                if (nameParts.length > 1) {
-                    apellido = nameParts[nameParts.length - 1];
+
+            String apellido = "";
+
+// PRIORIDAD 1: Usar name completo si está disponible
+            if (googleData.name != null && !googleData.name.trim().isEmpty()) {
+                System.out.println("Usando googleData.name: " + googleData.name);
+
+                // Intentar separar nombre y apellido
+                String fullName = googleData.name.trim();
+
+                // Manejar casos especiales: "Apellido, Nombre" o "Nombre Apellido"
+                if (fullName.contains(",")) {
+                    // Formato: "Apellido, Nombre"
+                    String[] parts = fullName.split("\\s*,\\s*");
+                    if (parts.length == 2) {
+                        apellido = parts[0].trim();
+                        nombre = parts[1].trim();
+                    }
+                } else {
+                    // Formato normal: "Nombre Apellido" o "Nombre Apellido1 Apellido2"
+                    String[] nameParts = fullName.split("\\s+");
+
+                    if (nameParts.length == 1) {
+                        // Solo un nombre
+                        nombre = nameParts[0];
+                        apellido = "";
+                    } else if (nameParts.length == 2) {
+                        // Nombre y apellido
+                        nombre = nameParts[0];
+                        apellido = nameParts[1];
+                    } else {
+                        // Múltiples nombres: primer es nombre, el resto es apellido
+                        nombre = nameParts[0];
+                        StringBuilder apellidoBuilder = new StringBuilder();
+                        for (int i = 1; i < nameParts.length; i++) {
+                            if (i > 1) apellidoBuilder.append(" ");
+                            apellidoBuilder.append(nameParts[i]);
+                        }
+                        apellido = apellidoBuilder.toString();
+                    }
                 }
             }
 
-            // Asignar valores por defecto como último recurso
-            persona.setNombre(nombre.isEmpty() ? "Usuario" : nombre);
-            persona.setApellido(apellido.isEmpty() ? "Google" : apellido);
+// PRIORIDAD 2: Si name no funcionó, usar givenName y familyName
+            if (nombre.isEmpty() && googleData.givenName != null && !googleData.givenName.trim().isEmpty()) {
+                System.out.println("Usando googleData.givenName: " + googleData.givenName);
+                nombre = googleData.givenName.trim();
+            }
+
+            if (apellido.isEmpty() && googleData.familyName != null && !googleData.familyName.trim().isEmpty()) {
+                System.out.println("Usando googleData.familyName: " + googleData.familyName);
+                apellido = googleData.familyName.trim();
+            }
+
+// PRIORIDAD 3: Si aún no tenemos nombre, intentar extraer del email
+            if (nombre.isEmpty() && googleData.email != null && !googleData.email.isEmpty()) {
+                System.out.println("Extrayendo nombre del email: " + googleData.email);
+                String emailPrefix = googleData.email.split("@")[0];
+                // Reemplazar puntos y guiones bajos por espacios
+                emailPrefix = emailPrefix.replaceAll("[._]", " ");
+                String[] emailParts = emailPrefix.trim().split("\\s+");
+                if (emailParts.length > 0) {
+                    nombre = emailParts[0];
+                    if (emailParts.length > 1 && apellido.isEmpty()) {
+                        StringBuilder apellidoBuilder = new StringBuilder();
+                        for (int i = 1; i < emailParts.length; i++) {
+                            if (i > 1) apellidoBuilder.append(" ");
+                            apellidoBuilder.append(emailParts[i]);
+                        }
+                        apellido = apellidoBuilder.toString();
+                    }
+                }
+            }
+
+// Si después de tod0 sigue vacío, asignar valores por defecto
+            if (nombre.isEmpty()) {
+                System.out.println("WARNING: No se pudo extraer nombre, usando valor por defecto");
+                nombre = "Usuario";
+            }
+            if (apellido.isEmpty()) {
+                System.out.println("WARNING: No se pudo extraer apellido, usando valor por defecto");
+                apellido = "Google";
+            }
+
+            System.out.println("=== RESULTADO FINAL ===");
+            System.out.println("Nombre asignado: " + nombre);
+            System.out.println("Apellido asignado: " + apellido);
+
+            persona.setNombre(nombre);
+            persona.setApellido(apellido);
             persona.setTelefono(telefono != null && !telefono.isEmpty() ? telefono : "0000000000");
-            String email = googleData.email != null ? googleData.email : nombreUsuario + "@google.com";
+            String email = googleData.email != null ? googleData.email : nombreUsuario;
             persona.setCorreo(email);
 
 

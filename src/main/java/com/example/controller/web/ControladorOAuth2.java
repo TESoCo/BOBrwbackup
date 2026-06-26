@@ -30,10 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -81,16 +78,24 @@ public class ControladorOAuth2 {
                     Collections.singletonList(
                             "https://www.googleapis.com/auth/userinfo.email " +
                                     "https://www.googleapis.com/auth/userinfo.profile " +
-                                    "openid")
+                                    "openid " + "https://www.googleapis.com/auth/gmail.send")
             ).build();
+
+            List<String> scopes = Arrays.asList(
+                    "https://www.googleapis.com/auth/userinfo.email",
+                    "https://www.googleapis.com/auth/userinfo.profile",
+                    "https://www.googleapis.com/auth/gmail.send"  // ← ESTE ES EL CLAVE
+            );
 
             String authorizationUrl = flow.newAuthorizationUrl()
                     .setRedirectUri(redirectUri)
                     .setResponseTypes(Collections.singleton("code"))
                     .setAccessType("offline")
                     .setApprovalPrompt("force")
+                    .setScopes(scopes)
                     .build();
 
+            System.out.println("URL de autorización: " + authorizationUrl);
             return new RedirectView(authorizationUrl);
 
         } catch (Exception e) {
@@ -120,9 +125,19 @@ public class ControladorOAuth2 {
             return "redirect:/login";
         }
 
+
         try {
             // 1. Intercambiar el código por un token de acceso
             GoogleTokenResponse tokenResponse = exchangeCodeForTokens(code);
+
+            System.out.println("=== TOKEN RESPONSE ===");
+            System.out.println("Access Token: " + tokenResponse.getAccessToken());
+            System.out.println("Refresh Token: " + tokenResponse.getRefreshToken());
+            System.out.println("Expires In: " + tokenResponse.getExpiresInSeconds());
+            System.out.println("Token Type: " + tokenResponse.getTokenType());
+
+
+
             String idTokenString = tokenResponse.getIdToken();
 
             // 2. Verificar el ID Token

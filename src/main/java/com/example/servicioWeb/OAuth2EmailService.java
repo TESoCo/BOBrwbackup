@@ -1,14 +1,15 @@
 package com.example.servicioWeb;
 
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.example.domain.Usuario;
+import com.example.servicio.UsuarioServicio;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
-import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
-import jakarta.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
@@ -27,155 +27,164 @@ public class OAuth2EmailService {
     private static final Logger logger = LoggerFactory.getLogger(OAuth2EmailService.class);
 
     @Autowired
-    private Gmail gmailService;
+    private UsuarioServicio usuarioServicio;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    @Autowired
+    private EncryptionService encryptionService;
+
+    @Value("${google.client.id}")
+    private String clientId;
+
+    @Value("${google.client.secret}")
+    private String clientSecret;
 
     @Value("${google.oauth.application.name}")
     private String applicationName;
 
-    /**
-     * Envía un correo simple sin adjuntos usando OAuth2
-     */
-    public boolean sendSimpleEmail(String to, String subject, String text) {
-        try {
-            MimeMessage mimeMessage = createMimeMessage(to, subject, text, null, null);
-            sendMessage(mimeMessage);
-            logger.info("Correo enviado exitosamente a: {}", to);
-            return true;
-        } catch (Exception e) {
-            logger.error("Error enviando correo a {}: {}", to, e.getMessage(), e);
-            return false;
-        }
-    }
+    @Value("${spring.mail.username}")
+    private String systemEmail;
 
     /**
-     * Envía un correo con archivo adjunto usando OAuth2
+     * Envía correo desde la cuenta del usuario (OAuth2 Gmail API)
      */
-    public boolean sendEmailWithAttachment(String to, String subject, String text,
-                                           byte[] attachment, String attachmentName) {
-        try {
-            MimeMessage mimeMessage = createMimeMessage(to, subject, text, attachment, attachmentName);
-            sendMessage(mimeMessage);
-            logger.info("Correo con adjunto enviado exitosamente a: {}", to);
-            return true;
-        } catch (Exception e) {
-            logger.error("Error enviando correo con adjunto a {}: {}", to, e.getMessage(), e);
-            return false;
-        }
-    }
+    public EmailResult sendMassEmailWithAttachment(
+            List<String> recipients,
+            String subject,
+            String content,
+            byte[] attachment,
+            String attachmentName,
+            String username) {
 
-    /**
-     * Envío masivo con adjuntos
-     */
-    public EmailResult sendMassEmailWithAttachment(List<String> recipients, String subject,
-                                                   String content, byte[] attachment,
-                                                   String attachmentName) {
         EmailResult result = new EmailResult();
 
-        for (String recipient : recipients) {
-            if (sendEmailWithAttachment(recipient, subject, content, attachment, attachmentName)) {
-                result.incrementSuccess();
-            } else {
+        try {
+            // Obtener usuario y su refresh token
+            Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+            if (usuario == null || usuario.getGoogleRefreshToken() == null) {
+                logger.error("Usuario {} no tiene refresh token OAuth2", username);
+                for (String recipient : recipients) {
+                    result.incrementFailed();
+                    result.addFailedEmail(recipient);
+                }
+                return result;
+            }
+
+            // Crear Gmail service para este usuario
+            Gmail gmailService = crearGmailService(usuario);
+
+            // Enviar a cada destinatario
+            for (String recipient : recipients) {
+                try {
+                    MimeMessage mimeMessage = crearMimeMessage(
+                            usuario.getNombreUsuario(),
+                            recipient,
+                            subject,
+                            content,
+                            attachment,
+                            attachmentName
+                    );
+                    enviarMensaje(mimeMessage, gmailService);
+                    result.incrementSuccess();
+                    logger.info("Correo enviado a {} desde cuenta de {}", recipient, username);
+                } catch (Exception e) {
+                    logger.error("Error enviando a {}: {}", recipient, e.getMessage());
+                    result.incrementFailed();
+                    result.addFailedEmail(recipient);
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error("Error general: {}", e.getMessage());
+            for (String recipient : recipients) {
                 result.incrementFailed();
                 result.addFailedEmail(recipient);
             }
         }
 
-        logger.info("Resultado envío masivo con adjuntos: {} exitosos, {} fallidos",
-                result.getSuccessCount(), result.getFailedCount());
         return result;
     }
 
     /**
-     * Envío masivo sin adjuntos
+     * Crea un Gmail service usando el refresh token del usuario
      */
-    public EmailResult sendMassEmail(List<String> recipients, String subject, String content) {
-        EmailResult result = new EmailResult();
+    private Gmail crearGmailService(Usuario usuario) throws Exception {
+        String refreshToken = encryptionService.decrypt(usuario.getGoogleRefreshToken());
 
-        for (String recipient : recipients) {
-            if (sendSimpleEmail(recipient, subject, content)) {
-                result.incrementSuccess();
-            } else {
-                result.incrementFailed();
-                result.addFailedEmail(recipient);
-            }
-        }
+        Credential credential = new GoogleCredential.Builder()
+                .setTransport(new NetHttpTransport())
+                .setJsonFactory(JacksonFactory.getDefaultInstance())
+                .setClientSecrets(clientId, clientSecret)
+                .build()
+                .setRefreshToken(refreshToken);
 
-        logger.info("Resultado envío masivo: {} exitosos, {} fallidos",
-                result.getSuccessCount(), result.getFailedCount());
-        return result;
+        credential.refreshToken();
+
+        return new Gmail.Builder(
+                new NetHttpTransport(),
+                JacksonFactory.getDefaultInstance(),
+                credential)
+                .setApplicationName(applicationName)
+                .build();
     }
 
     /**
-     * Crea un MimeMessage para Gmail
+     * Crea un MimeMessage
      */
-    private MimeMessage createMimeMessage(String to, String subject, String text,
-                                          byte[] attachment, String attachmentName) throws MessagingException {
+    private MimeMessage crearMimeMessage(
+            String fromEmail,
+            String toEmail,
+            String subject,
+            String text,
+            byte[] attachment,
+            String attachmentName) throws jakarta.mail.MessagingException {
+
         Properties props = new Properties();
         Session session = Session.getInstance(props, null);
+        MimeMessage message = new MimeMessage(session);
 
-        MimeMessage mimeMessage = new MimeMessage(session);
+        message.setFrom(new jakarta.mail.internet.InternetAddress(fromEmail));
+        message.addRecipient(jakarta.mail.Message.RecipientType.TO, new jakarta.mail.internet.InternetAddress(toEmail));
+        message.setSubject(subject);
 
-        // Configurar destinatarios y remitente
-        mimeMessage.setFrom(new InternetAddress(fromEmail));
-        mimeMessage.addRecipient(jakarta.mail.Message.RecipientType.TO, new InternetAddress(to));
-        mimeMessage.setSubject(subject);
-
-        // Crear el cuerpo del mensaje
-        MimeMultipart multipart = new MimeMultipart();
+        jakarta.mail.internet.MimeMultipart multipart = new jakarta.mail.internet.MimeMultipart();
 
         // Cuerpo del mensaje
-        MimeBodyPart bodyPart = new MimeBodyPart();
+        jakarta.mail.internet.MimeBodyPart bodyPart = new jakarta.mail.internet.MimeBodyPart();
         bodyPart.setText(text);
         multipart.addBodyPart(bodyPart);
 
-        // Adjuntar archivo si existe
+        // Adjunto
         if (attachment != null && attachmentName != null) {
-            MimeBodyPart attachmentPart = new MimeBodyPart();
+            jakarta.mail.internet.MimeBodyPart attachmentPart = new jakarta.mail.internet.MimeBodyPart();
             attachmentPart.setFileName(attachmentName);
             attachmentPart.setContent(attachment, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             multipart.addBodyPart(attachmentPart);
         }
 
-        mimeMessage.setContent(multipart);
-        return mimeMessage;
+        message.setContent(multipart);
+        return message;
     }
 
     /**
-     * Envía el mensaje usando la API de Gmail
+     * Envía mensaje usando Gmail API
      */
-    private void sendMessage(MimeMessage mimeMessage) throws IOException, MessagingException {
+    private void enviarMensaje(MimeMessage mimeMessage, Gmail gmailService) throws Exception {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         mimeMessage.writeTo(buffer);
-
         byte[] bytes = buffer.toByteArray();
         String encodedEmail = Base64.getUrlEncoder().encodeToString(bytes);
 
         Message message = new Message();
         message.setRaw(encodedEmail);
 
-        try {
-            // Enviar usando Gmail API
-            gmailService.users().messages().send("me", message).execute();
-        } catch (GoogleJsonResponseException e) {
-            logger.error("Error de Gmail API: {}", e.getDetails());
-            throw new IOException("Error al enviar correo: " + e.getMessage(), e);
-        }
+        gmailService.users().messages().send("me", message).execute();
     }
 
-    // Clase EmailResult (manteniendo la misma estructura)
+    // EmailResult inner class
     public static class EmailResult {
-        private int successCount;
-        private int failedCount;
-        private List<String> failedEmails;
-
-        public EmailResult() {
-            this.successCount = 0;
-            this.failedCount = 0;
-            this.failedEmails = new java.util.ArrayList<>();
-        }
+        private int successCount = 0;
+        private int failedCount = 0;
+        private List<String> failedEmails = new java.util.ArrayList<>();
 
         public void incrementSuccess() { successCount++; }
         public void incrementFailed() { failedCount++; }

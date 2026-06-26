@@ -24,6 +24,10 @@ public class Equipo {
     @Column(name = "desc_Equipo")
     private String descEquipo;
 
+    @ManyToOne
+    @JoinColumn(name = "id_Usuario_Creador")
+    private Usuario creador;
+
     // Agregar relación inversa con Usuario
     @OneToMany(mappedBy = "equipo")
     @JsonManagedReference("usuario-equipo")
