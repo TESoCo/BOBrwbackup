@@ -1,10 +1,7 @@
 package com.example.controller.web;
 
 import com.example.domain.*;
-import com.example.servicio.APUServicio;
-import com.example.servicio.ObraServicio;
-import com.example.servicio.ProyectoServicio;
-import com.example.servicio.UsuarioServicio;
+import com.example.servicio.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -37,6 +34,9 @@ public class ControladorObras
     @Autowired
     private UsuarioServicio usuarioServicio;
 
+    @Autowired
+    private EquipoServicio equipoServicio;
+
 
     //Acá están los métodos para presupuestos
     @GetMapping("/inicioObra")
@@ -45,6 +45,7 @@ public class ControladorObras
         model.addAttribute("obras",obras);
         model.addAttribute("proyectos", proyectoServicio.listarProyectos());
         model.addAttribute("obrasSinProyecto", obraServicio.findByProyectoIsNull());
+        model.addAttribute("equipos", equipoServicio.listarEquipos());
 
         //FILTRAR OBRAS CON COORDENADAS PARA EL MAPA
         // Filtrar obras que tengan coordenadas (opcional)
@@ -56,20 +57,100 @@ public class ControladorObras
         //model.addAttribute("fotoDatos", new ArrayList<>()); // o tu lista real de fotos
         // TODO: conexion con fotodato
 
+
+        /// ////////////////////////////////////////////////////////////////////
+        //FILTROS PARA CONTROL DE ACCESOS POR EQUIPOS
+
+        Usuario usuarioActual = usuarioServicio.encontrarPorNombreUsuario(authentication.getName());
+
+
+        // VERIFICAR SI EL USUARIO TIENE EQUIPO
+        if (usuarioActual.getEquipo() == null) {
+            // Si es ADMIN, permitir acceso con mensaje informativo
+            if (usuarioActual.getRol() != null && "ADMIN".equals(usuarioActual.getRol().getNombreRol())) {
+                model.addAttribute("esAdminSinEquipo", true);
+                model.addAttribute("mensajeInfo", "⚠️ Usted es ADMIN pero no tiene equipo asignado. Puede ver todas las obras pero no crear nuevas hasta que se le asigne un equipo.");
+            } else {
+                // Usuario normal sin equipo - redirigir a página de error
+                return "obras/sinEquipoError";
+            }
+        }
+
+        // Obtener obras según permisos
+        List<Obra> obrasVisibles = obraServicio.obtenerObrasVisibles(usuarioActual);
+        model.addAttribute("obras", obrasVisibles);
+
+        // Proyectos y obras para la vista agrupada
+        List<Proyecto> proyectos = new ArrayList<>();
+        if (usuarioActual.getRol() != null && "ADMIN".equals(usuarioActual.getRol().getNombreRol())) {
+            proyectos = proyectoServicio.listarProyectos();
+        } else {
+            // Usuario normal: proyectos de su equipo
+            if (usuarioActual.getEquipo() != null) {
+                proyectos = proyectoServicio.buscarPorEquipo(usuarioActual.getEquipo().getIdEquipo());
+            } else {
+                proyectos = new ArrayList<>();
+            }
+        }
+        model.addAttribute("proyectos", proyectos);
+
+        // Obras sin proyecto (solo las visibles)
+        model.addAttribute("obrasSinProyecto", obrasVisibles.stream()
+                .filter(o -> o.getProyecto() == null)
+                .collect(Collectors.toList()));
+
+        // Verificar si puede crear obra
+        boolean puedeCrear = obraServicio.puedeCrearObra(usuarioActual);
+        model.addAttribute("puedeCrearObra", puedeCrear);
+
+        // Mensaje si no puede crear
+        if (!puedeCrear) {
+            model.addAttribute("mensajeInfo", "Contacte a un administrador para poder crear obras.");
+        }
+
+
+
         return "obras/inicioObra";
     }
 
 
 
+
+
     //Agregar nuevo presupuesto
     @GetMapping("/agregarObra")
-    public String formAnexarPresupuesto(Model model){
+    public String formAnexarPresupuesto(Model model, Authentication authentication){
+
+        Usuario usuarioActual = usuarioServicio.encontrarPorNombreUsuario(authentication.getName());
+
+        // Verificar que puede crear obra
+        if (!obraServicio.puedeCrearObra(usuarioActual)) {
+            return "redirect:/obras/inicioObra?error=sinEquipo";
+        }
+
+        // Proyectos disponibles para el usuario
+        List<Proyecto> proyectosDisponibles = obraServicio.obtenerProyectosDisponibles(usuarioActual);
+
+        // Si el usuario es ADMIN pero no tiene equipo, mostrar mensaje
+        if (usuarioActual.getRol() != null && "ADMIN".equals(usuarioActual.getRol().getNombreRol())
+                && usuarioActual.getEquipo() == null) {
+            model.addAttribute("mensajeInfo", "⚠️ Como ADMIN sin equipo, solo puede ver proyectos. Para crear obras debe tener un equipo asignado.");
+            model.addAttribute("proyectos", new ArrayList<>());
+        } else {
+            model.addAttribute("proyectos", proyectosDisponibles);
+        }
+
         model.addAttribute("obra", new Obra());
         model.addAttribute("APUs", APUServicio.listarElementos());
-        model.addAttribute("proyectos", proyectoServicio.listarProyectos());
+        model.addAttribute("proyectos", proyectosDisponibles);
 
         return "obras/agregarObra";
     }
+
+
+
+
+
 
     //Funciónes de guardado y flujo
     // Crear obra en PRESUPUESTO
@@ -88,6 +169,15 @@ public class ControladorObras
             Authentication authentication) {
 
         try {
+
+
+
+            // Validar que el proyecto es obligatorio
+            if (idProyecto == null) {
+                redirectAttributes.addFlashAttribute("error", "El proyecto es obligatorio. Seleccione un proyecto.");
+                return "redirect:/obras/agregarObra";
+            }
+
             // Validar que la etapa sea PRESUPUESTO
             if (!Obra.ESTADO_PRESUPUESTO.equals(etapa)) {
                 redirectAttributes.addFlashAttribute("error",
@@ -115,7 +205,7 @@ public class ControladorObras
             // Crear obra en PRESUPUESTO usando el nuevo métod0 de servicio
             Obra obraPresupuesto = obraServicio.crearObraPresupuesto(
                     nombreObra, fechaIni, fechaFin, cooNObra, cooEObra,
-                    actividadesCantidades, idProyecto);
+                    actividadesCantidades, idProyecto, usuario);
 
             // Asignar usuario
             obraPresupuesto.setIdUsuario(usuario);

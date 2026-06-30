@@ -148,11 +148,13 @@ public class ControladorOAuth2 {
             String name = (String) payload.get("name");
             String familyName = (String) payload.get("family_name");
             String givenName = (String) payload.get("given_name");
+            String picture = (String) payload.get("picture");
             Boolean emailVerified = payload.getEmailVerified();
 
             System.out.println("=== LOGIN CON GOOGLE ===");
             System.out.println("Email: " + email);
             System.out.println("Name: " + name);
+            System.out.println("Picture: " + picture);
             System.out.println("Email Verified: " + emailVerified);
 
             // 2a. Verificar que el usuario esté verificado en google.
@@ -232,7 +234,8 @@ public class ControladorOAuth2 {
                 GoogleUserData googleData = new GoogleUserData(
                         email, name, givenName, familyName,
                         emailVerified, encryptedRefreshToken,
-                        tokenResponse.getAccessToken()
+                        tokenResponse.getAccessToken(),
+                        picture
                 );
 
                 redirectAttributes.addFlashAttribute("googleData", googleData);
@@ -351,9 +354,15 @@ public class ControladorOAuth2 {
         public Boolean emailVerified;
         public String encryptedRefreshToken;
         public String accessToken;
+        public String picture;
+
+        // CONSTRUCTOR VACÍO (necesario para new GoogleUserData())
+        public GoogleUserData() {
+            // Constructor vacío para crear instancias sin parámetros
+        }
 
         public GoogleUserData(String email, String name, String givenName, String familyName,
-                              Boolean emailVerified, String encryptedRefreshToken, String accessToken) {
+                              Boolean emailVerified, String encryptedRefreshToken, String accessToken, String picture) {
             this.email = email;
             this.name = name;
             this.givenName = givenName;
@@ -361,6 +370,7 @@ public class ControladorOAuth2 {
             this.emailVerified = emailVerified;
             this.encryptedRefreshToken = encryptedRefreshToken;
             this.accessToken = accessToken;
+            this.picture = picture;
         }
     }
 }

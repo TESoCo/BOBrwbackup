@@ -1,9 +1,6 @@
 package com.example.servicio;
 
-import com.example.domain.Apu;
-import com.example.domain.ApusObra;
-import com.example.domain.Obra;
-import com.example.domain.Proyecto;
+import com.example.domain.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -60,7 +57,7 @@ public interface ObraServicio {
     Obra crearObraPresupuesto(String nombreObra, LocalDate fechaIni, LocalDate fechaFin,
                               Double cooNObra, Double cooEObra,
                               Map<Long, Double> actividadesCantidades,
-                              Long idProyecto);
+                              Long idProyecto, Usuario usuarioCreador) ;
 
     // 2. Avanzar de PRESUPUESTO a EJECUCIÓN
     Obra avanzarAEjecucion(Long idObraPresupuesto, LocalDate fechaInicioReal);
@@ -90,5 +87,13 @@ public interface ObraServicio {
     Obra findObraByIdentificadorAndEtapa(String identificadorUnico, String etapa);
 
 
+    //ACCESO POR EQUIPOS
+    // OBTENER OBRAS VISIBLES PARA EL USUARIO
+    public List<Obra> obtenerObrasVisibles(Usuario usuario);
 
+    public boolean puedeCrearObra(Usuario usuario);
+
+    public boolean proyectoPerteneceAlEquipoDeUsuario(Usuario usuario, Long idProyecto);
+
+    public List<Proyecto> obtenerProyectosDisponibles(Usuario usuario);
 }

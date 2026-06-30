@@ -12,4 +12,5 @@ public interface EquipoServicio {
     List<Equipo> buscarPorDescripcion(String descripcion);
     List<Equipo> buscarEquiposSinUsuarios();
     List<Equipo> buscarEquiposSinProyectos();
+
 }

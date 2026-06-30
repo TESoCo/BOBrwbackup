@@ -1,10 +1,7 @@
 package com.example.servicio;
 
 import com.example.dao.*;
-import com.example.domain.Apu;
-import com.example.domain.ApusObra;
-import com.example.domain.Obra;
-import com.example.domain.Proyecto;
+import com.example.domain.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +32,14 @@ public class ObraServicioImp implements ObraServicio {
     @Autowired
     private APUServicio apuServicio;
 
+    @Autowired
+    private ProyectoServicio proyectoServicio;
+
+    @Autowired
+    private UsuarioServicio usuarioServicio;
+
+    @Autowired
+    private EquipoServicio equipoServicio;
 
 
     @Override
@@ -270,12 +275,36 @@ public class ObraServicioImp implements ObraServicio {
 
 // ========== NUEVOS MÉTODOS PARA EL FLUJO DE ETAPAS ==========
 
+    // CREAR OBRA CON VALIDACIONES
     @Override
     @Transactional
     public Obra crearObraPresupuesto(String nombreObra, LocalDate fechaIni, LocalDate fechaFin,
                                      Double cooNObra, Double cooEObra,
                                      Map<Long, Double> actividadesCantidades,
-                                     Long idProyecto) {
+                                     Long idProyecto, Usuario usuarioCreador) {
+
+        // 1. Validar que el usuario puede crear obras
+        if (!puedeCrearObra(usuarioCreador)) {
+            throw new RuntimeException("El usuario no tiene un equipo asignado. No puede crear obras.");
+        }
+
+        // 2. Validar que el proyecto es obligatorio
+        if (idProyecto == null) {
+            throw new RuntimeException("El proyecto es obligatorio para registrar una obra.");
+        }
+
+        // 3. Validar que el proyecto existe
+        Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
+        if (proyecto == null) {
+            throw new RuntimeException("El proyecto seleccionado no existe.");
+        }
+
+        // 4. Si no es ADMIN, validar que el proyecto pertenece a su equipo
+        if (usuarioCreador.getRol() == null || !"ADMIN".equals(usuarioCreador.getRol().getNombreRol())) {
+            if (!proyectoPerteneceAlEquipoDeUsuario(usuarioCreador, idProyecto)) {
+                throw new RuntimeException("El proyecto seleccionado no pertenece a su equipo.");
+            }
+        }
 
         // Validar nombre único
         List<Obra> obrasExistentes = obraDao.findByNombreObra(nombreObra);
@@ -296,14 +325,8 @@ public class ObraServicioImp implements ObraServicio {
         obraPresupuesto.setCooNObra(cooNObra);
         obraPresupuesto.setCooEObra(cooEObra);
         obraPresupuesto.setAnular(false);
-
-        // Asignar proyecto
-        if (idProyecto != null) {
-            Proyecto proyecto = proyectoDao.findById(idProyecto).get();
-            if (proyecto != null) {
-                obraPresupuesto.setProyecto(proyecto);
-            }
-        }
+        obraPresupuesto.setIdUsuario(usuarioCreador);
+        obraPresupuesto.setProyecto(proyecto);
 
         // Guardar obra
         obraDao.save(obraPresupuesto);
@@ -626,6 +649,106 @@ public class ObraServicioImp implements ObraServicio {
     public Obra findObraByIdentificadorAndEtapa(String identificadorUnico, String etapa) {
         return obraDao.findByIdentificadorUnicoAndEtapa(identificadorUnico, etapa);
     }
+
+
+    //ACCESO POR EQUIPOS
+    // OBTENER OBRAS VISIBLES PARA EL USUARIO
+    @Override
+    @Transactional(readOnly = true)
+    public List<Obra> obtenerObrasVisibles(Usuario usuario) {
+        if (usuario == null) {
+            return new ArrayList<>();
+        }
+
+        // Si es ADMIN, ver todas las obras
+        if (usuario.getRol() != null && "ADMIN".equals(usuario.getRol().getNombreRol())) {
+            return obtenerObrasParaAdmin(usuario);
+        }
+
+        // Usuarios normales: solo obras de proyectos de su equipo + obras propias
+        List<Obra> obrasVisibles = new ArrayList<>();
+
+        // Obras propias
+        obrasVisibles.addAll(obraDao.findByIdUsuario_IdUsuario(usuario.getIdUsuario()));
+
+        // Obras de proyectos de su equipo
+        if (usuario.getEquipo() != null) {
+            List<Proyecto> proyectosDelEquipo = proyectoServicio.buscarPorEquipo(usuario.getEquipo().getIdEquipo());
+            for (Proyecto proyecto : proyectosDelEquipo) {
+                obrasVisibles.addAll(obraDao.findByProyecto_IdProyecto(proyecto.getIdProyecto()));
+            }
+        }
+
+        return obrasVisibles.stream().distinct().collect(Collectors.toList());
+    }
+
+    private List<Obra> obtenerObrasParaAdmin(Usuario admin) {
+        // Admin ve obras de equipos que creó
+
+        List<Obra> obras = new ArrayList<>();
+
+        // Obras propias del admin
+        obras.addAll(obraDao.findByIdUsuario(admin));
+
+
+        return obras.stream().distinct().collect(Collectors.toList());
+    }
+
+    // VERIFICAR SI USUARIO PUEDE CREAR OBRA
+    @Override
+    @Transactional(readOnly = true)
+    public boolean puedeCrearObra(Usuario usuario) {
+        if (usuario == null) return false;
+
+        // Admin siempre puede crear
+        if (usuario.getRol() != null && "ADMIN".equals(usuario.getRol().getNombreRol())) {
+            return true;
+        }
+
+        // Usuario normal necesita tener equipo
+        return usuario.getEquipo() != null;
+    }
+
+    // VERIFICAR SI PROYECTO PERTENECE AL EQUIPO DEL USUARIO
+    @Override
+    @Transactional(readOnly = true)
+    public boolean proyectoPerteneceAlEquipoDeUsuario(Usuario usuario, Long idProyecto) {
+        if (usuario == null || usuario.getEquipo() == null) {
+            return false;
+        }
+
+        Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
+        if (proyecto == null) {
+            return false;
+        }
+
+        return proyecto.getEquipo() != null &&
+                proyecto.getEquipo().getIdEquipo().equals(usuario.getEquipo().getIdEquipo());
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Proyecto> obtenerProyectosDisponibles(Usuario usuario) {
+
+        if (usuario == null) {
+            return new ArrayList<>();
+        }
+
+        // ADMIN: Ver TODOS los proyectos
+        if (usuario.getRol() != null && "ADMIN".equals(usuario.getRol().getNombreRol())) {
+            return proyectoServicio.listarProyectos();
+        }
+
+        // Usuario normal: solo proyectos de su equipo
+        if (usuario.getEquipo() != null) {
+            return proyectoServicio.buscarPorEquipo(usuario.getEquipo().getIdEquipo());
+        }
+
+        return new ArrayList<>();
+    }
+
+
 }
 
 

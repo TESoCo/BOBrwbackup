@@ -152,6 +152,55 @@ public class UsuarioServicioImpl implements UsuarioServicio {
 
 
 
+    /**
+     *  Encontrar usuario por correo
+     */
+    @Override
+    @Transactional
+    public List<Usuario> encontrarPorCorreo(String correo){
+
+        return usuarioDao.findByPersona_Correo(correo);
+    }
+
+
+
+    /**
+     * Métod0 auxiliar para descargar imagen desde URL
+     */
+    public byte[] downloadImageFromUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return null;
+        }
+
+        try {
+            System.out.println("📥 Descargando imagen de: " + imageUrl);
+            java.net.URL url = new java.net.URL(imageUrl);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            if (conn.getResponseCode() == 200) {
+                try (java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                     java.io.InputStream is = conn.getInputStream()) {
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = is.read(buffer)) != -1) {
+                        baos.write(buffer, 0, bytesRead);
+                    }
+                    byte[] result = baos.toByteArray();
+                    System.out.println("Imagen descargada: " + result.length + " bytes");
+                    return result;
+                }
+            } else {
+                System.err.println("Error al descargar imagen, código: " + conn.getResponseCode());
+            }
+        } catch (Exception e) {
+            System.err.println(" Error descargando imagen de Google: " + e.getMessage());
+        }
+        return null;
+    }
+
 
 
 }

@@ -127,18 +127,18 @@
             <form th:action="@{/obras/salvarPresupuesto}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-                <!-- Proyecto (Opcional) -->
+                <!-- Proyecto  -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="idProyecto" class="form-label">Proyecto (opcional)</label>
-                        <select id="idProyecto" name="idProyecto" class="form-select">
+                        <label for="idProyecto" class="form-label">Proyecto </label>
+                        <select id="idProyecto" name="idProyecto" class="form-select" required>
                             <option value="">Sin proyecto</option>
                             <option th:each="proyecto : ${proyectos}"
                                     th:value="${proyecto.idProyecto}"
                                     th:text="${proyecto.descProyecto}">
                             </option>
                         </select>
-                        <small class="text-muted">Asociar a un proyecto para agrupar las etapas</small>
+                        <small class="text-muted">Asociar a un proyecto para agrupar las etapas. El proyecto es obligatorio y debe pertenecer a su equipo</small>
                     </div>
                 </div>
 

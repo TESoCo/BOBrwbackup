@@ -1,6 +1,8 @@
 package com.example.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -8,6 +10,8 @@ import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -36,12 +40,15 @@ public class Usuario implements Serializable {
     @Column(name = "cargo")
     private String cargo;
 
+
+
     @Lob // Anotación importante para BLOB
     @Column(name = "foto_Perfil", columnDefinition = "LONGBLOB")
     private byte[] fotoPerfil;
 
     @Column(name = "foto_tipo")
     private String fotoTipo;
+
 
     // RELACIÓN CON rol: ManyToOne (un usuario tiene un rol)
     //Relacion muchos a uno con rol, un rol puede ser asignado a varios usuarios
@@ -62,7 +69,12 @@ public class Usuario implements Serializable {
     @ManyToOne
     @JoinColumn(name = "id_Equipo", referencedColumnName = "id_Equipo")
     @JsonBackReference("usuario-equipo")
+    @ToString.Exclude
     private Equipo equipo;
+
+
+
+
 
     //NUEVAS COLUMNAS PARA REGISTRO DE USUARIOS CON GOOGLE
 
@@ -80,5 +92,6 @@ public class Usuario implements Serializable {
 
     @Column(name = "email_verified")
     private Boolean emailVerified = false;
+
 
 }

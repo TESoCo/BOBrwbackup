@@ -35,8 +35,10 @@ public class Obra implements Serializable {
     @Column(name = "identificador_unico_obra", nullable = false, length = 36)
     private String identificadorUnico; // UUID que agrupa las 3 etapas
 
-    @ManyToOne //un usuario puede crear muchas obras
-    @JoinColumn(name = "id_Usuario")
+    @ManyToOne(fetch = FetchType.LAZY) //un usuario puede crear muchas obras
+    @JoinColumn(name = "id_Usuario", referencedColumnName = "id_Usuario")
+    @JsonBackReference("usuario-obras")  // ← HIJO: NO se serializa
+    @ToString.Exclude
     private Usuario idUsuario;
 
 
@@ -102,9 +104,9 @@ public class Obra implements Serializable {
 
 
     //Relacion muchos a uno con proyecto, un proyecto puede ser asignado a varios obras
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_Proyecto", referencedColumnName = "id_Proyecto")
-    @JsonBackReference("obra-proyecto")
+    @JsonBackReference("proyecto-obras")
     @ToString.Exclude
     private Proyecto proyecto;
 

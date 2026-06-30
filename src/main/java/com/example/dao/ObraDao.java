@@ -1,12 +1,15 @@
 package com.example.dao;
 
 import com.example.domain.Obra;
+import com.example.domain.Proyecto;
+import com.example.domain.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 public interface ObraDao extends JpaRepository<Obra, Long> {
@@ -97,4 +100,11 @@ public interface ObraDao extends JpaRepository<Obra, Long> {
 
     @Query("SELECT o FROM Obra o WHERE o.identificadorUnico = :identificador ORDER BY o.idObra ASC")
     List<Obra> findByIdentificadorUnicoOrdered(@Param("identificador") String identificador);
+
+    List<Obra> findByIdUsuario(Usuario usuario);
+
+
+    List<Obra> findByProyecto(Proyecto proyecto);
+    List<Obra> findByProyectoIn(List<Proyecto> proyectos);
+
 }

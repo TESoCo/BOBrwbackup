@@ -15,4 +15,6 @@ public interface UsuarioServicio {
     List <Usuario> listarUsuariosSinEquipo();
     public void aprobarUsuario(Long idUsuario);
     public String getAccessTokenForUser(Long userId) throws Exception;
+    public List<Usuario> encontrarPorCorreo(String correo);
+    public byte[] downloadImageFromUrl(String imageUrl);
 }

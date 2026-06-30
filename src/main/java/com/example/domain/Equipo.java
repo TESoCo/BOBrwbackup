@@ -1,13 +1,16 @@
 package com.example.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -24,19 +27,19 @@ public class Equipo {
     @Column(name = "desc_Equipo")
     private String descEquipo;
 
-    @ManyToOne
-    @JoinColumn(name = "id_Usuario_Creador")
-    private Usuario creador;
+
 
     // Agregar relación inversa con Usuario
-    @OneToMany(mappedBy = "equipo")
-    @JsonManagedReference("usuario-equipo")
-    private List<Usuario> usuarios;
+    @OneToMany(mappedBy = "equipo", fetch = FetchType.LAZY)
+    @JsonManagedReference("usuario-equipo")// ← PADRE: se serializa
+    @ToString.Exclude
+    private List<Usuario> usuarios = new ArrayList<>();
 
     // Agregar relación inversa con proyecto
-    @OneToMany(mappedBy = "equipo")
-    @JsonManagedReference("equipo-proyecto")
-    private List<Proyecto> proyectos;
+    @OneToMany(mappedBy = "equipo", fetch = FetchType.LAZY)
+    @JsonManagedReference("equipo-proyectos")
+    @ToString.Exclude
+    private List<Proyecto> proyectos = new ArrayList<>();
 
 
 

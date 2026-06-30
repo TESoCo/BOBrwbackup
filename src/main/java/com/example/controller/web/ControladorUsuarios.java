@@ -316,21 +316,42 @@ public class ControladorUsuarios {
      * Mostrar formulario de registro para usuarios de Google
      */
     @GetMapping("/registrar-google")
-    public String mostrarFormularioRegistroGoogle(Model model, RedirectAttributes redirectAttributes) {
+    public String mostrarFormularioRegistroGoogle(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         try {
-            // Verificar si hay datos de Google en la sesión
-            if (!model.containsAttribute("googleData")) {
-                // Intentar recuperar de flash attributes
-                Object googleData = redirectAttributes.getFlashAttributes().get("googleData");
-                if (googleData != null) {
-                    model.addAttribute("googleData", googleData);
-                } else {
-                    // Si no hay datos, redirigir al login
-                    redirectAttributes.addFlashAttribute("error",
-                            "No se encontraron datos de autenticación. Por favor, intenta de nuevo.");
-                    return "redirect:/login";
-                }
+            System.out.println("=== GET /registrar-google ===");
+            System.out.println("ID de sesión: " + session.getId());
+
+            ControladorOAuth2.GoogleUserData googleData =
+                    (ControladorOAuth2.GoogleUserData) session.getAttribute("googleData");
+
+            System.out.println("googleData en sesión: " + (googleData != null ? "EXISTE" : "null"));
+            if (googleData != null) {
+                System.out.println("Email: " + googleData.email);
+                System.out.println("Name: " + googleData.name);
             }
+
+            // Si no hay datos en sesión, intentar con flash attributes
+            if (googleData == null && model.containsAttribute("googleData")) {
+                googleData = (ControladorOAuth2.GoogleUserData) model.getAttribute("googleData");
+                System.out.println("googleData recuperado de flash attributes");
+            }
+
+            if (googleData == null) {
+                System.out.println("❌ No se encontraron datos de Google");
+                redirectAttributes.addFlashAttribute("error",
+                        "No se encontraron datos de autenticación. Por favor, intenta de nuevo.");
+                return "redirect:/login";
+            }
+
+            String suggestedUsername = googleData.email != null ? googleData.email.split("@")[0] : "";
+            model.addAttribute("nombreUsuario", suggestedUsername);
+
+            // Pasar datos al modelo
+            model.addAttribute("googleData", googleData);
+            model.addAttribute("nombre", googleData.givenName != null ? googleData.givenName : "");
+            model.addAttribute("apellido", googleData.familyName != null ? googleData.familyName : "");
+            model.addAttribute("correo", googleData.email != null ? googleData.email : "");
+
 
             // Obtener roles disponibles para el registro
             List<Rol> roles = rolServicio.listarRoles();
@@ -357,124 +378,125 @@ public class ControladorUsuarios {
             @RequestParam String rolSeleccionado,
             @RequestParam(required = false) String telefono,
             @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
+            @RequestParam(required = false) String googleEmail,
+            @RequestParam(required = false) String googleName,
+            @RequestParam(required = false) String googleGivenName,
+            @RequestParam(required = false) String googleFamilyName,
+            @RequestParam(required = false) String googlePicture,
+            @RequestParam(required = false) Boolean googleEmailVerified,
+            @RequestParam(required = false) String encryptedRefreshToken,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
 
-        ControladorOAuth2.GoogleUserData googleData = (ControladorOAuth2.GoogleUserData) session.getAttribute("googleData");
+
+        System.out.println("=== POST /registrar-google ===");
+        System.out.println("nombreUsuario: " + nombreUsuario);
+        System.out.println("cargo: " + cargo);
+        System.out.println("rolSeleccionado: " + rolSeleccionado);
+        System.out.println("googleEmail: " + googleEmail);
+        System.out.println("googleName: " + googleName);
+        System.out.println("googleGivenName: " + googleGivenName);
+        System.out.println("googleFamilyName: " + googleFamilyName);
+
+        //ControladorOAuth2.GoogleUserData googleData = (ControladorOAuth2.GoogleUserData) session.getAttribute("googleData");
 
         try {
 
+            //  1. RECONSTRUIR DATOS DE GOOGLE desde los hidden fields
+            ControladorOAuth2.GoogleUserData googleData = new ControladorOAuth2.GoogleUserData();
+            googleData.email = googleEmail;
+            googleData.name = googleName;
+            googleData.givenName = googleGivenName;
+            googleData.familyName = googleFamilyName;
+            googleData.emailVerified = googleEmailVerified != null ? googleEmailVerified : false;
+            googleData.encryptedRefreshToken = encryptedRefreshToken;
 
-
-            if (googleData == null) {
-                redirectAttributes.addFlashAttribute("error", "Datos de Google no encontrados");
+            //  2. VALIDAR QUE EXISTAN DATOS DE GOOGLE
+            if (googleData.email == null || googleData.email.isEmpty()) {
+                System.err.println("❌ ERROR: Datos de Google no recibidos en el POST");
+                redirectAttributes.addFlashAttribute("error",
+                        "Datos de Google no encontrados. Por favor, inicia sesión nuevamente.");
                 return "redirect:/login";
             }
 
-            // Validar campos
+            System.out.println(" Datos de Google reconstruidos correctamente");
+            System.out.println("   Email: " + googleData.email);
+            System.out.println("   Name: " + googleData.name);
+
+            //  3. VALIDAR CAMPOS OBLIGATORIOS
             if (nombreUsuario == null || nombreUsuario.isEmpty() ||
                     cargo == null || cargo.isEmpty() ||
                     rolSeleccionado == null || rolSeleccionado.isEmpty()) {
 
-                redirectAttributes.addFlashAttribute("error", "Todos los campos son obligatorios");
+                System.err.println("❌ ERROR: Campos obligatorios faltantes");
+                redirectAttributes.addFlashAttribute("error",
+                        "Todos los campos son obligatorios");
                 redirectAttributes.addFlashAttribute("googleData", googleData);
                 return "redirect:/usuarios/registrar-google";
             }
 
-            // Verificar si el nombre de usuario ya existe
+            // 4. VERIFICAR SI EL NOMBRE DE USUARIO YA EXISTE
             Usuario usuarioExistente = usuarioServicio.encontrarPorNombreUsuario(nombreUsuario);
             if (usuarioExistente != null) {
-                redirectAttributes.addFlashAttribute("error", "El nombre de usuario ya existe");
+                System.err.println("❌ ERROR: Nombre de usuario ya existe: " + nombreUsuario);
+                redirectAttributes.addFlashAttribute("error",
+                        "El nombre de usuario '" + nombreUsuario + "' ya existe");
                 redirectAttributes.addFlashAttribute("googleData", googleData);
                 return "redirect:/usuarios/registrar-google";
             }
 
-            // 1. CREAR PERSONA
+            // 5. VERIFICAR SI EL EMAIL YA ESTÁ REGISTRADO
+            if (googleData.email != null) {
+                List<Usuario> usuariosPorEmail = usuarioServicio.encontrarPorCorreo(googleData.email);
+                if (!usuariosPorEmail.isEmpty()) {
+                    Usuario usuarioPorEmail = usuariosPorEmail.get(0);
+                    if (usuarioPorEmail != null) {
+                        System.err.println("❌ ERROR: Email ya registrado: " + googleData.email);
+                        redirectAttributes.addFlashAttribute("error",
+                                "Este email ya está registrado. Por favor, inicia sesión.");
+                        return "redirect:/login";
+                    }
+                }
+            }
+
+            // 6. CREAR PERSONA
             Persona persona = new Persona();
 
-            // Verificar que los datos de Google no sean null
+            // 6.1.  Verificar que los datos de Google no sean null
             System.out.println("=== DATOS RECIBIDOS DE GOOGLE ===");
             System.out.println("googleData.name: " + googleData.name);
             System.out.println("googleData.givenName: " + googleData.givenName);
             System.out.println("googleData.familyName: " + googleData.familyName);
             System.out.println("googleData.email: " + googleData.email);
-            String nombre = googleData.givenName != null ? googleData.givenName : "";
 
 
-            String apellido = "";
 
-// PRIORIDAD 1: Usar name completo si está disponible
-            if (googleData.name != null && !googleData.name.trim().isEmpty()) {
-                System.out.println("Usando googleData.name: " + googleData.name);
 
-                // Intentar separar nombre y apellido
-                String fullName = googleData.name.trim();
 
-                // Manejar casos especiales: "Apellido, Nombre" o "Nombre Apellido"
-                if (fullName.contains(",")) {
-                    // Formato: "Apellido, Nombre"
-                    String[] parts = fullName.split("\\s*,\\s*");
-                    if (parts.length == 2) {
-                        apellido = parts[0].trim();
-                        nombre = parts[1].trim();
-                    }
-                } else {
-                    // Formato normal: "Nombre Apellido" o "Nombre Apellido1 Apellido2"
-                    String[] nameParts = fullName.split("\\s+");
+            // 6.2. Extraer nombre y apellido
+            String nombre = googleGivenName != null ? googleGivenName : "";
+            String apellido = googleFamilyName != null ? googleFamilyName : "";
 
-                    if (nameParts.length == 1) {
-                        // Solo un nombre
-                        nombre = nameParts[0];
-                        apellido = "";
-                    } else if (nameParts.length == 2) {
-                        // Nombre y apellido
-                        nombre = nameParts[0];
-                        apellido = nameParts[1];
-                    } else {
-                        // Múltiples nombres: primer es nombre, el resto es apellido
-                        nombre = nameParts[0];
-                        StringBuilder apellidoBuilder = new StringBuilder();
-                        for (int i = 1; i < nameParts.length; i++) {
-                            if (i > 1) apellidoBuilder.append(" ");
-                            apellidoBuilder.append(nameParts[i]);
-                        }
-                        apellido = apellidoBuilder.toString();
-                    }
-                }
+            // 6.3. Si no hay nombre, usar el email
+            if (nombre.isEmpty() && googleData.email != null) {
+                nombre = googleData.email.split("@")[0];
+            }
+            if (nombre.isEmpty()) {
+                nombre = "Usuario";
+            }
+            if (apellido.isEmpty()) {
+                apellido = "Google";
             }
 
-// PRIORIDAD 2: Si name no funcionó, usar givenName y familyName
-            if (nombre.isEmpty() && googleData.givenName != null && !googleData.givenName.trim().isEmpty()) {
-                System.out.println("Usando googleData.givenName: " + googleData.givenName);
-                nombre = googleData.givenName.trim();
-            }
+            persona.setNombre(nombre);
+            persona.setApellido(apellido);
+            persona.setTelefono(telefono != null && !telefono.isEmpty() ? telefono : "0000000000");
+            persona.setCorreo(googleData.email != null ? googleData.email : nombreUsuario + "@google.com");
 
-            if (apellido.isEmpty() && googleData.familyName != null && !googleData.familyName.trim().isEmpty()) {
-                System.out.println("Usando googleData.familyName: " + googleData.familyName);
-                apellido = googleData.familyName.trim();
-            }
+            personaServicio.salvar(persona);
+            System.out.println("Persona creada con ID: " + persona.getIdPersona());
 
-// PRIORIDAD 3: Si aún no tenemos nombre, intentar extraer del email
-            if (nombre.isEmpty() && googleData.email != null && !googleData.email.isEmpty()) {
-                System.out.println("Extrayendo nombre del email: " + googleData.email);
-                String emailPrefix = googleData.email.split("@")[0];
-                // Reemplazar puntos y guiones bajos por espacios
-                emailPrefix = emailPrefix.replaceAll("[._]", " ");
-                String[] emailParts = emailPrefix.trim().split("\\s+");
-                if (emailParts.length > 0) {
-                    nombre = emailParts[0];
-                    if (emailParts.length > 1 && apellido.isEmpty()) {
-                        StringBuilder apellidoBuilder = new StringBuilder();
-                        for (int i = 1; i < emailParts.length; i++) {
-                            if (i > 1) apellidoBuilder.append(" ");
-                            apellidoBuilder.append(emailParts[i]);
-                        }
-                        apellido = apellidoBuilder.toString();
-                    }
-                }
-            }
-
-// Si después de tod0 sigue vacío, asignar valores por defecto
+            // 6.4.  Si después de tod0 sigue vacío, asignar valores por defecto
             if (nombre.isEmpty()) {
                 System.out.println("WARNING: No se pudo extraer nombre, usando valor por defecto");
                 nombre = "Usuario";
@@ -488,24 +510,15 @@ public class ControladorUsuarios {
             System.out.println("Nombre asignado: " + nombre);
             System.out.println("Apellido asignado: " + apellido);
 
-            persona.setNombre(nombre);
-            persona.setApellido(apellido);
-            persona.setTelefono(telefono != null && !telefono.isEmpty() ? telefono : "0000000000");
-            String email = googleData.email != null ? googleData.email : nombreUsuario;
-            persona.setCorreo(email);
 
-
-            personaServicio.salvar(persona);
-            System.out.println("Persona creada con ID: " + persona.getIdPersona());
-
-            // 2. BUSCAR ROL
+            // 7. BUSCAR ROL
             Rol rol = rolServicio.listarRoles().stream()
                     .filter(r -> r.getNombreRol().equalsIgnoreCase(rolSeleccionado))
                     .findFirst()
                     .orElse(null);
 
-            if (rol == null){
-                // Si no se encuentra, buscar rol por defecto
+            if (rol == null) {
+                System.err.println("⚠️ Rol no encontrado: " + rolSeleccionado + ", buscando fallback...");
                 rol = rolServicio.listarRoles().stream()
                         .filter(r -> "USER".equalsIgnoreCase(r.getNombreRol()) ||
                                 "OPERATIVO".equalsIgnoreCase(r.getNombreRol()))
@@ -517,14 +530,21 @@ public class ControladorUsuarios {
                 }
             }
 
+            if (rol == null) {
+                System.err.println("❌ ERROR: No se pudo asignar un rol válido");
+                redirectAttributes.addFlashAttribute("error",
+                        "No se pudo asignar un rol válido");
+                return "redirect:/usuarios/registrar-google";
+            }
+
+            System.out.println("Rol asignado: " + rol.getNombreRol() + " (ID: " + rol.getIdRol() + ")");
 
 
 
-            // 3. CREAR USUARIO
+
+            // 8. CREAR USUARIO
             Usuario usuario = new Usuario();
             usuario.setNombreUsuario(nombreUsuario);
-            String randomPassword = java.util.UUID.randomUUID().toString();
-            usuario.setPass_usuario(passwordEncoder.encode(randomPassword)); // Contraseña al azar para OAuth2
             usuario.setCargo(cargo);
             usuario.setPersona(persona);
             usuario.setRol(rol);
@@ -532,22 +552,59 @@ public class ControladorUsuarios {
             usuario.setAuthProvider("GOOGLE");
             usuario.setEmailVerified(googleData.emailVerified);
 
-            // Guardar refresh token encriptado
+            // 8.1. Contraseña aleatoria para usuarios OAuth2
+            String randomPassword = java.util.UUID.randomUUID().toString();
+            usuario.setPass_usuario(passwordEncoder.encode(randomPassword));
+            System.out.println("Contraseña generada para OAuth2");
+
+            // 8.2. Guardar refresh token encriptado
             if (googleData.encryptedRefreshToken != null) {
                 usuario.setGoogleRefreshToken(googleData.encryptedRefreshToken);
             }
 
-            // 4. PROCESAR FOTO (opcional)
-            if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
-                String contentType = fotoPerfil.getContentType();
-                if (contentType.startsWith("image/") && fotoPerfil.getSize() <= 5 * 1024 * 1024) {
-                    usuario.setFotoPerfil(fotoPerfil.getBytes());
-                    usuario.setFotoTipo(contentType);
+            // 9. PROCESAR FOTO DE PERFIL
+            // Opción A: Foto de Google
+            if (googlePicture != null && !googlePicture.isEmpty()) {
+                try {
+                    byte[] fotoBytes = usuarioServicio.downloadImageFromUrl(googlePicture);
+                    if (fotoBytes != null) {
+                        usuario.setFotoPerfil(fotoBytes);
+                        usuario.setFotoTipo("image/jpeg");
+                        System.out.println(" Foto de Google descargada");
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al descargar foto de Google: " + e.getMessage());
                 }
             }
 
-            // Guardar usuario
+            // Opción B: Foto subida por el usuario (sobrescribe la de Google)
+            if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+                try {
+                    String contentType = fotoPerfil.getContentType();
+                    if (contentType != null && contentType.startsWith("image/") &&
+                            fotoPerfil.getSize() <= 5 * 1024 * 1024) {
+                        usuario.setFotoPerfil(fotoPerfil.getBytes());
+                        usuario.setFotoTipo(contentType);
+                        System.out.println("✅ Foto subida por el usuario guardada");
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al procesar foto de perfil: " + e.getMessage());
+                }
+            }
+
+            // 10. GUARDAR USUARIO
             usuarioServicio.guardar(usuario);
+            System.out.println("Usuario Google creado con ID: " + usuario.getIdUsuario());
+
+            // 11. LIMPIAR SESIÓN
+            session.removeAttribute("googleData");
+            session.removeAttribute("googleDataTimestamp");
+            System.out.println("Sesión limpiada");
+
+            // 12. MENSAJE DE ÉXITO
+            redirectAttributes.addFlashAttribute("success",
+                    "¡Registro completado! Tu cuenta está pendiente de aprobación por un administrador.");
+            System.out.println("=== REGISTRO GOOGLE COMPLETADO EXITOSAMENTE ===");
 
             redirectAttributes.addFlashAttribute("success",
                     "¡Registro completado! Tu cuenta está pendiente de aprobación por un administrador.");
@@ -556,8 +613,7 @@ public class ControladorUsuarios {
         } catch (Exception e) {
             System.err.println("Error al registrar usuario Google: " + e.getMessage());
             e.printStackTrace();
-            redirectAttributes.addFlashAttribute("error", "Error al registrar: " + e.getMessage());
-            redirectAttributes.addFlashAttribute("googleData", googleData);
+            redirectAttributes.addFlashAttribute("error", "Error al registrar" + e.getMessage());
             return "redirect:/usuarios/registrar-google";
         }
     }

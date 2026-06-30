@@ -241,10 +241,30 @@
                     <span>Obras</span>
                 </div>
             </div>
+            <div th:if="${!puedeCrearObra}" class="alert alert-warning" style="margin: 20px 0; padding: 15px; border-radius: 8px; background: #fef3c7; border: 1px solid #f59e0b; color: #92400e;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.2rem;"></i>
+                <strong style="margin-left: 10px;">⚠️ No tiene un equipo asignado</strong>
+                <p style="margin: 10px 0 0 0; font-size: 0.95rem;">
+                    Para poder crear obras y ver proyectos, debe ser asignado a un equipo por un administrador.
+                    Si ya tiene un equipo asignado, por favor contacte a soporte.
+                </p>
+            </div>
+            <!-- Mensaje para ADMIN sin equipo -->
+            <div th:if="${esAdminSinEquipo != null and esAdminSinEquipo}"
+                 class="alert alert-warning" style="margin: 20px 0; padding: 15px; border-radius: 8px; background: #fef3c7; border: 1px solid #f59e0b; color: #92400e;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.2rem;"></i>
+                <strong style="margin-left: 10px;">⚠️ Usted es ADMIN pero no tiene equipo asignado</strong>
+                <p style="margin: 10px 0 0 0; font-size: 0.95rem;">
+                    Puede <strong>visualizar</strong> todas las obras del sistema, pero no puede <strong>crear</strong> nuevas obras
+                    hasta que se le asigne un equipo. Para crear obras, debe estar asociado a un equipo.
+                </p>
+            </div>
         </section>
 
         <section class="navigation-section">
-            <a th:href="@{/obras/agregarObra}" class="btn btn-success">
+            <a th:href="@{/obras/agregarObra}"
+               th:if="${puedeCrearObra}"
+               class="btn btn-success">
                 <i class='bx bx-plus'></i> Registrar Nueva Obra
             </a>
 

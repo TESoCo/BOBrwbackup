@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,15 +23,17 @@ public class Proyecto {
     private Long idProyecto;
 
     //Relacion muchos a uno con equipo, un equipo puede ser asignado a varios proyectos
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_Equipo", referencedColumnName = "id_Equipo")
-    @JsonBackReference("usuario-equipo")
+    @JsonBackReference("equipo-proyectos")  // ← HIJO: NO se serializa
+    @ToString.Exclude
     private Equipo equipo;
 
-    // Agregar relación inversa con obras
-    @OneToMany(mappedBy = "proyecto")
-    @JsonManagedReference("proyecto-obra")
-    private List<Obra> obras;
+    // RELACIÓN CON OBRAS
+    @OneToMany(mappedBy = "proyecto", fetch = FetchType.LAZY)
+    @JsonManagedReference("proyecto-obras")  // ← PADRE: se serializa
+    @ToString.Exclude
+    private List<Obra> obras = new ArrayList<>();
 
     @NotEmpty
     @Column(name = "desc_Proyecto")
