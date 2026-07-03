@@ -1,7 +1,10 @@
 package com.example.servicio;
 
+import com.example.domain.AuditoriaInventario;
 import com.example.domain.Inventario;
 import com.example.domain.Material;
+import com.example.domain.Usuario;
+import com.example.domain.enums.EstadoInventario;
 
 import java.util.List;
 
@@ -24,4 +27,29 @@ public interface InventarioServicio {
 
 
     public void agregarMaterialAInvConCantidad(Inventario inventario, Material material, Double cantidad);
+
+
+    public Inventario cambiarEstado(Long idInventario, EstadoInventario nuevoEstado, Usuario usuario, String comentario, String ipOrigen, String userAgent);
+
+    public void reservarStock(Inventario inventario);
+
+    public void confirmarEntregaStock(Inventario inventario);
+
+    public void liberarReservaStock(Inventario inventario);
+
+
+    public void registrarAuditoria(Inventario inventario, String estadoAnterior, String estadoNuevo, Usuario usuario, String comentario);
+
+    public List<AuditoriaInventario> obtenerAuditoriaPorInventario(Long idInventario);
+
+    public List<EstadoInventario> obtenerEstadosPermitidos(Long idInventario, Usuario usuario);
+
+
+    public List<Inventario> obtenerInventariosAprobados();
+
+    public List<Inventario> obtenerInventariosEntregados();
+
+    public List<Inventario> obtenerInventariosPendientes();
+
+    public List<Inventario> buscarPorAprobacion(EstadoInventario estadoInventario);
 }

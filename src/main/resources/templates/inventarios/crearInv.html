@@ -138,7 +138,7 @@
                 <div class="form-content">
                     <form th:action="@{/inventarios/guardarInv}" method="post" th:object="${inventario}">
                         <input type="hidden" th:field="*{idUsuario.idUsuario}" />
-                        <input type="hidden" th:field="*{tipoInv}" value="INGRESO"/>
+
 
                         <div class="form-group">
                             <label>Usuario Actual:</label>
@@ -147,7 +147,7 @@
 
                         <div class="form-group">
                             <label>Nombre Obra:</label>
-                            <select th:field="*{idObra}" class="form-select" required>
+                            <select th:field="*{idObra}" class="form-select">
                                 <option value="">Seleccione una obra...</option>
                                 <option th:each="obra : ${obras}"
                                         th:value="${obra.idObra}"

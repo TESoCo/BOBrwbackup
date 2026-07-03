@@ -211,7 +211,7 @@
                     <!-- Selected Materials Summary -->
                     <div id="selectedMaterialsSummary" class="selected-summary" style="display: none;">
                         <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: var(--border-radius); padding: 1rem; margin-bottom: 1rem;">
-                            <div style="display: flex; justify-content: between; align-items: center;">
+                            <div style="display: flex; justify-content: left; align-items: center;">
                                 <div>
                                     <strong style="color: var(--primary);">
                                         <span id="selectedCount">0</span> materiales seleccionados
@@ -232,7 +232,7 @@
                         <div class="materials-grid" id="materialsGrid">
                             <div th:each="material, status : ${materiales}" class="material-card"
                                  th:attr="data-id=${material.idMaterial}, data-name=${material.nombreMaterial},
-                                         data-price=${material.precioMaterial}, data-description=${material.descripcionMaterial}">
+                                         data-price=${preciosMateriales != null ? preciosMateriales[material.idMaterial] : 0}, data-description=${material.descripcionMaterial}">
                                 <div class="material-card-header">
                                     <input type="checkbox"
                                            th:id="'material_' + ${material.idMaterial}"
@@ -249,7 +249,13 @@
                                 <div class="material-card-body">
                                     <div class="material-description" th:text="${material.descripcionMaterial}"></div>
                                     <div class="material-price">
-                                        $<span th:text="${#numbers.formatDecimal(material.precioMaterial, 1, 'COMMA', 2, 'POINT')}"></span>
+                                        <span th:if="${preciosMateriales != null && preciosMateriales[material.idMaterial] != null}">
+                                            $<span th:text="${#numbers.formatDecimal(preciosMateriales[material.idMaterial], 1, 'COMMA', 2, 'POINT')}"></span>
+                                        </span>
+                                        <span th:unless="${preciosMateriales != null && preciosMateriales[material.idMaterial] != null}"
+                                              style="color: var(--danger); font-size: 0.75rem;">
+                                            Sin precio
+                                        </span>
                                     </div>
                                 </div>
 

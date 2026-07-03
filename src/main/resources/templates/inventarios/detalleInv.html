@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Detalle Inventario</title>
+</head>
+<body>
+<div class="container">
+    <h1>Detalle de Inventario #<span th:text="${inventario.idInventario}"></span></h1>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Información General</h3>
+            <span class="badge"
+                  th:classappend="${inventario.aprobacion.name() == 'SOLICITADO' ? 'badge-warning' :
+                                     inventario.aprobacion.name() == 'APROBADO' ? 'badge-info' :
+                                     inventario.aprobacion.name() == 'ENTREGADO' ? 'badge-success' :
+                                     inventario.aprobacion.name() == 'RECHAZADO' ? 'badge-danger' :
+                                     'badge-secondary'}"
+                  th:text="${inventario.aprobacion.displayName}"></span>
+        </div>
+        <div class="card-body">
+            <p><strong>Gestor:</strong> <span th:text="${inventario.idUsuario?.nombreUsuario}">N/A</span></p>
+            <p><strong>Obra:</strong> <span th:text="${inventario.idObra?.nombreObra}">N/A</span></p>
+            <p><strong>Proveedor:</strong> <span th:text="${inventario.proveedorInv?.nombreProveedor}">N/A</span></p>
+            <p><strong>Fecha Solicitud:</strong> <span th:text="${#temporals.format(inventario.fechaIngreso, 'dd/MM/yyyy')}"></span></p>
+            <p th:if="${inventario.fechaEntrega}"><strong>Fecha Entrega:</strong> <span th:text="${#temporals.format(inventario.fechaEntrega, 'dd/MM/yyyy')}"></span></p>
+            <p><strong>Unidad:</strong> <span th:text="${inventario.unidadInv}"></span></p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4>Materiales</h4>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Material</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="mat : ${inventario.materialesInventarios}">
+                <td th:text="${mat.material?.nombreMaterial}">N/A</td>
+                <td th:text="${mat.cantidad}">0</td>
+                <td th:text="${mat.material?.unidadMaterial}">N/A</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Gestión de Estados -->
+    <div class="card" th:if="${!inventario.estadoFinal}">
+        <div class="card-header">
+            <h4>Cambiar Estado</h4>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/inventarios/{id}/cambiarEstado(id=${inventario.idInventario})}" method="post">
+                <div class="form-group">
+                    <label>Nuevo Estado:</label>
+                    <select name="nuevoEstado" class="form-control" required>
+                        <option th:each="estado : ${estadosPermitidos}"
+                                th:value="${estado.name()}"
+                                th:text="${estado.displayName}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Comentario:</label>
+                    <textarea name="comentario" class="form-control" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Cambiar Estado</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Auditoría -->
+    <div class="card">
+        <div class="card-header">
+            <h4>Historial de Auditoría</h4>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Estado Anterior</th>
+                <th>Estado Nuevo</th>
+                <th>Usuario</th>
+                <th>Comentario</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="aud : ${auditoria}">
+                <td th:text="${#temporals.format(aud.fechaCambio, 'dd/MM/yyyy HH:mm')}"></td>
+                <td th:text="${aud.estadoAnterior}"></td>
+                <td th:text="${aud.estadoNuevo}"></td>
+                <td th:text="${aud.usuario?.nombreUsuario}">N/A</td>
+                <td th:text="${aud.comentario}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

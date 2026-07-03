@@ -187,7 +187,7 @@
                                     <th>ID</th>
                                     <th>Nombre Gestor</th>
                                     <th>Nombre Obra</th>
-                                    <th>Tipo Registro</th>
+                                    <th>Estado</th>
                                     <th>Fecha</th>
                                     <th>Unidad de Medida</th>
                                     <th>Cantidad</th>
@@ -201,7 +201,7 @@
                                 <td th:text="${inv.idInventario}"></td>
                                 <td th:text="${inv.idUsuario.nombreUsuario}"></td>
                                 <td th:text="${inv.idObra.nombreObra}"></td>
-                                <td th:text="${inv.tipoInv}"></td>
+                                <td th:text="${inv.aprobacion}"></td>
                                 <td th:text="${inv.fechaIngreso}"></td>
                                 <td th:text="${inv.unidadInv}"></td>
 

@@ -1,5 +1,6 @@
 package com.example.domain;
 
+import com.example.domain.enums.EstadoInventario;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -42,9 +43,13 @@ public class Inventario implements Serializable {
     private Obra idObra;
 
 
-    @Column(name = "tipo_inv")
-    private String tipoInv = "MATERIAL";
-    //Otras opciones: HERRAMIENTA y CONSUMIBLE
+    @ManyToOne
+    @JoinColumn(name = "id_Proveedor")
+    private Proveedor proveedorInv;
+
+    @Column(name = "aprobacion_inv")
+    @Enumerated(EnumType.STRING) // Esto guarda "SOLICITADO", "APROBADO", etc.
+    private EstadoInventario aprobacion = EstadoInventario.SOLICITADO;
 
 
     @Column(name = "anular")
@@ -55,6 +60,9 @@ public class Inventario implements Serializable {
     @Column(name = "Fecha_Ingreso", table = "fecha_inventario", nullable = false)
     private LocalDate fechaIngreso;
 
+    @Column(name = "fecha_entrega", table = "fecha_inventario")
+    private LocalDate fechaEntrega;
+
     // From UNIDADES_INVENTARIO
     @Column(name = "Unidad_Inv", table = "unidades_inventario", nullable = false)
     private String unidadInv;
@@ -63,6 +71,32 @@ public class Inventario implements Serializable {
     @OneToMany(mappedBy = "inventario", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private List<MaterialesInventario> materialesInventarios = new ArrayList<>();
+
+    // Métodos helpers
+    public boolean isAprobado() {
+        return aprobacion == EstadoInventario.APROBADO;
+    }
+
+    public boolean isEntregado() {
+        return aprobacion == EstadoInventario.ENTREGADO;
+    }
+
+    public boolean isSolicitado() {
+        return aprobacion == EstadoInventario.SOLICITADO;
+    }
+
+    public boolean isRechazado() {
+        return aprobacion == EstadoInventario.RECHAZADO;
+    }
+
+    public boolean isAnulado() {
+        return aprobacion == EstadoInventario.ANULADO;
+    }
+
+    public boolean isEstadoFinal() {
+        return aprobacion.isEstadoFinal();
+    }
+
 
 
 

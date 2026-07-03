@@ -79,4 +79,30 @@ public class Material implements Serializable {
                 .orElse(null);
     }
 
+    @Column(name = "stock_disponible", columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
+    private Double stockDisponible = 0.0;
+
+    @Column(name = "stock_reservado", columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
+    private Double stockReservado = 0.0;
+
+    @Column(name = "stock_minimo", columnDefinition = "DECIMAL(10,2) DEFAULT 0.00")
+    private Double stockMinimo = 0.0;
+
+    @Column(name = "ubicacion")
+    private String ubicacion;
+
+    @Column(name = "activo")
+    private Boolean activo = true;
+
+    // Métod para obtener stock total
+    public Double getStockTotal() {
+        return stockDisponible + stockReservado;
+    }
+
+    // Métod para verificar si hay stock disponible
+    public boolean hayStockDisponible(Double cantidad) {
+        return stockDisponible >= cantidad;
+    }
+
+
 }

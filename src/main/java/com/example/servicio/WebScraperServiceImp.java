@@ -153,6 +153,7 @@ public class WebScraperServiceImp implements WebScraperService {
 
                     //CREAR NUEVO PROVEEDOR
                     proveedor = new Proveedor();
+                    proveedor.setNombreProveedor(dto.getProveedorNombre());
                     //Inicializar materiales relacionados al proveedor
                     proveedor.setMaterialList(new ArrayList<>());
                     // Inicializar info comercial y la asignamos al proveedor
@@ -176,6 +177,7 @@ public class WebScraperServiceImp implements WebScraperService {
                     Persona persona;
                     if (proveedor.getIdPersona() == null) {
                         persona = crearPersonaProveedor(dto);
+                        persona = personaServicio.salvar(persona);
                         proveedor.setIdPersona(persona);
                     }
                     // ⚠️ IMPORTANTE: Guardar el nuevo proveedor

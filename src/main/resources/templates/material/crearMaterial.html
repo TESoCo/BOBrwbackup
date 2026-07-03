@@ -359,6 +359,78 @@
                     </div>
                 </div>
 
+                <!-- Botón para estimar cantidades -->
+                <div th:if="${materialesGenerados != null and !materialesGenerados.empty}"
+                     style="margin: 1.5rem 0; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+
+                    <button type="button" id="btnEstimarCantidades" class="btn btn-primary"
+                            onclick="estimarCantidades()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-calculator"></i> Estimar Cantidades con IA
+                    </button>
+
+                    <span style="color: var(--secondary); font-size: 0.9rem;">
+                        <i class="fas fa-info-circle"></i> La IA estimará las cantidades necesarias
+                    </span>
+                </div>
+
+                <!-- Mostrar resultados de estimación -->
+                <div th:if="${materialesEstimados != null and !materialesEstimados.empty}"
+                     style="margin-top: 2rem; padding: 1.5rem; background: #f0fdf4; border-radius: 10px; border: 1px solid #86efac;">
+
+                    <h4 style="display: flex; align-items: center; gap: 0.5rem; color: #15803d;">
+                        <i class="fas fa-check-circle"></i> Cantidades Estimadas
+                        <span style="font-size: 0.875rem; background: #15803d; color: white; padding: 0.25rem 0.75rem; border-radius: 50px;">
+                        <span th:text="${materialesEstimados.size()}">0</span> materiales
+                        </span>
+                    </h4>
+
+                    <div class="table-container" style="margin-top: 1rem; max-height: 400px; overflow-y: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Unidad</th>
+                                    <th>Cantidad Estimada</th>
+                                    <th>Justificación</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="material, stat : ${materialesEstimados}">
+                                    <td th:text="${material.nombre}"></td>
+                                    <td th:text="${material.unidad}"></td>
+                                    <td>
+                                        <input type="number"
+                                               name="cantidades"
+                                               th:value="${material.cantidadEstimada}"
+                                               step="0.01" min="0"
+                                               class="form-input cantidad-input"
+                                               style="width: 100px; padding: 0.5rem;"
+                                               onchange="actualizarTotal()">
+                                    </td>
+                                    <td style="font-size: 0.85rem; color: var(--secondary);"
+                                        th:text="${material.justificacion}">
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-info"
+                                                onclick="aplicarCantidad(this, ${stat.index})">
+                                            <i class="fas fa-check"></i> Aplicar
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-success" onclick="aplicarTodasLasCantidades()">
+                            <i class="fas fa-arrow-right"></i> Aplicar Todas las Cantidades
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="ocultarEstimacion()">
+                            <i class="fas fa-times"></i> Cerrar
+                        </button>
+                    </div>
+                </div>
 
                 <!-- AQUÍ VA EL CÓDIGO DEL AGENTE IA -->
 
@@ -931,6 +1003,437 @@
         document.body.appendChild(notif);
         setTimeout(() => notif.remove(), 3000);
     }
+
+
+    // ==========================================================
+    // FUNCIONES PARA ESTIMACIÓN DE CANTIDADES
+    // ==========================================================
+
+    /**
+     * Estima cantidades usando IA
+     */
+    function estimarCantidades() {
+        console.log('📊 Estimando cantidades...');
+
+        const apuSelect = document.getElementById('apuId');
+        const apuId = apuSelect ? apuSelect.value : null;
+
+        console.log('🔍 APU ID obtenido:', apuId);
+        console.log('🔍 APU Select value:', apuSelect ? apuSelect.value : 'null');
+
+        if (!apuId || apuId === '') {
+            mostrarNotificacion('⚠️ Selecciona un APU primero', 'warning');
+            return;
+        }
+
+        const materiales = obtenerMaterialesDeTabla();
+        console.log('📦 Materiales en tabla:', materiales.length);
+        if (materiales.length === 0) {
+            mostrarNotificacion('⚠️ No hay materiales para estimar', 'warning');
+            return;
+        }
+
+        // Obtener la descripción del APU seleccionado
+        const apuOption = apuSelect.options[apuSelect.selectedIndex];
+        const descripcionApu = apuOption ? apuOption.text : '';
+
+        console.log('📝 Descripción APU:', descripcionApu);
+
+        // Mostrar indicador de carga
+        mostrarCarga(true);
+
+        const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+
+
+        fetch('/material/estimarCantidades', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({
+                apuId: apuId,
+                materiales: materiales,
+                descripcion: descripcionApu,
+                unidadBase: 'unidad'
+            })
+        })
+            .then(response => {
+                console.log('📥 Respuesta recibida, status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+
+                mostrarCarga(false);
+                console.log('📊 Datos recibidos:', data);
+                if (data.success && data.materiales) {
+                    mostrarEstimacion(data.materiales);
+                    mostrarNotificacion('✅ ' + data.mensaje);
+                } else {
+                    mostrarNotificacion('❌ ' + (data.error || 'Error estimando cantidades'), 'error');
+                }
+            })
+            .catch(error => {
+                mostrarCarga(false);
+                console.error('Error:', error);
+                mostrarNotificacion('❌ Error de conexión: ' + error.message, 'error');
+            });
+    }
+
+    /**
+     * Obtiene los materiales de la tabla actual
+     */
+    function obtenerMaterialesDeTabla() {
+        const materiales = [];
+        const tbody = document.querySelector('#guardarMaterialesForm tbody');
+        if (!tbody) {
+            console.warn('⚠️ No se encontró el tbody de la tabla');
+            return materiales;
+        }
+
+        const rows = tbody.querySelectorAll('tr');
+        console.log('🔍 Filas encontradas:', rows.length);
+
+        rows.forEach((row, index) => {
+            // Buscar inputs en la fila
+            const nombreInput = row.querySelector('input[name="nombres"]');
+            const descripcionInput = row.querySelector('input[name="descripciones"]');
+            const unidadSelect = row.querySelector('select[name="unidades"]');
+            const precioInput = row.querySelector('input[name="precios"]');
+            const proveedorInput = row.querySelector('input[name="proveedor"]');
+
+            // También buscar por clase como fallback
+            const nombre = nombreInput ? nombreInput.value :
+                (row.querySelector('.material-nombre') ? row.querySelector('.material-nombre').value : '');
+            const descripcion = descripcionInput ? descripcionInput.value :
+                (row.querySelector('.material-descripcion') ? row.querySelector('.material-descripcion').value : '');
+            const unidad = unidadSelect ? unidadSelect.value :
+                (row.querySelector('.material-unidad') ? row.querySelector('.material-unidad').value : 'und');
+            const precio = precioInput ? precioInput.value :
+                (row.querySelector('.material-precio') ? row.querySelector('.material-precio').value : '1000.00');
+            const proveedor = proveedorInput ? proveedorInput.value :
+                (row.querySelector('.material-proveedor') ? row.querySelector('.material-proveedor').value : '');
+
+            if (nombre && nombre.trim() !== '') {
+                materiales.push({
+                    nombre: nombre.trim(),
+                    descripcion: descripcion.trim() || nombre.trim(),
+                    unidad: unidad.trim() || 'und',
+                    precio: precio || '1000.00',
+                    proveedor: proveedor || ''
+                });
+                console.log(`📦 Material ${index + 1}: ${nombre.trim()}`);
+            }
+        });
+
+        return materiales;
+    }
+
+    /**
+     * Muestra el panel de estimación
+     */
+    function mostrarEstimacion(materiales) {
+
+        console.log('Mostrando estimación para:', materiales.length, 'materiales');
+        console.log('Datos recibidos:', materiales);
+
+        // Buscar o crear contenedor
+        let container = document.getElementById('estimacionContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'estimacionContainer';
+            container.style.cssText = `
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f0fdf4;
+            border-radius: 10px;
+            border: 1px solid #86efac;
+            `;
+
+            // Insertar después de la tabla de materiales
+            const tablaContainer = document.querySelector('.table-container');
+            if (tablaContainer) {
+                tablaContainer.parentNode.insertBefore(container, tablaContainer.nextSibling);
+            }else {
+                // Si no hay tabla, buscar otro lugar
+                const btnContainer = document.getElementById('btnEstimarCantidades');
+                if (btnContainer) {
+                    btnContainer.parentNode.insertBefore(container, btnContainer.nextSibling);
+                }
+            }
+        }
+
+        // Verificar que los materiales tengan datos de cantidad
+        let hasCantidades = false;
+        materiales.forEach(m => {
+            if (m.cantidadEstimada && m.cantidadEstimada !== '0' && m.cantidadEstimada !== '0.00') {
+                hasCantidades = true;
+            }
+        });
+
+        if (!hasCantidades) {
+            // Si todas las cantidades son cero, usar estimación manual
+            console.warn('⚠️ Todas las cantidades son cero, usando valores por defecto');
+            materiales = materiales.map(m => ({
+                ...m,
+                cantidadEstimada: '1.00',
+                justificacion: 'Cantidad por defecto'
+            }));
+        }
+
+        let html = `
+        <h4 style="display: flex; align-items: center; gap: 0.5rem; color: #15803d;">
+            <i class="fas fa-check-circle"></i> Cantidades Estimadas
+            <span style="font-size: 0.875rem; background: #15803d; color: white; padding: 0.25rem 0.75rem; border-radius: 50px;">
+                ${materiales.length} materiales
+            </span>
+        </h4>
+        <div class="table-container" style="margin-top: 1rem; max-height: 400px; overflow-y: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Unidad</th>
+                        <th>Cantidad Estimada</th>
+                        <th>Justificación</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+        materiales.forEach((material, index) => {
+            const cantidad = material.cantidadEstimada || '0';
+            const nombre = material.nombre || 'Material ' + (index + 1);
+            const unidad = material.unidad || 'und';
+            const justificacion = material.justificacion || 'Estimado por IA';
+
+            console.log(`📊 Material ${index}: ${nombre} -> ${cantidad} ${unidad}`);
+
+            html += `
+            <tr>
+                <td><strong>${escapeHtml(nombre)}</strong></td>
+                <td>${escapeHtml(unidad)}</td>
+                <td>
+                    <input type="number"
+                           id="cantidad_${index}"
+                           value="${cantidad}"
+                           step="0.01" min="0"
+                           class="form-input cantidad-input"
+                           style="width: 100px; padding: 0.5rem; border: 2px solid #4caf50;"
+                           onchange="actualizarTotalEstimacion()">
+                </td>
+                <td style="font-size: 0.85rem; color: var(--secondary);">
+                    ${escapeHtml(justificacion)}
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-info"
+                            onclick="aplicarCantidadIndice(${index})">
+                        <i class="fas fa-check"></i> Aplicar
+                    </button>
+                </td>
+            </tr>
+        `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-success" onclick="aplicarTodasLasCantidades()">
+                <i class="fas fa-arrow-right"></i> Aplicar Todas las Cantidades
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="ocultarEstimacion()">
+                <i class="fas fa-times"></i> Cerrar
+            </button>
+            <button type="button" class="btn btn-warning" onclick="regenerarEstimacion()">
+                <i class="fas fa-redo"></i> Re-estimar
+            </button>
+        </div>
+    `;
+
+        container.innerHTML = html;
+        container.style.display = 'block';
+
+        // Guardar datos para referencia
+        window.materialesEstimados = materiales;
+
+        // Mostrar notificación de éxito
+        mostrarNotificacion('Cantidades estimadas para ' + materiales.length + ' materiales');
+    }
+
+    /**
+     * Aplica la cantidad de un material específico
+     */
+    function aplicarCantidadIndice(index) {
+        const input = document.getElementById(`cantidad_${index}`);
+        if (!input) return;
+
+        const cantidad = parseFloat(input.value);
+        if (isNaN(cantidad) || cantidad < 0) {
+            mostrarNotificacion('⚠️ Cantidad inválida', 'warning');
+            return;
+        }
+
+        // Buscar el material en la tabla principal y aplicar la cantidad
+        const materialesTabla = document.querySelectorAll('#guardarMaterialesForm tbody tr');
+        if (index < materialesTabla.length) {
+            const row = materialesTabla[index];
+            // Buscar o crear campo de cantidad
+            let cantidadInput = row.querySelector('.cantidad-material');
+            if (!cantidadInput) {
+                // Si no existe, agregar columna de cantidad
+                const cells = row.querySelectorAll('td');
+                if (cells.length > 0) {
+                    // Crear input de cantidad después del último campo
+                    const cantidadCell = document.createElement('td');
+                    cantidadCell.innerHTML = `
+                    <input type="number" name="cantidades"
+                           value="${cantidad}" step="0.01" min="0"
+                           class="form-input cantidad-material"
+                           style="width: 80px; padding: 0.3rem;">
+                `;
+                    // Insertar antes de la celda de acciones o al final
+                    const actionsCell = row.querySelector('td:last-child');
+                    if (actionsCell) {
+                        row.insertBefore(cantidadCell, actionsCell);
+                    } else {
+                        row.appendChild(cantidadCell);
+                    }
+                }
+            } else {
+                cantidadInput.value = cantidad;
+            }
+
+            // Resaltar la fila
+            row.style.backgroundColor = '#d1fae5';
+            setTimeout(() => {
+                row.style.backgroundColor = '';
+            }, 2000);
+
+            mostrarNotificacion(`✅ Cantidad aplicada: ${cantidad}`);
+        }
+    }
+
+    /**
+     * Aplica todas las cantidades estimadas
+     */
+    function aplicarTodasLasCantidades() {
+        if (!window.materialesEstimados) {
+            mostrarNotificacion('⚠️ No hay estimaciones para aplicar', 'warning');
+            return;
+        }
+
+        window.materialesEstimados.forEach((material, index) => {
+            const input = document.getElementById(`cantidad_${index}`);
+            if (input) {
+                const cantidad = parseFloat(input.value);
+                if (!isNaN(cantidad) && cantidad >= 0) {
+                    aplicarCantidadIndice(index);
+                }
+            }
+        });
+
+        mostrarNotificacion('✅ Todas las cantidades aplicadas');
+    }
+
+    /**
+     * Oculta el panel de estimación
+     */
+    function ocultarEstimacion() {
+        const container = document.getElementById('estimacionContainer');
+        if (container) {
+            container.style.display = 'none';
+        }
+    }
+
+    /**
+     * Muestra/oculta indicador de carga
+     */
+    function mostrarCarga(mostrar) {
+        let loader = document.getElementById('loaderEstimacion');
+        if (mostrar) {
+            if (!loader) {
+                loader = document.createElement('div');
+                loader.id = 'loaderEstimacion';
+                loader.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #667eea;"></i>
+                    <p style="margin-top: 1rem;">Estimando cantidades con IA...</p>
+                    <small style="color: var(--secondary);">Esto puede tomar unos segundos</small>
+                </div>
+            `;
+                const container = document.querySelector('.table-container');
+                if (container) {
+                    container.parentNode.insertBefore(loader, container.nextSibling);
+                }
+            }
+            loader.style.display = 'block';
+        } else if (loader) {
+            loader.style.display = 'none';
+        }
+    }
+
+    // Función auxiliar para notificaciones
+    function mostrarNotificacion(mensaje, tipo = 'success') {
+        const notif = document.createElement('div');
+        notif.textContent = mensaje;
+        notif.style.cssText = `
+        position: fixed; bottom: 20px; right: 20px; padding: 12px 24px;
+        background: ${tipo === 'success' ? '#4caf50' : tipo === 'warning' ? '#ff9800' : '#f44336'};
+        color: white; border-radius: 8px; z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        animation: slideIn 0.3s ease, fadeOut 3s 3s forwards;
+        max-width: 400px;
+    `;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 4000);
+    }
+
+
+    // Función para depurar el estado del APU seleccionado
+    function debugApuSeleccionado() {
+        const apuSelect = document.getElementById('apuId');
+        if (!apuSelect) {
+            console.log('❌ No se encontró el elemento apuId');
+            return;
+        }
+
+        console.log('🔍 APU Select encontrado:');
+        console.log('  - Value actual:', apuSelect.value);
+        console.log('  - Selected index:', apuSelect.selectedIndex);
+        console.log('  - Options count:', apuSelect.options.length);
+
+        const selectedOption = apuSelect.options[apuSelect.selectedIndex];
+        if (selectedOption) {
+            console.log('  - Texto seleccionado:', selectedOption.text);
+            console.log('  - Value seleccionado:', selectedOption.value);
+        }
+
+        console.log('  - Todas las opciones:');
+        for (let i = 0; i < apuSelect.options.length; i++) {
+            console.log(`    ${i}: value="${apuSelect.options[i].value}" text="${apuSelect.options[i].text}"`);
+        }
+    }
+
+    // Llamar a la función de depuración cuando se carga la página
+    document.addEventListener('DOMContentLoaded', function() {
+        // ... código existente ...
+
+        // Debug del APU
+        debugApuSeleccionado();
+
+        // También debug cuando cambia el select
+        const apuSelect = document.getElementById('apuId');
+        if (apuSelect) {
+            apuSelect.addEventListener('change', function() {
+                console.log('🔄 APU seleccionado cambiado a:', this.value);
+            });
+        }
+    });
+
+
 </script>
 </body>
 </html>

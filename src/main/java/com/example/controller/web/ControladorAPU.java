@@ -186,11 +186,19 @@ public class ControladorAPU {
             materialIdsActuales.add(ma.getMaterial().getIdMaterial());
 
         }
+
+        //Obtener precios actuales de los materiales
+        Map<Long, BigDecimal> preciosMateriales = new HashMap<>();
+        for (Material material : materialesDisponibles) {
+            preciosMateriales.put(material.getIdMaterial(), materialServicio.getPrecioActual(material.getIdMaterial()));
+        }
+
         model.addAttribute("apu", apu);
         model.addAttribute("materiales", materialServicio.listarTodos());
         model.addAttribute("materialesActuales", materialesActuales);
         model.addAttribute("materialIdsActuales", materialIdsActuales);
         model.addAttribute("cantidadesMap", cantidadesMateriales);
+        model.addAttribute("preciosMateriales", preciosMateriales);
         return "apus/editarAPU";
     }
 
