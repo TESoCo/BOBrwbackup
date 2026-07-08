@@ -79,6 +79,13 @@ public class ControladorInv {
         // Estados disponibles para filtro
         List<EstadoInventario> estados = Arrays.asList(EstadoInventario.values());
 
+        // Crear un mapa con los precios actuales pre-calculados
+        Map<Long, BigDecimal> preciosActuales = new HashMap<>();
+        for (Material material : materiales) {
+            BigDecimal precio = materialServicio.getPrecioActual(material.getIdMaterial());
+            preciosActuales.put(material.getIdMaterial(), precio);
+        }
+
         model.addAttribute("inventarios", inventarios);
         model.addAttribute("materiales", materiales);
         model.addAttribute("obras", obras);
@@ -86,6 +93,7 @@ public class ControladorInv {
         model.addAttribute("estadoFiltroSeleccionado", estadoFiltro);
         model.addAttribute("obraIdSeleccionada", obraId);
         model.addAttribute("usuarioActual", usuarioLogeado);
+        model.addAttribute("preciosActuales", preciosActuales);
         return "inventarios/inventario";
     }
 
@@ -112,7 +120,8 @@ public class ControladorInv {
                     .collect(Collectors.toList());
         }
 
-        // Si no es ADMIN, mostrar solo sus inventarios y los de su equipo //TODO cambiar por permiso "ver inventarios"
+        // Si no es ADMIN, mostrar solo sus inventarios y los de su equipo
+
         if (!usuario.getRol().getNombreRol().equals("ADMIN")) {
             Set<Long> obrasPermitidas = obtenerObrasPermitidas(usuario);
             todos = todos.stream()
@@ -127,7 +136,7 @@ public class ControladorInv {
 
 
     // ========== CREAR INVENTARIO ==========
-    // TODO esto no funciona, 404 en front
+
     @GetMapping("/crearInv")
     public String crearInv(Model model) {
         // Get the currently logged-in user
@@ -166,10 +175,17 @@ public class ControladorInv {
                              @RequestParam(value = "idObra", required = false) Long obra,
                              @RequestParam(value = "materialIds", required = false) List<Long> materialIds,
                              @RequestParam(value = "materialCantidades", required = false) List<Double> materialCantidades,
-                             @RequestParam(value = "comentario", required = false) String comentario,
+                             @RequestParam(value = "tipoDestino", required = false) String tipoDestino,
                              RedirectAttributes redirectAttributes)
     {
-
+        // LOG para depuración
+        System.out.println("=== DEBUG GUARDAR INVENTARIO ===");
+        System.out.println("Inventario: " + inventario);
+        System.out.println("tipoDestino: " + tipoDestino);
+        System.out.println("idObra recibido: " + obra);
+        System.out.println("materialIds: " + materialIds);
+        System.out.println("materialCantidades: " + materialCantidades);
+        System.out.println("Errores: " + (errores.hasErrors() ? errores.getAllErrors() : "NINGUNO"));
 
         // Obtener el usuario actualmente autenticado
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -195,11 +211,97 @@ public class ControladorInv {
         }
 
 
+        // ========== LÓGICA DE DESTINO ==========
+        boolean esParaStock = "STOCK".equals(tipoDestino);
+
+        if (esParaStock) {
+            // Caso 1: Agregar al stock (sin obra)
+            inventario.setIdObra(null);
+            System.out.println("=== AGREGANDO AL STOCK ===");
+        } else {
+            // Caso 2: Consumir de stock para una obra
+            if (obra == null) {
+                model.addAttribute("error", "Debe seleccionar una obra");
+                model.addAttribute("usuario", usuarioLogeado);
+                model.addAttribute("obras", obtenerObrasDisponibles(usuarioLogeado));
+                model.addAttribute("materiales", materialServicio.listarTodosConPrecios());
+                return "inventarios/crearInv";
+            }
+
+            Obra obraAsignada = obraServicio.localizarObra(obra);
+            if (obraAsignada != null && tieneAccesoAObra(usuarioLogeado, obraAsignada)) {
+                inventario.setIdObra(obraAsignada);
+            } else {
+                model.addAttribute("error", "No tiene acceso a la obra seleccionada");
+                return "inventarios/crearInv";
+            }
+            System.out.println("=== CONSUMIENDO DE STOCK PARA OBRA: " + obraAsignada.getNombreObra());
+        }
+
+        // Configurar el inventario
+        inventario.setIdUsuario(usuarioLogeado);
+        inventario.setAprobacion(EstadoInventario.SOLICITADO);
+
+        // ========== PROCESAR MATERIALES Y STOCK ==========
+        if (inventario.getMaterialesInventarios() == null) {
+            inventario.setMaterialesInventarios(new ArrayList<>());
+        }
+
+        for (int i = 0; i < materialIds.size(); i++) {
+            Long materialId = materialIds.get(i);
+            Double cantidad = (i < materialCantidades.size()) ? materialCantidades.get(i) : null;
+
+            if (materialId != null && cantidad != null && cantidad > 0) {
+                Material material = materialServicio.obtenerPorId(materialId);
+                if (material == null) continue;
+
+                // ========== ACTUALIZAR STOCK ==========
+                Double stockActual = material.getStockDisponible() != null ?
+                        material.getStockDisponible() : 0.0;
+
+                if (esParaStock) {
+                    // AGREGAR al stock
+                    material.setStockDisponible(stockActual + cantidad);
+                    System.out.println("Material: " + material.getNombreMaterial() +
+                            " - Stock anterior: " + stockActual +
+                            " + " + cantidad +
+                            " = " + material.getStockDisponible());
+                } else {
+                    // CONSUMIR del stock
+                    if (stockActual < cantidad) {
+                        model.addAttribute("error",
+                                String.format("Stock insuficiente para %s. Disponible: %.2f, Solicitado: %.2f",
+                                        material.getNombreMaterial(),
+                                        stockActual,
+                                        cantidad));
+                        model.addAttribute("usuario", usuarioLogeado);
+                        model.addAttribute("obras", obtenerObrasDisponibles(usuarioLogeado));
+                        model.addAttribute("materiales", materialServicio.listarTodosConPrecios());
+                        return "inventarios/crearInv";
+                    }
+                    material.setStockDisponible(stockActual - cantidad);
+                    System.out.println("Material: " + material.getNombreMaterial() +
+                            " - Stock anterior: " + stockActual +
+                            " - " + cantidad +
+                            " = " + material.getStockDisponible());
+                }
+
+                // Guardar el material actualizado
+                materialServicio.guardar(material);
+
+                // Crear la relación MaterialesInventario
+                MaterialesInventario materialInventario = new MaterialesInventario();
+                materialInventario.setInventario(inventario);
+                materialInventario.setMaterial(material);
+                materialInventario.setCantidad(cantidad);
+                inventario.getMaterialesInventarios().add(materialInventario);
+            }
+        }
 
         try {
-            // Validar que haya materiales seleccionados
-            if (materialIds == null || materialIds.isEmpty()) {
-                model.addAttribute("error", "Debe seleccionar al menos un material");
+            // Validar que haya al menos un material
+            if (inventario.getMaterialesInventarios().isEmpty()) {
+                model.addAttribute("error", "Debe seleccionar al menos un material con cantidad válida");
                 model.addAttribute("usuario", usuarioLogeado);
                 model.addAttribute("obras", obtenerObrasDisponibles(usuarioLogeado));
                 model.addAttribute("materiales", materialServicio.listarTodosConPrecios());
@@ -217,17 +319,15 @@ public class ControladorInv {
                 }
             }
 
-            // También asegurar que el usuario sea persistente
-            inventario.setIdUsuario(usuarioLogeado);
-
-            // Estado inicial siempre SOLICITADO al crear
-            inventario.setAprobacion(EstadoInventario.SOLICITADO);
+            // Guardar inventario
+            System.out.println("=== GUARDANDO INVENTARIO ===");
+            inventarioServicio.guardarInv(inventario);
+            System.out.println("=== INVENTARIO GUARDADO CON ID: " + inventario.getIdInventario());
 
             // Limpiar materiales existentes (para edición)
             if (inventario.getIdInventario() != null) {
                 inventario.getMaterialesInventarios().clear();
             }
-
 
             // Solo procesar nuevos materiales si se envían en el formulario
             // Esto ocurre normalmente cuando se crea un nuevo inventario o se editan materiales existentes
@@ -256,40 +356,38 @@ public class ControladorInv {
             // Si no se envían materiales (edición sin cambiar materiales),
             // se mantienen los materiales existentes automáticamente
 
-            // Validar stock disponible antes de guardar
-            for (MaterialesInventario mi : inventario.getMaterialesInventarios()) {
-                Material material = mi.getMaterial();
-                if (material != null && material.getStockDisponible() < mi.getCantidad()) {
-                    model.addAttribute("error",
-                            String.format("Stock insuficiente para %s. Disponible: %.2f, Solicitado: %.2f",
-                                    material.getNombreMaterial(),
-                                    material.getStockDisponible(),
-                                    mi.getCantidad()));
-                    model.addAttribute("usuario", usuarioLogeado);
-                    model.addAttribute("obras", obtenerObrasDisponibles(usuarioLogeado));
-                    model.addAttribute("materiales", materialServicio.listarTodosConPrecios());
-                    return "inventarios/crearInv";
-                }
-            }
+
+
+            System.out.println("=== ANTES DE GUARDAR OTRA VEZ ===");
 
             // The inventario object already has the usuario set from the form
             // Guardar inventario
             inventarioServicio.guardarInv(inventario);
 
+            System.out.println("=== DESPUÉS DE GUARDAR ===");
+
             // Registrar auditoría de creación
+            // Registrar auditoría
+            String accion = esParaStock ? "Ingreso de materiales al STOCK" : "Solicitud de materiales para OBRA";
             inventarioServicio.registrarAuditoria(
                     inventario,
                     null,
                     EstadoInventario.SOLICITADO.name(),
                     usuarioLogeado,
-                    "Creación de solicitud de inventario: " + (comentario != null ? comentario : "")
+                    "Creación de solicitud de inventario: " + (inventario.getComentarioInv() != null ? inventario.getComentarioInv() : "")
             );
 
             redirectAttributes.addFlashAttribute("success",
-                    String.format("Solicitud de inventario #%d creada exitosamente en estado %s",
+                    String.format("%s #%d creada exitosamente en estado %s",
+                            esParaStock ? "Ingreso al stock" : "Solicitud de inventario",
                             inventario.getIdInventario(),
                             inventario.getAprobacion().getDisplayName()));
+
+
+
         } catch (Exception e) {
+            System.err.println("=== ERROR AL GUARDAR ===");
+            e.printStackTrace();
             model.addAttribute("error", "Error al guardar: " + e.getMessage());
             model.addAttribute("usuario", usuarioLogeado);
             model.addAttribute("obras", obtenerObrasDisponibles(usuarioLogeado));

@@ -82,7 +82,10 @@ public class ProtoBOB {
                                             "/usuarios/foto/**",// Permitir acceso a fotos de perfil
                                             "/oauth2/**",           // Todas las rutas de OAuth2
                                             "/usuarios/registrar-google", // Formulario de registro Google
-                                            "/usuarios/registrar-google/**"
+                                            "/usuarios/registrar-google/**",
+                                            "/usuarios/registrar-microsoft",
+                                            "/usuarios/registrar-microsoft/**",
+                                            "/oauth2/authorization/microsoft" // Ruta de autorización de Microsoft
                                     ).permitAll()
 
 

@@ -165,19 +165,9 @@
 
                         <div class="form-group">
                             <label><i class='bx bx-ruler'></i> Unidad de Medida: <span style="color: #ef4444;">*</span></label>
-                            <select th:field="*{unidadInv}" required>
-                                <option value="">Seleccione una unidad...</option>
-                                <option value="m³">Metro cúbico (m³)</option>
-                                <option value="m²">Metro cuadrado (m²)</option>
-                                <option value="m">Metro lineal (m)</option>
-                                <option value="kg">Kilogramo (kg)</option>
-                                <option value="und">Unidad (und)</option>
-                                <option value="gl">Galón (gl)</option>
-                                <option value="l">Litro (l)</option>
-                                <option value="hr">Hora (hr)</option>
-                                <option value="día">Día</option>
-                            </select>
-                            <span class="error-message" th:if="${#fields.hasErrors('unidadInv')}" th:errors="*{unidadInv}"></span>
+                            <label>Observaciones o comentarios:</label>
+                            <input type="text" th:field="*{comentarioInv}" required>
+
                         </div>
 
                         <!-- Iteración sobre materiales -->

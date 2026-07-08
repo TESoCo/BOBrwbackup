@@ -2,6 +2,7 @@ package com.example.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -33,7 +34,7 @@ public class AuditoriaInventario {
     private Usuario usuario;
 
     @Column(name = "fecha_cambio", nullable = false)
-    @CreatedDate
+    @CreationTimestamp
     private LocalDateTime fechaCambio;
 
     @Column(name = "comentario")

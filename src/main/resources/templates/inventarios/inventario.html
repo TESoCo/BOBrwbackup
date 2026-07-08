@@ -188,7 +188,9 @@
                                     <th>Nombre Gestor</th>
                                     <th>Nombre Obra</th>
                                     <th>Estado</th>
+                                    <th>Tipo</th>
                                     <th>Fecha</th>
+                                    <th>Comentario</th>
                                     <th>Unidad de Medida</th>
                                     <th>Cantidad</th>
                                     <th>Material</th>
@@ -199,21 +201,66 @@
                             <tbody>
                             <tr th:each="inv : ${inventarios}">
                                 <td th:text="${inv.idInventario}"></td>
-                                <td th:text="${inv.idUsuario.nombreUsuario}"></td>
-                                <td th:text="${inv.idObra.nombreObra}"></td>
+                                <td th:text="${inv.idUsuario != null ? inv.idUsuario.nombreUsuario : 'N/A'}"></td>
+                                <td th:text="${inv.idObra != null ? inv.idObra.nombreObra : 'SIN OBRA (STOCK)'}"></td>
                                 <td th:text="${inv.aprobacion}"></td>
+                                <td>
+                                    <span th:if="${inv.idObra == null}" class="badge badge-stock">
+                                        <i class="fas fa-warehouse"></i> Ingreso a Stock
+                                    </span>
+                                    <span th:if="${inv.idObra != null}" class="badge badge-obra">
+                                        <i class="fas fa-building"></i> Consumo en Obra
+                                    </span>
+                                </td>
                                 <td th:text="${inv.fechaIngreso}"></td>
-                                <td th:text="${inv.unidadInv}"></td>
 
-                                <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].cantidad}"></td>
-                                <td th:if="${!inv.materialesInventarios.empty}" th:text="${inv.materialesInventarios[0].material.nombreMaterial}"></td>
-                                <td th:if="${!inv.materialesInventarios.empty}" th:text="${materiales[inv.materialesInventarios[0].material.idMaterial].getPrecioActual() }"></td>
+                                <!-- En lugar de mostrar solo el primer material, mostraremos todos en una lista -->
+                                <td>
+                                    <span th:if="${inv.comentarioInv != null}" th:text="${inv.comentarioInv}"></span>
+                                    <span th:unless="${inv.comentarioInv != null}" style="color: #999; font-style: italic;">Sin comentario</span>
+                                </td>
 
-                                <td th:unless="${!inv.materialesInventarios.empty}">-</td>
-                                <td th:unless="${!inv.materialesInventarios.empty}">-</td>
-                                <td th:unless="${!inv.materialesInventarios.empty}">-</td>
+                                <td>
+                                    <div th:each="matInv : ${inv.materialesInventarios}" style="margin-bottom: 4px;">
+                                        <span th:text="${matInv.material != null ? matInv.material.unidadMaterial : 'N/A'}"></span>
+                                    </div>
+                                    <div th:if="${inv.materialesInventarios.empty}" style="color: #999;">-</div>
+                                </td>
 
-                                <td >
+                                <td>
+                                    <div th:each="matInv : ${inv.materialesInventarios}" style="margin-bottom: 4px;">
+                                        <span th:text="${matInv.cantidad}"></span>
+                                    </div>
+                                    <div th:if="${inv.materialesInventarios.empty}" style="color: #999;">-</div>
+                                </td>
+
+                                <td>
+                                    <div th:each="matInv : ${inv.materialesInventarios}" style="margin-bottom: 4px;">
+                                        <span th:text="${matInv.material != null ? matInv.material.nombreMaterial : 'N/A'}"></span>
+                                    </div>
+                                    <div th:if="${inv.materialesInventarios.empty}" style="color: #999;">-</div>
+                                </td>
+
+                                <td>
+                                    <div th:each="matInv : ${inv.materialesInventarios}" style="margin-bottom: 4px;">
+                                        <span th:if="${matInv.material != null}">
+                                            <span th:with="precioActual=${preciosActuales.get(matInv.material.idMaterial)}">
+                                                <span th:if="${precioActual != null and precioActual > 0}">
+                                                    <strong style="color: #2c7da0;">
+                                                        $ <span th:text="${#numbers.formatDecimal(precioActual, 1, 2)}"></span>
+                                                    </strong> COP
+                                                </span>
+                                                <span th:unless="${precioActual != null and precioActual > 0}" style="color: #999;">
+                                                    <i class="fas fa-minus-circle"></i> Sin precio
+                                                </span>
+                                            </span>
+                                        </span>
+                                        <span th:unless="${matInv.material != null}" style="color: #999;">N/A</span>
+                                    </div>
+                                    <div th:if="${inv.materialesInventarios.empty}" style="color: #999;">-</div>
+                                </td>
+
+                                <td>
                                     <a th:href="@{/inventarios/cambiarInv/} + ${inv.idInventario}"
                                        class="btn btn-warning btn-sm"
                                        sec:authorize="hasAuthority('EDITAR_MATERIAL')">

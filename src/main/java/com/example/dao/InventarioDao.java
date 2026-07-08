@@ -19,8 +19,8 @@ public interface InventarioDao extends JpaRepository<Inventario, Long> {
     List<Inventario> findByFechaIngresoBefore(LocalDate date);
     List<Inventario> findByFechaIngresoAfter(LocalDate date);
 
-    List<Inventario> findByUnidadInv(String unidad);
-    List<Inventario> findByUnidadInvContainingIgnoreCase(String unidad);
+    List<Inventario> findBycomentarioInv(String comentario);
+    List<Inventario> findBycomentarioInvContainingIgnoreCase(String comentario);
 
     List<Inventario> findByAnular(boolean anular);
 

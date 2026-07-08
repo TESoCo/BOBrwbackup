@@ -972,4 +972,258 @@ public class ControladorUsuarios {
 
         return "usuarios/usuarios";
     }
+
+    /**
+     * Mostrar formulario de registro para usuarios de Microsoft
+     */
+    @GetMapping("/registrar-microsoft")
+    public String mostrarFormularioRegistroMicrosoft(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            System.out.println("=== GET /registrar-microsoft ===");
+            System.out.println("ID de sesión: " + session.getId());
+
+            // Intentar obtener datos de Microsoft desde flash attributes o sesión
+            ControladorOAuth2.MicrosoftUserData microsoftData = null;
+
+            // Primero intentar desde flash attributes (pasado por redirect)
+            if (model.containsAttribute("microsoftData")) {
+                microsoftData = (ControladorOAuth2.MicrosoftUserData) model.getAttribute("microsoftData");
+                System.out.println("microsoftData recuperado de flash attributes");
+            }
+
+            // Si no, intentar desde sesión
+            if (microsoftData == null) {
+                microsoftData = (ControladorOAuth2.MicrosoftUserData) session.getAttribute("microsoftData");
+                System.out.println("microsoftData en sesión: " + (microsoftData != null ? "EXISTE" : "null"));
+            }
+
+            if (microsoftData != null) {
+                System.out.println("Email: " + microsoftData.email);
+                System.out.println("Name: " + microsoftData.name);
+            }
+
+            if (microsoftData == null) {
+                System.out.println("❌ No se encontraron datos de Microsoft");
+                redirectAttributes.addFlashAttribute("error",
+                        "No se encontraron datos de autenticación. Por favor, intenta de nuevo.");
+                return "redirect:/login";
+            }
+
+            String suggestedUsername = microsoftData.email != null ? microsoftData.email.split("@")[0] : "";
+            model.addAttribute("nombreUsuario", suggestedUsername);
+
+            // Pasar datos al modelo
+            model.addAttribute("microsoftData", microsoftData);
+            model.addAttribute("nombre", microsoftData.givenName != null ? microsoftData.givenName : "");
+            model.addAttribute("apellido", microsoftData.familyName != null ? microsoftData.familyName : "");
+            model.addAttribute("correo", microsoftData.email != null ? microsoftData.email : "");
+
+            // Obtener roles disponibles
+            List<Rol> roles = rolServicio.listarRoles();
+            model.addAttribute("roles", roles);
+
+            return "usuarios/registrarMicrosoft";
+
+        } catch (Exception e) {
+            System.err.println("Error al cargar formulario de registro Microsoft: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al cargar el formulario");
+            return "redirect:/login";
+        }
+    }
+
+    /**
+     * Procesar registro de usuario desde Microsoft
+     */
+    @PostMapping("/registrar-microsoft")
+    public String registrarUsuarioMicrosoft(
+            @RequestParam String nombreUsuario,
+            @RequestParam String cargo,
+            @RequestParam String rolSeleccionado,
+            @RequestParam(required = false) String telefono,
+            @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
+            @RequestParam(required = false) String microsoftEmail,
+            @RequestParam(required = false) String microsoftName,
+            @RequestParam(required = false) String microsoftGivenName,
+            @RequestParam(required = false) String microsoftFamilyName,
+            @RequestParam(required = false) Boolean microsoftEmailVerified,
+            @RequestParam(required = false) String encryptedRefreshToken,
+            @RequestParam(required = false) String microsoftPicture,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        System.out.println("=== POST /registrar-microsoft ===");
+        System.out.println("nombreUsuario: " + nombreUsuario);
+        System.out.println("cargo: " + cargo);
+        System.out.println("rolSeleccionado: " + rolSeleccionado);
+        System.out.println("microsoftEmail: " + microsoftEmail);
+
+        try {
+            // 1. RECONSTRUIR DATOS DE MICROSOFT
+            ControladorOAuth2.MicrosoftUserData microsoftData = new ControladorOAuth2.MicrosoftUserData();
+            microsoftData.email = microsoftEmail;
+            microsoftData.name = microsoftName;
+            microsoftData.givenName = microsoftGivenName;
+            microsoftData.familyName = microsoftFamilyName;
+            microsoftData.emailVerified = microsoftEmailVerified != null ? microsoftEmailVerified : false;
+            microsoftData.encryptedRefreshToken = encryptedRefreshToken;
+            microsoftData.picture = microsoftPicture;
+
+            // 2. VALIDAR DATOS DE MICROSOFT
+            if (microsoftData.email == null || microsoftData.email.isEmpty()) {
+                System.err.println("❌ ERROR: Datos de Microsoft no recibidos en el POST");
+                redirectAttributes.addFlashAttribute("error",
+                        "Datos de Microsoft no encontrados. Por favor, inicia sesión nuevamente.");
+                return "redirect:/login";
+            }
+
+            System.out.println("✅ Datos de Microsoft reconstruidos correctamente");
+            System.out.println("   Email: " + microsoftData.email);
+            System.out.println("   Name: " + microsoftData.name);
+
+            // 3. VALIDAR CAMPOS OBLIGATORIOS
+            if (nombreUsuario == null || nombreUsuario.isEmpty() ||
+                    cargo == null || cargo.isEmpty() ||
+                    rolSeleccionado == null || rolSeleccionado.isEmpty()) {
+
+                System.err.println("❌ ERROR: Campos obligatorios faltantes");
+                redirectAttributes.addFlashAttribute("error", "Todos los campos son obligatorios");
+                redirectAttributes.addFlashAttribute("microsoftData", microsoftData);
+                return "redirect:/usuarios/registrar-microsoft";
+            }
+
+            // 4. VERIFICAR SI EL NOMBRE DE USUARIO YA EXISTE
+            Usuario usuarioExistente = usuarioServicio.encontrarPorNombreUsuario(nombreUsuario);
+            if (usuarioExistente != null) {
+                System.err.println("❌ ERROR: Nombre de usuario ya existe: " + nombreUsuario);
+                redirectAttributes.addFlashAttribute("error",
+                        "El nombre de usuario '" + nombreUsuario + "' ya existe");
+                redirectAttributes.addFlashAttribute("microsoftData", microsoftData);
+                return "redirect:/usuarios/registrar-microsoft";
+            }
+
+            // 5. VERIFICAR SI EL EMAIL YA ESTÁ REGISTRADO
+            if (microsoftData.email != null) {
+                List<Usuario> usuariosPorEmail = usuarioServicio.encontrarPorCorreo(microsoftData.email);
+                if (!usuariosPorEmail.isEmpty()) {
+                    System.err.println("❌ ERROR: Email ya registrado: " + microsoftData.email);
+                    redirectAttributes.addFlashAttribute("error",
+                            "Este email ya está registrado. Por favor, inicia sesión.");
+                    return "redirect:/login";
+                }
+            }
+
+            // 6. CREAR PERSONA
+            Persona persona = new Persona();
+            String nombre = microsoftGivenName != null ? microsoftGivenName : "";
+            String apellido = microsoftFamilyName != null ? microsoftFamilyName : "";
+
+            if (nombre.isEmpty() && microsoftData.email != null) {
+                nombre = microsoftData.email.split("@")[0];
+            }
+            if (nombre.isEmpty()) {
+                nombre = "Usuario";
+            }
+            if (apellido.isEmpty()) {
+                apellido = "Microsoft";
+            }
+
+            persona.setNombre(nombre);
+            persona.setApellido(apellido);
+            persona.setTelefono(telefono != null && !telefono.isEmpty() ? telefono : "0000000000");
+            persona.setCorreo(microsoftData.email != null ? microsoftData.email : nombreUsuario + "@microsoft.com");
+
+            personaServicio.salvar(persona);
+            System.out.println("Persona creada con ID: " + persona.getIdPersona());
+
+            // 7. BUSCAR ROL
+            Rol rol = rolServicio.listarRoles().stream()
+                    .filter(r -> r.getNombreRol().equalsIgnoreCase(rolSeleccionado))
+                    .findFirst()
+                    .orElse(null);
+
+            if (rol == null) {
+                System.err.println("⚠️ Rol no encontrado: " + rolSeleccionado + ", buscando fallback...");
+                rol = rolServicio.listarRoles().stream()
+                        .filter(r -> "USER".equalsIgnoreCase(r.getNombreRol()) ||
+                                "OPERATIVO".equalsIgnoreCase(r.getNombreRol()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (rol == null && !rolServicio.listarRoles().isEmpty()) {
+                    rol = rolServicio.listarRoles().get(0);
+                }
+            }
+
+            if (rol == null) {
+                System.err.println("❌ ERROR: No se pudo asignar un rol válido");
+                redirectAttributes.addFlashAttribute("error", "No se pudo asignar un rol válido");
+                return "redirect:/usuarios/registrar-microsoft";
+            }
+
+            System.out.println("Rol asignado: " + rol.getNombreRol() + " (ID: " + rol.getIdRol() + ")");
+
+            // 8. CREAR USUARIO
+            Usuario usuario = new Usuario();
+            usuario.setNombreUsuario(nombreUsuario);
+            usuario.setCargo(cargo);
+            usuario.setPersona(persona);
+            usuario.setRol(rol);
+            usuario.setStatus("PENDING");
+            usuario.setAuthProvider("MICROSOFT");
+            usuario.setEmailVerified(microsoftData.emailVerified != null ? microsoftData.emailVerified : false);
+
+            // Contraseña aleatoria para usuarios OAuth2
+            String randomPassword = java.util.UUID.randomUUID().toString();
+            usuario.setPass_usuario(passwordEncoder.encode(randomPassword));
+            System.out.println("Contraseña generada para OAuth2");
+
+            // Guardar refresh token encriptado
+            if (microsoftData.encryptedRefreshToken != null) {
+                usuario.setGoogleRefreshToken(microsoftData.encryptedRefreshToken);
+            }
+
+            // 9. PROCESAR FOTO DE PERFIL
+            if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+                try {
+                    String contentType = fotoPerfil.getContentType();
+                    if (contentType != null && contentType.startsWith("image/") &&
+                            fotoPerfil.getSize() <= 5 * 1024 * 1024) {
+                        usuario.setFotoPerfil(fotoPerfil.getBytes());
+                        usuario.setFotoTipo(contentType);
+                        System.out.println("✅ Foto subida por el usuario guardada");
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al procesar foto de perfil: " + e.getMessage());
+                }
+            }
+
+            // 10. GUARDAR USUARIO
+            usuarioServicio.guardar(usuario);
+            System.out.println("Usuario Microsoft creado con ID: " + usuario.getIdUsuario());
+
+            // 11. LIMPIAR SESIÓN
+            session.removeAttribute("microsoftData");
+            session.removeAttribute("microsoftDataTimestamp");
+            System.out.println("Sesión limpiada");
+
+            // 12. MENSAJE DE ÉXITO
+            redirectAttributes.addFlashAttribute("success",
+                    "¡Registro completado! Tu cuenta está pendiente de aprobación por un administrador.");
+            System.out.println("=== REGISTRO MICROSOFT COMPLETADO EXITOSAMENTE ===");
+
+            return "redirect:/login?pending=true";
+
+        } catch (Exception e) {
+            System.err.println("Error al registrar usuario Microsoft: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al registrar: " + e.getMessage());
+            return "redirect:/usuarios/registrar-microsoft";
+        }
+    }
+
+
+
+
+
 }

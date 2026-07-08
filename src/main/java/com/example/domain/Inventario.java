@@ -19,7 +19,7 @@ import java.util.List;
 @Table(name = "inventario")
 
 @SecondaryTables({
-        @SecondaryTable(name = "unidades_inventario", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Inventario")),
+        @SecondaryTable(name = "comentarios_inventario", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Inventario")),
         @SecondaryTable(name = "fecha_inventario", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_Inventario"))
 })
 
@@ -63,9 +63,9 @@ public class Inventario implements Serializable {
     @Column(name = "fecha_entrega", table = "fecha_inventario")
     private LocalDate fechaEntrega;
 
-    // From UNIDADES_INVENTARIO
-    @Column(name = "Unidad_Inv", table = "unidades_inventario", nullable = false)
-    private String unidadInv;
+    // From COMENTARIO_INVENTARIO
+    @Column(name = "Comentario_Inv", table = "comentarios_inventario", nullable = false)
+    private String comentarioInv;
 
     // Many-to-many relationship for materiales (separate table)
     @OneToMany(mappedBy = "inventario", cascade = CascadeType.ALL, orphanRemoval = true)

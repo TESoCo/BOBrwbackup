@@ -700,7 +700,7 @@ public class ControladorMaterial {
         String descripcionPrueba = "Construcción de muro de contención en concreto reforzado";
         resultado.append("Descripción: ").append(descripcionPrueba).append("\n\n");
 
-        // Esta llamada probará todo el orden: OpenRouter -> Gemini -> DeepSeek -> Ollama -> Local
+        // Esta llamada probará tod0 el orden: OpenRouter -> Gemini -> DeepSeek -> Ollama -> Local
         try {
             long startTime = System.currentTimeMillis();
             List<Map<String, String>> materiales = aiService.generarMateriales(descripcionPrueba);

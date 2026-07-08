@@ -60,6 +60,19 @@ public class ControladorOAuth2 {
     @Value("${google.redirect.uri}")
     private String redirectUri;
 
+    // Valores para Microsoft
+    @Value("${microsoft.client.id:}")
+    private String microsoftClientId;
+
+    @Value("${microsoft.client.secret:}")
+    private String microsoftClientSecret;
+
+    @Value("${microsoft.redirect.uri:}")
+    private String microsoftRedirectUri;
+
+
+
+
     /**
      * Inicia el flujo de login con Google
      */
@@ -102,6 +115,32 @@ public class ControladorOAuth2 {
             System.err.println("Error al iniciar login con Google: " + e.getMessage());
             e.printStackTrace();
             return new RedirectView("/login?error=google_error");
+        }
+    }
+
+    /**
+     * Inicia el flujo de login con Microsoft
+     */
+    @GetMapping("/login/microsoft")
+    public RedirectView loginWithMicrosoft() {
+        try {
+            // Construir URL de autorización de Microsoft
+            String authorizationUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize" +
+                    "?client_id=" + microsoftClientId +
+                    "&response_type=code" +
+                    "&redirect_uri=" + microsoftRedirectUri +
+                    "&response_mode=query" +
+                    "&scope=openid%20profile%20email%20User.Read" +
+                    "&access_type=offline" +
+                    "&prompt=consent";
+
+            System.out.println("URL de autorización Microsoft: " + authorizationUrl);
+            return new RedirectView(authorizationUrl);
+
+        } catch (Exception e) {
+            System.err.println("Error al iniciar login con Microsoft: " + e.getMessage());
+            e.printStackTrace();
+            return new RedirectView("/login?error=microsoft_error");
         }
     }
 
@@ -253,8 +292,192 @@ public class ControladorOAuth2 {
         }
     }
 
+
     /**
-     * Intercambia el código de autorización por tokens
+     * Callback de Microsoft después de la autenticación
+     */
+    @GetMapping("/callback/microsoft")
+    public String microsoftCallback(
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "error", required = false) String error,
+            @RequestParam(value = "error_description", required = false) String errorDescription,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+
+        if (error != null) {
+            redirectAttributes.addFlashAttribute("error", "Error en autenticación con Microsoft: " + error +
+                    (errorDescription != null ? " - " + errorDescription : ""));
+            return "redirect:/login";
+        }
+
+        if (code == null || code.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "No se recibió código de autorización");
+            return "redirect:/login";
+        }
+
+        try {
+            // Intercambiar el código por tokens
+            MicrosoftTokenResponse tokenResponse = exchangeCodeForTokensMicrosoft(code);
+
+            System.out.println("=== TOKEN RESPONSE MICROSOFT ===");
+            System.out.println("Access Token: " + tokenResponse.accessToken);
+            System.out.println("Refresh Token: " + tokenResponse.refreshToken);
+            System.out.println("Expires In: " + tokenResponse.expiresIn);
+
+            // Obtener información del usuario desde Microsoft Graph
+            MicrosoftUserInfo userInfo = getUserInfoFromMicrosoft(tokenResponse.accessToken);
+
+            String email = userInfo.mail != null ? userInfo.mail : userInfo.userPrincipalName;
+            String name = userInfo.displayName;
+            String givenName = userInfo.givenName;
+            String familyName = userInfo.surname;
+            String picture = null; // Microsoft no da foto en el user info
+
+            System.out.println("=== LOGIN CON MICROSOFT ===");
+            System.out.println("Email: " + email);
+            System.out.println("Name: " + name);
+            System.out.println("GivenName: " + givenName);
+            System.out.println("FamilyName: " + familyName);
+
+            if (email == null || email.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error",
+                        "No se pudo obtener el correo electrónico de Microsoft. Verifica tus permisos.");
+                return "redirect:/login";
+            }
+
+            // Procesar el usuario (común para Google y Microsoft)
+            return processOAuth2User(email, name, givenName, familyName, picture, true,
+                    tokenResponse.refreshToken, "MICROSOFT", request, redirectAttributes);
+
+        } catch (Exception e) {
+            System.err.println("Error en callback de Microsoft: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al autenticar con Microsoft: " + e.getMessage());
+            return "redirect:/login";
+        }
+    }
+
+
+    /**
+     * Métod común para procesar usuarios OAuth2 (tanto Google como Microsoft)
+     */
+    private String processOAuth2User(
+            String email,
+            String name,
+            String givenName,
+            String familyName,
+            String picture,
+            Boolean emailVerified,
+            String refreshToken,
+            String provider,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            // Verificar si el usuario ya existe por email
+            Usuario usuarioExistente = null;
+            if (email != null) {
+                List<Usuario> usuarios = usuarioServicio.encontrarPorCorreo(email);
+                if (!usuarios.isEmpty()) {
+                    usuarioExistente = usuarios.get(0);
+                }
+            }
+
+            // Si no se encontró por email, intentar por nombre de usuario
+            if (usuarioExistente == null && email != null) {
+                String username = email.split("@")[0];
+                usuarioExistente = usuarioServicio.encontrarPorNombreUsuario(username);
+            }
+
+            if (usuarioExistente != null) {
+                // USUARIO EXISTENTE: actualizar refresh token
+                System.out.println("✅ Usuario encontrado: " + usuarioExistente.getNombreUsuario());
+
+                String refreshTokenToStore = refreshToken;
+                if (refreshTokenToStore != null && !refreshTokenToStore.isEmpty()) {
+                    try {
+                        String encryptedRefreshToken = encryptionService.encrypt(refreshTokenToStore);
+                        usuarioExistente.setGoogleRefreshToken(encryptedRefreshToken);
+                        usuarioServicio.guardar(usuarioExistente);
+                        System.out.println("Refresh token actualizado para: " + usuarioExistente.getNombreUsuario());
+                    } catch (Exception e) {
+                        System.err.println("No se pudo encriptar el refresh token: " + e.getMessage());
+                    }
+                }
+
+                // Verificar el estado del usuario
+                String status = usuarioExistente.getStatus();
+                System.out.println("Estado del usuario: " + status);
+
+                if ("PENDING".equals(status)) {
+                    redirectAttributes.addFlashAttribute("error",
+                            "Tu cuenta está pendiente de aprobación por un administrador");
+                    return "redirect:/login?pending=true";
+                } else if ("REJECTED".equals(status)) {
+                    redirectAttributes.addFlashAttribute("error",
+                            "Tu cuenta ha sido rechazada. Contacta al administrador.");
+                    return "redirect:/login?rejected=true";
+                } else if (!"APPROVED".equals(status)) {
+                    redirectAttributes.addFlashAttribute("error",
+                            "Estado de cuenta no válido. Contacta al administrador.");
+                    return "redirect:/login";
+                }
+
+                // Autenticar al usuario
+                System.out.println("Autenticando usuario: " + usuarioExistente.getNombreUsuario());
+                authenticateUser(usuarioExistente, request);
+                System.out.println("Usuario autenticado correctamente");
+
+                redirectAttributes.addFlashAttribute("success", "¡Bienvenido de vuelta!");
+                return "redirect:/dashboard";
+
+            } else {
+                // NUEVO USUARIO
+                System.out.println("🆕 Nuevo usuario de " + provider + ", redirigiendo a registro");
+
+                String encryptedRefreshToken = null;
+                if (refreshToken != null && !refreshToken.isEmpty()) {
+                    try {
+                        encryptedRefreshToken = encryptionService.encrypt(refreshToken);
+                    } catch (Exception e) {
+                        System.err.println("Error al encriptar refresh token: " + e.getMessage());
+                    }
+                }
+
+                // Crear objeto de datos según el proveedor
+                if ("GOOGLE".equals(provider)) {
+                    GoogleUserData googleData = new GoogleUserData(
+                            email, name, givenName, familyName,
+                            emailVerified, encryptedRefreshToken, null, picture
+                    );
+                    redirectAttributes.addFlashAttribute("googleData", googleData);
+                } else if ("MICROSOFT".equals(provider)) {
+                    MicrosoftUserData microsoftData = new MicrosoftUserData(
+                            email, name, givenName, familyName,
+                            emailVerified, encryptedRefreshToken, picture
+                    );
+                    redirectAttributes.addFlashAttribute("microsoftData", microsoftData);
+                }
+
+                redirectAttributes.addFlashAttribute("success",
+                        "¡Hola " + name + "! Completa el registro para terminar");
+
+                return "redirect:/usuarios/registrar-" + provider.toLowerCase();
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error en processOAuth2User: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al procesar autenticación: " + e.getMessage());
+            return "redirect:/login";
+        }
+    }
+
+
+
+
+    /**
+     * Intercambia el código de autorización por tokens (Google)
      */
     private GoogleTokenResponse exchangeCodeForTokens(String code) throws Exception {
         GoogleClientSecrets clientSecrets = new GoogleClientSecrets()
@@ -277,8 +500,110 @@ public class ControladorOAuth2 {
                 .execute();
     }
 
+
     /**
-     * Autentica al usuario manualmente
+     * NUEVO: Intercambia el código de autorización por tokens (Microsoft)
+     */
+    private MicrosoftTokenResponse exchangeCodeForTokensMicrosoft(String code) throws Exception {
+        // Construir la URL para el token exchange
+        String tokenUrl = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+
+        // Crear el body de la petición
+        String body = "client_id=" + microsoftClientId +
+                "&client_secret=" + microsoftClientSecret +
+                "&code=" + code +
+                "&redirect_uri=" + microsoftRedirectUri +
+                "&grant_type=authorization_code";
+
+        // Realizar la petición HTTP
+        java.net.URL url = new java.net.URL(tokenUrl);
+        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        conn.setDoOutput(true);
+
+        try (java.io.OutputStream os = conn.getOutputStream()) {
+            os.write(body.getBytes());
+            os.flush();
+        }
+
+        int responseCode = conn.getResponseCode();
+        if (responseCode != 200) {
+            // Leer el error
+            try (java.io.BufferedReader br = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(conn.getErrorStream()))) {
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    response.append(line);
+                }
+                throw new Exception("Error en token exchange: " + responseCode + " - " + response.toString());
+            }
+        }
+        // Leer la respuesta
+        try (java.io.BufferedReader br = new java.io.BufferedReader(
+                new java.io.InputStreamReader(conn.getInputStream()))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                response.append(line);
+            }
+
+            // Parsear JSON
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(response.toString());
+
+            MicrosoftTokenResponse tokenResponse = new MicrosoftTokenResponse();
+            tokenResponse.accessToken = json.get("access_token").asText();
+            tokenResponse.refreshToken = json.has("refresh_token") ? json.get("refresh_token").asText() : null;
+            tokenResponse.expiresIn = json.get("expires_in").asInt();
+            tokenResponse.tokenType = json.get("token_type").asText();
+
+            return tokenResponse;
+        }
+    }
+
+
+    /**
+     * NUEVO: Obtiene información del usuario desde Microsoft Graph
+     */
+    private MicrosoftUserInfo getUserInfoFromMicrosoft(String accessToken) throws Exception {
+        String userInfoUrl = "https://graph.microsoft.com/v1.0/me";
+
+        java.net.URL url = new java.net.URL(userInfoUrl);
+        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+
+        int responseCode = conn.getResponseCode();
+        if (responseCode != 200) {
+            throw new Exception("Error al obtener información del usuario: " + responseCode);
+        }
+
+        try (java.io.BufferedReader br = new java.io.BufferedReader(
+                new java.io.InputStreamReader(conn.getInputStream()))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                response.append(line);
+            }
+
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(response.toString());
+
+            MicrosoftUserInfo userInfo = new MicrosoftUserInfo();
+            userInfo.mail = json.has("mail") ? json.get("mail").asText() : null;
+            userInfo.userPrincipalName = json.has("userPrincipalName") ? json.get("userPrincipalName").asText() : null;
+            userInfo.displayName = json.has("displayName") ? json.get("displayName").asText() : null;
+            userInfo.givenName = json.has("givenName") ? json.get("givenName").asText() : null;
+            userInfo.surname = json.has("surname") ? json.get("surname").asText() : null;
+
+            return userInfo;
+        }
+    }
+
+    /**
+     * Autentica al usuario manualmente (ambos lo usan)
      */
     private void authenticateUser(Usuario usuario, HttpServletRequest request) {
 
@@ -372,5 +697,52 @@ public class ControladorOAuth2 {
             this.accessToken = accessToken;
             this.picture = picture;
         }
+    }
+
+    /**
+     * Clase auxiliar para datos de Microsoft
+     */
+    public static class MicrosoftUserData {
+        public String email;
+        public String name;
+        public String givenName;
+        public String familyName;
+        public Boolean emailVerified;
+        public String encryptedRefreshToken;
+        public String picture;
+
+        public MicrosoftUserData() {}
+
+        public MicrosoftUserData(String email, String name, String givenName, String familyName,
+                                 Boolean emailVerified, String encryptedRefreshToken, String picture) {
+            this.email = email;
+            this.name = name;
+            this.givenName = givenName;
+            this.familyName = familyName;
+            this.emailVerified = emailVerified;
+            this.encryptedRefreshToken = encryptedRefreshToken;
+            this.picture = picture;
+        }
+    }
+
+    /**
+     * Clase para respuesta de tokens de Microsoft
+     */
+    private static class MicrosoftTokenResponse {
+        public String accessToken;
+        public String refreshToken;
+        public int expiresIn;
+        public String tokenType;
+    }
+
+    /**
+     * Clase para información de usuario de Microsoft
+     */
+    private static class MicrosoftUserInfo {
+        public String mail;
+        public String userPrincipalName;
+        public String displayName;
+        public String givenName;
+        public String surname;
     }
 }

@@ -21,10 +21,6 @@ public class GoogleOAuthService {
     @Value("${google.client.secret}")
     private String CLIENT_SECRET;
 
-    // Estos valores vendrían de tu configuración de Google Cloud
-    private final String clientId = "TU_CLIENT_ID";
-    private final String clientSecret = "TU_CLIENT_SECRET";
-
     public String getAccessToken(String encryptedRefreshToken) throws Exception {
         String refreshToken = encryptionService.decrypt(encryptedRefreshToken);
 

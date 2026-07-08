@@ -24,7 +24,7 @@
             <p><strong>Proveedor:</strong> <span th:text="${inventario.proveedorInv?.nombreProveedor}">N/A</span></p>
             <p><strong>Fecha Solicitud:</strong> <span th:text="${#temporals.format(inventario.fechaIngreso, 'dd/MM/yyyy')}"></span></p>
             <p th:if="${inventario.fechaEntrega}"><strong>Fecha Entrega:</strong> <span th:text="${#temporals.format(inventario.fechaEntrega, 'dd/MM/yyyy')}"></span></p>
-            <p><strong>Unidad:</strong> <span th:text="${inventario.unidadInv}"></span></p>
+            <p><strong>Comentarios:</strong> <span th:text="${inventario.comentarioInv}"></span></p>
         </div>
     </div>
 

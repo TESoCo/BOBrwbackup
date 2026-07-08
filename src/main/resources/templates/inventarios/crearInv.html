@@ -146,6 +146,14 @@
                         </div>
 
                         <div class="form-group">
+                            <label>Destino del material:</label>
+                            <select id="tipoDestino" name="tipoDestino" class="form-select" onchange="toggleDestino()">
+                                <option value="OBRA">Obra (Consumir stock)</option>
+                                <option value="STOCK">Stock (Agregar material)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
                             <label>Nombre Obra:</label>
                             <select th:field="*{idObra}" class="form-select">
                                 <option value="">Seleccione una obra...</option>
@@ -162,8 +170,8 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Unidad de inventario (unidad de medida general:</label>
-                            <input type="text" th:field="*{unidadInv}" required>
+                            <label>Observaciones o comentarios:</label>
+                            <input type="text" th:field="*{comentarioInv}" required>
                         </div>
 
                         <!-- 📌 Materiales -->
@@ -173,16 +181,22 @@
                                 <div class="material-item">
                                     <div class="form-group">
                                         <label>Material:</label>
-                                        <select name="materialIds" class="material-select">
+                                        <select name="materialIds" class="material-select" onchange="mostrarStock(this)">
                                             <option value="">-- Seleccionar Material --</option>
                                             <option th:each="material : ${materiales}"
                                                     th:value="${material.idMaterial}"
-                                                    th:text="${material.nombreMaterial}"></option>
+                                                    th:text="${material.nombreMaterial}"
+                                                    th:data-stock="${material.stockDisponible}"></option>
                                         </select>
                                     </div>
                                     <div class="form-group">
                                         <label>Cantidad:</label>
-                                        <input type="number" name="materialCantidades" class="material-quantity" placeholder="Ingrese cantidad" min="0" step="0.01">
+                                        <input type="number" name="materialCantidades" class="material-quantity" placeholder="Ingrese cantidad" min="0" step="0.01" onchange="validarStock(this)">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Stock actual:</label>
+                                        <input type="number" class="stock-disponible" readonly
+                                               placeholder="0.00" step="0.01">
                                     </div>
                                 </div>
                             </div>
@@ -246,14 +260,129 @@
         }
     });
 
-    // --- Funciones de Material (fuera de DOMContentLoaded) ---
-    // NOTA: Estas funciones deben estar definidas globalmente o adjuntas a botones HTML.
+    // ========== FUNCIONES PARA STOCK ==========
+
+    function toggleDestino() {
+        const tipoDestino = document.getElementById('tipoDestino').value;
+        const obraGroup = document.getElementById('obraGroup');
+        const helpTextObra = document.getElementById('helpTextObra');
+        const helpTextStock = document.getElementById('helpTextStock');
+        const materialQuantities = document.querySelectorAll('.material-quantity');
+
+        if (tipoDestino === 'STOCK') {
+            // Ocultar selección de obra
+            obraGroup.style.display = 'none';
+            helpTextObra.style.display = 'none';
+            helpTextStock.style.display = 'inline';
+
+            // No validar stock para consumo
+            materialQuantities.forEach(input => {
+                input.dataset.validarStock = 'false';
+            });
+
+            // Actualizar etiquetas
+            document.querySelector('.materials-section h3').innerHTML =
+                '<i class="bx bx-plus-circle"></i> Agregar materiales al stock';
+
+        } else {
+            // Mostrar selección de obra
+            obraGroup.style.display = 'block';
+            helpTextObra.style.display = 'inline';
+            helpTextStock.style.display = 'none';
+
+            // Activar validación de stock para consumo
+            materialQuantities.forEach(input => {
+                input.dataset.validarStock = 'true';
+            });
+
+            // Actualizar etiquetas
+            document.querySelector('.materials-section h3').innerHTML =
+                '<i class="bx bx-list-plus"></i> Materiales para obra';
+        }
+
+        // Recalcular stock después para todos los materiales
+        document.querySelectorAll('.material-item').forEach(item => {
+            calcularStockDespues(item);
+        });
+    }
+
+    function mostrarStock(select) {
+        const item = select.closest('.material-item');
+        const stock = parseFloat(select.options[select.selectedIndex]?.dataset?.stock || 0);
+        const stockInput = item.querySelector('.stock-disponible');
+        if (stockInput) {
+            stockInput.value = stock.toFixed(2);
+        }
+        calcularStockDespues(item);
+    }
+
+    function validarStock(input) {
+        const item = input.closest('.material-item');
+        const tipoDestino = document.getElementById('tipoDestino').value;
+
+        // Si es STOCK, no validar
+        if (tipoDestino === 'STOCK') {
+            calcularStockDespues(item);
+            return true;
+        }
+
+        const select = item.querySelector('.material-select');
+        const stock = parseFloat(select.options[select.selectedIndex]?.dataset?.stock || 0);
+        const cantidad = parseFloat(input.value) || 0;
+
+        if (cantidad > stock && stock > 0) {
+            alert(`⚠️ Stock insuficiente.\nDisponible: ${stock.toFixed(2)}\nSolicitado: ${cantidad.toFixed(2)}`);
+            input.value = '';
+            item.querySelector('.stock-despues').value = stock.toFixed(2);
+            return false;
+        }
+
+        calcularStockDespues(item);
+        return true;
+    }
+
+    function calcularStockDespues(item) {
+        const tipoDestino = document.getElementById('tipoDestino').value;
+        const select = item.querySelector('.material-select');
+        const cantidadInput = item.querySelector('.material-quantity');
+        const stockDespuesInput = item.querySelector('.stock-despues');
+
+        if (!select || !cantidadInput || !stockDespuesInput) return;
+
+        const stock = parseFloat(select.options[select.selectedIndex]?.dataset?.stock || 0);
+        const cantidad = parseFloat(cantidadInput.value) || 0;
+
+        let stockDespues;
+        if (tipoDestino === 'STOCK') {
+            stockDespues = stock + cantidad; // Agregar al stock
+        } else {
+            stockDespues = stock - cantidad; // Consumir del stock
+        }
+
+        stockDespuesInput.value = stockDespues.toFixed(2);
+    }
+
     function addMaterial() {
         const materialItems = document.getElementById('materialItems');
         if (materialItems && materialItems.firstElementChild) {
             const newMaterialItem = materialItems.firstElementChild.cloneNode(true);
             newMaterialItem.querySelector('.material-select').value = '';
             newMaterialItem.querySelector('.material-quantity').value = '';
+            newMaterialItem.querySelector('.stock-disponible').value = '0.00';
+            newMaterialItem.querySelector('.stock-despues').value = '0.00';
+
+            // Configurar eventos
+            const select = newMaterialItem.querySelector('.material-select');
+            const input = newMaterialItem.querySelector('.material-quantity');
+
+            select.onchange = function() { mostrarStock(this); };
+            input.onchange = function() { validarStock(this); };
+            input.oninput = function() { validarStock(this); };
+
+            // Aplicar el tipo de destino actual
+            const tipoDestino = document.getElementById('tipoDestino').value;
+            input.dataset.validarStock = tipoDestino === 'STOCK' ? 'false' : 'true';
+
             materialItems.appendChild(newMaterialItem);
         }
     }
@@ -264,7 +393,14 @@
         if (materialItems && materialItems.children.length > 1 && parentItem) {
             parentItem.remove();
         }
+
     }
+
+    // Inicializar al cargar
+    document.addEventListener("DOMContentLoaded", function() {
+        toggleDestino();
+    });
+
 </script>
 
 </body>

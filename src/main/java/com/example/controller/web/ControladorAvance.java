@@ -98,8 +98,8 @@ public class ControladorAvance
         model.addAttribute("idUsuario", idUsuario);
         model.addAttribute("fecha", fecha);
         model.addAttribute("contratistas", contratistaServicio.listarContratistas());
-        //Proveedores para envío masivo de correos
-        model.addAttribute("proveedores", proveedorServicio.listar());
+        //Usuarios para envío masivo de correos
+        model.addAttribute("usuarios", usuarioServicio.listarUsuarios());
 
         return "avances/inicioAvances";
     }
@@ -579,7 +579,7 @@ public class ControladorAvance
 
     }
 
-    // Generar reporte de avances en excel apra correo electrónico
+    // Generar reporte de avances en excel para correo electrónico
     @GetMapping("/excelCorreo")
     public byte[] generarReporteAvancesExcel(@RequestParam(required = false) Long idObraTexto,
                                              @RequestParam(required = false) Long idObraSelect,
