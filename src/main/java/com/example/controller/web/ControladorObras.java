@@ -41,29 +41,28 @@ public class ControladorObras
     //Acá están los métodos para presupuestos
     @GetMapping("/inicioObra")
     public String inicioObra(Model model, Authentication authentication){
+        // 0. Todas las obras
         List<Obra> obras = obraServicio.listaObra();
-        model.addAttribute("obras",obras);
-        model.addAttribute("proyectos", proyectoServicio.listarProyectos());
-        model.addAttribute("obrasSinProyecto", obraServicio.findByProyectoIsNull());
-        model.addAttribute("equipos", equipoServicio.listarEquipos());
 
-        //FILTRAR OBRAS CON COORDENADAS PARA EL MAPA
+
+
+
+
+        // 1 .FILTRAR OBRAS CON COORDENADAS PARA EL MAPA
         // Filtrar obras que tengan coordenadas (opcional)
         List<Obra> obrasConCoordenadas = obras.stream()
                 .filter(obra -> obra.getCooNObra() != null && obra.getCooEObra() != null)
                 .collect(Collectors.toList());
 
-        model.addAttribute("obras", obrasConCoordenadas);
-        //model.addAttribute("fotoDatos", new ArrayList<>()); // o tu lista real de fotos
+
+        //model.addAttribute("fotoDatos", new ArrayList<>()); // todo lista real de fotos?
         // TODO: conexion con fotodato
 
 
+
         /// ////////////////////////////////////////////////////////////////////
-        //FILTROS PARA CONTROL DE ACCESOS POR EQUIPOS
-
+        // 2. FILTROS PARA CONTROL DE ACCESOS POR EQUIPOS
         Usuario usuarioActual = usuarioServicio.encontrarPorNombreUsuario(authentication.getName());
-
-
         // VERIFICAR SI EL USUARIO TIENE EQUIPO
         if (usuarioActual.getEquipo() == null) {
             // Si es ADMIN, permitir acceso con mensaje informativo
@@ -75,12 +74,16 @@ public class ControladorObras
                 return "obras/sinEquipoError";
             }
         }
+        /// /////////////////////////////////////////////////////////////////////
 
-        // Obtener obras según permisos
+
+        // 3. Obtener obras según permisos
         List<Obra> obrasVisibles = obraServicio.obtenerObrasVisibles(usuarioActual);
-        model.addAttribute("obras", obrasVisibles);
+        System.out.println("Obras visibles para el usuario: " + obrasVisibles.size());
 
-        // Proyectos y obras para la vista agrupada
+
+
+        // 4. Proyectos y obras para la vista agrupada
         List<Proyecto> proyectos = new ArrayList<>();
         if (usuarioActual.getRol() != null && "ADMIN".equals(usuarioActual.getRol().getNombreRol())) {
             proyectos = proyectoServicio.listarProyectos();
@@ -92,22 +95,32 @@ public class ControladorObras
                 proyectos = new ArrayList<>();
             }
         }
-        model.addAttribute("proyectos", proyectos);
 
-        // Obras sin proyecto (solo las visibles)
+
+
+        // 5. Obras sin proyecto (solo las visibles)
         model.addAttribute("obrasSinProyecto", obrasVisibles.stream()
                 .filter(o -> o.getProyecto() == null)
                 .collect(Collectors.toList()));
 
-        // Verificar si puede crear obra
-        boolean puedeCrear = obraServicio.puedeCrearObra(usuarioActual);
-        model.addAttribute("puedeCrearObra", puedeCrear);
 
+        // 6. Verificar si puede crear obra
+        boolean puedeCrear = obraServicio.puedeCrearObra(usuarioActual);
         // Mensaje si no puede crear
         if (!puedeCrear) {
             model.addAttribute("mensajeInfo", "Contacte a un administrador para poder crear obras.");
         }
 
+        model.addAttribute("obras", obras); // 0
+        model.addAttribute("obrasMapa", obrasConCoordenadas); // 1
+        // 2. Filtro por equipos
+        model.addAttribute("obrasVisibles", obrasVisibles);// ← Esta es la lista para la tabla // 3
+        model.addAttribute("proyectos", proyectos);// 4
+        // model.addAttribute("proyectos", proyectoServicio.listarProyectos()); // 4 (lista todos los proyectos si el filtro se daña)
+        // 5. Obras sin proyecto
+        model.addAttribute("obrasSinProyecto", obraServicio.findByProyectoIsNull()); // 5 (sacado de la capa de servicio
+        model.addAttribute("puedeCrearObra", puedeCrear); // 6
+        model.addAttribute("equipos", equipoServicio.listarEquipos()); // 7
 
 
         return "obras/inicioObra";
