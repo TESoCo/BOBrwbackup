@@ -27,8 +27,7 @@ public interface ObraDao extends JpaRepository<Obra, Long> {
     List<Obra> findByNombreObraContainingIgnoreCase(String nombreObra);
 
     // Búsqueda por etapa
-    List<Obra> findByEtapa(String etapa);
-    List<Obra> findByEtapaContainingIgnoreCase(String etapa);
+    List<Obra> findByEtapa(Obra.EtapaObra etapa);
 
     // Búsqueda por usuario
     List<Obra> findByIdUsuario_IdUsuario(Long idUsuario);

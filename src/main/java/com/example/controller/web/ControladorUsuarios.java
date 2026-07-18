@@ -226,10 +226,14 @@ public class ControladorUsuarios {
 
 
             //Forzar estado inicial (sin aprobación)
-            usuario.setStatus("PENDING");
+            usuario.setStatus(Usuario.StatusUsuario.PENDING);
 
             // Establecer el proveedor de autenticación
-            usuario.setAuthProvider(authProvider);
+            if ("LOCAL".equals(authProvider)) {
+                usuario.setAuthProvider(Usuario.AuthProvider.LOCAL);
+            } else if ("GOOGLE".equals(authProvider)) {
+                usuario.setAuthProvider(Usuario.AuthProvider.GOOGLE);
+            }
 
             // Encriptación condicional según el proveedor
             if ("LOCAL".equals(authProvider)) {
@@ -548,8 +552,8 @@ public class ControladorUsuarios {
             usuario.setCargo(cargo);
             usuario.setPersona(persona);
             usuario.setRol(rol);
-            usuario.setStatus("PENDING");
-            usuario.setAuthProvider("GOOGLE");
+            usuario.setStatus(Usuario.StatusUsuario.PENDING);
+            usuario.setAuthProvider(Usuario.AuthProvider.GOOGLE);
             usuario.setEmailVerified(googleData.emailVerified);
 
             // 8.1. Contraseña aleatoria para usuarios OAuth2
@@ -645,7 +649,7 @@ public class ControladorUsuarios {
         try {
             Usuario usuario = usuarioServicio.encontrarPorId(id);
             if (usuario != null) {
-                usuario.setStatus("REJECTED");
+                usuario.setStatus(Usuario.StatusUsuario.REJECTED);
                 usuarioServicio.guardar(usuario);
                 redirectAttributes.addFlashAttribute("success", "Usuario rechazado");
             }
@@ -1169,8 +1173,8 @@ public class ControladorUsuarios {
             usuario.setCargo(cargo);
             usuario.setPersona(persona);
             usuario.setRol(rol);
-            usuario.setStatus("PENDING");
-            usuario.setAuthProvider("MICROSOFT");
+            usuario.setStatus(Usuario.StatusUsuario.PENDING);
+            usuario.setAuthProvider(Usuario.AuthProvider.MICROSOFT);
             usuario.setEmailVerified(microsoftData.emailVerified != null ? microsoftData.emailVerified : false);
 
             // Contraseña aleatoria para usuarios OAuth2

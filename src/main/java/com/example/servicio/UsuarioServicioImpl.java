@@ -132,7 +132,7 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     @Transactional
     public void aprobarUsuario(Long idUsuario) {
         Usuario usuario = usuarioDao.findById(idUsuario).orElseThrow();
-        usuario.setStatus("APPROVED");
+        usuario.setStatus(Usuario.StatusUsuario.APPROVED);
         usuarioDao.save(usuario);
         // ✅ ENVIAR CORREO DE NOTIFICACIÓN
         enviarCorreoAprobacion(usuario);

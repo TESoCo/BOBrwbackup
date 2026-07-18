@@ -153,7 +153,7 @@ public class ControladorAvance
 
             // Verificar etapa de la obra
             Obra obra = obraServicio.localizarObra(idObra);
-            if (!Obra.ESTADO_EJECUCION.equals(obra.getEtapa())) {
+            if (!Obra.EtapaObra.EJECUCION.equals(obra.getEtapa())) {
                 redirectAttributes.addFlashAttribute("error",
                         "Solo se pueden registrar avances en obras en etapa EJECUCIÓN. Etapa actual: " + obra.getEtapa());
                 return "redirect:/avances/agregarAvance";
@@ -718,7 +718,7 @@ public class ControladorAvance
         Map<String, Object> progreso = new HashMap<>();
 
         Obra obra = obraServicio.localizarObra(idObra);
-        if (obra == null || !Obra.ESTADO_EJECUCION.equals(obra.getEtapa())) {
+        if (obra == null || !Obra.EtapaObra.EJECUCION.equals(obra.getEtapa())) {
             progreso.put("error", "La obra no está en etapa EJECUCIÓN");
             return progreso;
         }

@@ -215,7 +215,8 @@ public class DataInitializer implements CommandLineRunner {
 
     }
 
-    private void crearUsuarioAdministrador() {
+    @Transactional
+    protected void crearUsuarioAdministrador() {
         try {
             if (usuarioServicio.encontrarPorNombreUsuario("admin") == null) {
 
@@ -224,8 +225,8 @@ public class DataInitializer implements CommandLineRunner {
                 if (adminExistente != null) {
                     // Si existe pero no tiene el estado correcto, actualizarlo
                     if (!"APPROVED".equals(adminExistente.getStatus())) {
-                        adminExistente.setStatus("APPROVED");
-                        adminExistente.setAuthProvider("LOCAL");
+                        adminExistente.setStatus(Usuario.StatusUsuario.APPROVED);
+                        adminExistente.setAuthProvider(Usuario.AuthProvider.LOCAL);
                         usuarioServicio.guardar(adminExistente);
                         System.out.println("Usuario admin actualizado a estado APPROVED");
                     }
@@ -244,6 +245,9 @@ public class DataInitializer implements CommandLineRunner {
                     return;
                 }
 
+                //Guardar la cantidad de permisos
+                int permisoCount = rolAdmin.getPermisoList().size();
+
                 // Crear persona
                 Persona persona = new Persona();
                 persona.setNombre("Administrador");
@@ -261,8 +265,8 @@ public class DataInitializer implements CommandLineRunner {
                 usuario.setRol(rolAdmin);
 
                 //Autoaprobar el Adimn por defecto para que tenga acceso
-                usuario.setStatus("APPROVED");      // ✅ Aprobado automáticamente
-                usuario.setAuthProvider("LOCAL");   // 🔒 Autenticación local
+                usuario.setStatus(Usuario.StatusUsuario.APPROVED);      // ✅ Aprobado automáticamente
+                usuario.setAuthProvider(Usuario.AuthProvider.LOCAL);   // 🔒 Autenticación local
                 usuario.setEmailVerified(true);     // ✅ Email verificado (admin local)
                 usuario.setGoogleRefreshToken(null); // Sin token de Google
 
@@ -273,7 +277,7 @@ public class DataInitializer implements CommandLineRunner {
                 System.out.println("   📌 Estado: APPROVED (aprobado automáticamente)");
 
                 System.out.println("Usuario administrador creado con rol ADMIN y " +
-                        rolAdmin.getPermisoList().size() + " permisos");
+                        permisoCount + " permisos");
 
             } else {
                 System.out.println("Usuario administrador ya existe");
@@ -299,19 +303,19 @@ public class DataInitializer implements CommandLineRunner {
 
                 // Verificar que todos los usuarios tengan un estado
                 if (usuario.getStatus() == null) {
-                    usuario.setStatus("PENDING");
+                    usuario.setStatus(Usuario.StatusUsuario.PENDING);
                     necesitaCorreccion = true;
                 }
 
                 // Verificar que todos tengan un authProvider
                 if (usuario.getAuthProvider() == null) {
-                    usuario.setAuthProvider("LOCAL");
+                    usuario.setAuthProvider(Usuario.AuthProvider.LOCAL);
                     necesitaCorreccion = true;
                 }
 
                 // Verificar que el admin esté aprobado
                 if ("admin".equals(usuario.getNombreUsuario()) && !"APPROVED".equals(usuario.getStatus())) {
-                    usuario.setStatus("APPROVED");
+                    usuario.setStatus(Usuario.StatusUsuario.APPROVED);
                     necesitaCorreccion = true;
                 }
 

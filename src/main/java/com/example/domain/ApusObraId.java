@@ -1,41 +1,37 @@
 package com.example.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.io.Serializable;
+import java.util.Objects;
+
 import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Embeddable
 public class ApusObraId implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    @ManyToOne
-    @JoinColumn(name = "id_Obra")
-    private Obra obra;
+    @Column(name = "id_obra")
+    private Long idObra;
 
-    @ManyToOne
-    @JoinColumn(name = "id_APU")
-    private Apu apu;
-
-    // Constructors
-    public ApusObraId() {}
-
-    public ApusObraId(Obra idObra, Apu idAPU) {
-        this.obra = idObra;
-        this.apu = idAPU;
-    }
+    @Column(name = "id_apu")
+    private Long idApu;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ApusObraId that = (ApusObraId) o;
-        return obra.equals(that.obra) && apu.equals(that.apu);
+        return Objects.equals(idObra, that.idObra) &&
+                Objects.equals(idApu, that.idApu);
     }
 
     @Override
     public int hashCode() {
-        int result = obra.hashCode();
-        result = 31 * result + apu.hashCode();
-        return result;
+        return Objects.hash(idObra, idApu);
     }
 }

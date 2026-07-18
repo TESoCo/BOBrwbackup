@@ -192,7 +192,7 @@ public class ControladorObras
             }
 
             // Validar que la etapa sea PRESUPUESTO
-            if (!Obra.ESTADO_PRESUPUESTO.equals(etapa)) {
+            if (!Obra.EtapaObra.PRESUPUESTO.equals(etapa)) {
                 redirectAttributes.addFlashAttribute("error",
                         "Para crear una obra en PRESUPUESTO use el formulario de presupuesto");
                 return "redirect:/obras/agregarObra";

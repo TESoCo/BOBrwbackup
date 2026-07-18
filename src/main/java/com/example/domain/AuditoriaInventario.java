@@ -2,22 +2,33 @@ package com.example.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Entity
-@Table(name = "auditoria_inventario")
-@EntityListeners(AuditingEntityListener.class)
+@Table(name = "auditoria",
+        indexes = {
+                @Index(name = "idx_auditoria_entidad", columnList = "entidad, id_entidad"),
+                @Index(name = "idx_auditoria_fecha", columnList = "fecha_cambio"),
+                @Index(name = "idx_auditoria_usuario", columnList = "id_usuario")
+        })
+
 public class AuditoriaInventario {
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_auditoria")
     private Long idAuditoria;
+
+
 
     @ManyToOne
     @JoinColumn(name = "id_inventario", nullable = false)

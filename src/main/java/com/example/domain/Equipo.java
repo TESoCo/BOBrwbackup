@@ -10,10 +10,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "equipo")
 public class Equipo {
@@ -23,12 +25,15 @@ public class Equipo {
     @Column(name = "id_Equipo")
     private Long idEquipo;
 
-    @NotEmpty
-    @Column(name = "desc_Equipo")
+    @NotEmpty(message = "La descripción del equipo es obligatoria")
+    @Column(name = "descripcion_equipo", nullable = false, length = 255)
     private String descEquipo;
 
+    @Column(name = "codigo_equipo", length = 50, unique = true)
+    private String codigoEquipo;
 
 
+    // ---------- RELACIONES ----------
     // Agregar relación inversa con Usuario
     @OneToMany(mappedBy = "equipo", fetch = FetchType.LAZY)
     @JsonManagedReference("usuario-equipo")// ← PADRE: se serializa
@@ -41,6 +46,39 @@ public class Equipo {
     @ToString.Exclude
     private List<Proyecto> proyectos = new ArrayList<>();
 
+    // ---------- AUDITORÍA ----------
+    @Column(name = "activo")
+    private Boolean activo = true;
 
+    @Column(name = "fecha_creacion", updatable = false)
+    private LocalDateTime fechaCreacion;
+
+    @Column(name = "fecha_actualizacion")
+    private LocalDateTime fechaActualizacion;
+
+    @PrePersist
+    protected void onCreate() {
+        fechaCreacion = LocalDateTime.now();
+        fechaActualizacion = LocalDateTime.now();
+        if (codigoEquipo == null) {
+            codigoEquipo = "EQ-" + System.currentTimeMillis();
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        fechaActualizacion = LocalDateTime.now();
+    }
+
+    // ---------- MÉTODOS DE AYUDA ----------
+    public void agregarUsuario(Usuario usuario) {
+        usuarios.add(usuario);
+        usuario.setEquipo(this);
+    }
+
+    public void eliminarUsuario(Usuario usuario) {
+        usuarios.remove(usuario);
+        usuario.setEquipo(null);
+    }
 
 }

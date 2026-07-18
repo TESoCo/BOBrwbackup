@@ -220,18 +220,18 @@ public class ControladorOAuth2 {
                 }
 
                 // Verificar el estado del usuario
-                String status = usuarioExistente.getStatus();
+                String status = usuarioExistente.getStatus().name();
                 System.out.println("Estado del usuario: " + status);
 
-                if ("PENDING".equals(status)) {
+                if (Usuario.StatusUsuario.PENDING.equals(status)) {
                     redirectAttributes.addFlashAttribute("error",
                             "Tu cuenta está pendiente de aprobación por un administrador");
                     return "redirect:/login?pending=true";
-                } else if ("REJECTED".equals(status)) {
+                } else if (Usuario.StatusUsuario.REJECTED.equals(status)) {
                     redirectAttributes.addFlashAttribute("error",
                             "Tu cuenta ha sido rechazada. Contacta al administrador.");
                     return "redirect:/login?rejected=true";
-                } else if (!"APPROVED".equals(status)) {
+                } else if (!Usuario.StatusUsuario.APPROVED.equals(status)) {
                     redirectAttributes.addFlashAttribute("error",
                             "Estado de cuenta no válido. Contacta al administrador.");
                     return "redirect:/login";
@@ -406,18 +406,18 @@ public class ControladorOAuth2 {
                 }
 
                 // Verificar el estado del usuario
-                String status = usuarioExistente.getStatus();
+                String status = usuarioExistente.getStatus().name();
                 System.out.println("Estado del usuario: " + status);
 
-                if ("PENDING".equals(status)) {
+                if (Usuario.StatusUsuario.PENDING.equals(status)) {
                     redirectAttributes.addFlashAttribute("error",
                             "Tu cuenta está pendiente de aprobación por un administrador");
                     return "redirect:/login?pending=true";
-                } else if ("REJECTED".equals(status)) {
+                } else if (Usuario.StatusUsuario.REJECTED.equals(status)) {
                     redirectAttributes.addFlashAttribute("error",
                             "Tu cuenta ha sido rechazada. Contacta al administrador.");
                     return "redirect:/login?rejected=true";
-                } else if (!"APPROVED".equals(status)) {
+                } else if (!Usuario.StatusUsuario.APPROVED.equals(status)) {
                     redirectAttributes.addFlashAttribute("error",
                             "Estado de cuenta no válido. Contacta al administrador.");
                     return "redirect:/login";

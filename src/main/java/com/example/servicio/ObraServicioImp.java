@@ -205,9 +205,7 @@ public class ObraServicioImp implements ObraServicio {
         Proyecto proyecto = proyectoDao.findById(idProyecto).get();
         if (proyecto == null) return null;
         return proyecto.getObras().stream()
-                .filter(o -> Obra.ESTADO_PRESUPUESTO.equals(o.getEtapa()))
-                .findFirst()
-                .orElse(null);
+                .filter(o -> Obra.EtapaObra.PRESUPUESTO.equals(o.getEtapa())).findFirst().orElse(null);
     }
 
     @Override
@@ -215,7 +213,7 @@ public class ObraServicioImp implements ObraServicio {
         Proyecto proyecto = proyectoDao.findById(idProyecto).get();
         if (proyecto == null) return null;
         return proyecto.getObras().stream()
-                .filter(o -> Obra.ESTADO_EJECUCION.equals(o.getEtapa()))
+                .filter(o -> Obra.EtapaObra.EJECUCION.equals(o.getEtapa()))
                 .findFirst()
                 .orElse(null);
     }
@@ -225,7 +223,7 @@ public class ObraServicioImp implements ObraServicio {
         Proyecto proyecto = proyectoDao.findById(idProyecto).get();
         if (proyecto == null) return null;
         return proyecto.getObras().stream()
-                .filter(o -> Obra.ESTADO_CIERRE.equals(o.getEtapa()))
+                .filter(o -> Obra.EtapaObra.CIERRE.equals(o.getEtapa()))
                 .findFirst()
                 .orElse(null);
     }
@@ -318,7 +316,7 @@ public class ObraServicioImp implements ObraServicio {
         // Crear obra en PRESUPUESTO
         Obra obraPresupuesto = new Obra();
         obraPresupuesto.setNombreObra(nombreObra + " (PRESUPUESTO)");
-        obraPresupuesto.setEtapa(Obra.ESTADO_PRESUPUESTO);
+        obraPresupuesto.setEtapa(Obra.EtapaObra.PRESUPUESTO);
         obraPresupuesto.setIdentificadorUnico(identificadorUnico);
         obraPresupuesto.setFechaIni(fechaIni);
         obraPresupuesto.setFechaFinManual(fechaFin);
@@ -353,7 +351,7 @@ public class ObraServicioImp implements ObraServicio {
             throw new RuntimeException("Obra de presupuesto no encontrada");
         }
 
-        if (!Obra.ESTADO_PRESUPUESTO.equals(obraPresupuesto.getEtapa())) {
+        if (!Obra.EtapaObra.PRESUPUESTO.equals(obraPresupuesto.getEtapa())) {
             throw new RuntimeException("La obra no está en etapa PRESUPUESTO");
         }
 
@@ -373,7 +371,7 @@ public class ObraServicioImp implements ObraServicio {
         // Crear obra en EJECUCIÓN
         Obra obraEjecucion = new Obra();
         obraEjecucion.setNombreObra(obraPresupuesto.getNombreObra().replace(" (PRESUPUESTO)", "") + " (EJECUCIÓN)");
-        obraEjecucion.setEtapa(Obra.ESTADO_EJECUCION);
+        obraEjecucion.setEtapa(Obra.EtapaObra.EJECUCION);
         obraEjecucion.setIdentificadorUnico(obraPresupuesto.getIdentificadorUnico());
         obraEjecucion.setFechaIni(fechaInicioReal);
         obraEjecucion.setFechaFinManual(obraPresupuesto.getFechaFinManual());
@@ -406,7 +404,7 @@ public class ObraServicioImp implements ObraServicio {
             throw new RuntimeException("Obra de ejecución no encontrada");
         }
 
-        if (!Obra.ESTADO_EJECUCION.equals(obraEjecucion.getEtapa())) {
+        if (!Obra.EtapaObra.EJECUCION.equals(obraEjecucion.getEtapa())) {
             throw new RuntimeException("La obra no está en etapa EJECUCIÓN");
         }
 
@@ -453,7 +451,7 @@ public class ObraServicioImp implements ObraServicio {
         // Crear obra en CIERRE
         Obra obraCierre = new Obra();
         obraCierre.setNombreObra(obraEjecucion.getNombreObra().replace(" (EJECUCIÓN)", "") + " (CIERRE)");
-        obraCierre.setEtapa(Obra.ESTADO_CIERRE);
+        obraCierre.setEtapa(Obra.EtapaObra.CIERRE);
         obraCierre.setIdentificadorUnico(obraEjecucion.getIdentificadorUnico());
         obraCierre.setFechaIni(obraEjecucion.getFechaIni());
         obraCierre.setFechaFinManual(fechaCierreReal);
@@ -484,7 +482,7 @@ public class ObraServicioImp implements ObraServicio {
         if (obra == null || obra.getIdentificadorUnico() == null) return null;
 
         return obraDao.findByIdentificadorUnicoAndEtapa(
-                obra.getIdentificadorUnico(), Obra.ESTADO_PRESUPUESTO);
+                obra.getIdentificadorUnico(), Obra.EtapaObra.PRESUPUESTO.name());
     }
 
     @Override
@@ -493,7 +491,7 @@ public class ObraServicioImp implements ObraServicio {
         Obra obra = localizarObra(idObra);
         if (obra == null) return false;
 
-        if (!Obra.ESTADO_PRESUPUESTO.equals(obra.getEtapa())) return false;
+        if (!Obra.EtapaObra.PRESUPUESTO.equals(obra.getEtapa())) return false;
         if (obra.isAnular()) return false;
         if (obra.getApusObraList() == null || obra.getApusObraList().isEmpty()) return false;
 
@@ -510,7 +508,7 @@ public class ObraServicioImp implements ObraServicio {
         Obra obra = localizarObra(idObra);
         if (obra == null) return false;
 
-        if (!Obra.ESTADO_EJECUCION.equals(obra.getEtapa())) return false;
+        if (!Obra.EtapaObra.EJECUCION.equals(obra.getEtapa())) return false;
         if (obra.isAnular()) return false;
         if (obra.getApusObraList() == null || obra.getApusObraList().isEmpty()) return false;
 
@@ -538,7 +536,7 @@ public class ObraServicioImp implements ObraServicio {
     @Transactional(readOnly = true)
     public Double calcularPorcentajeAvance(Long idObraEjecucion) {
         Obra ejecucion = localizarObra(idObraEjecucion);
-        if (ejecucion == null || !Obra.ESTADO_EJECUCION.equals(ejecucion.getEtapa())) {
+        if (ejecucion == null || !Obra.EtapaObra.EJECUCION.equals(ejecucion.getEtapa())) {
             return 0.0;
         }
 
@@ -575,7 +573,7 @@ public class ObraServicioImp implements ObraServicio {
         Obra presupuesto = obtenerPresupuestoDeObra(idObra);
         comparativa.put("presupuesto", presupuesto);
 
-        if (Obra.ESTADO_EJECUCION.equals(obra.getEtapa())) {
+        if (Obra.EtapaObra.EJECUCION.equals(obra.getEtapa())) {
             comparativa.put("porcentajeAvance", calcularPorcentajeAvance(idObra));
 
             List<Map<String, Object>> detalles = new ArrayList<>();

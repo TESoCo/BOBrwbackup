@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,7 @@ public class UsuarioDetailsServices implements UserDetailsService {
 
 //Method for loading a user by their name
     @Override
+    @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
         Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
 
@@ -38,11 +40,11 @@ public class UsuarioDetailsServices implements UserDetailsService {
         }
 
         //¿el usuario ha sido aprobado?
-        if ("PENDING".equals(usuario.getStatus())) {
+        if (Usuario.StatusUsuario.PENDING.equals(usuario.getStatus())) {
             throw new DisabledException("Cuenta pendiente de aprobación administrativa.");
-        } else if ("REJECTED".equals(usuario.getStatus())) {
+        } else if (Usuario.StatusUsuario.REJECTED.equals(usuario.getStatus())) {
             throw new DisabledException("Cuenta rechazada por el administrador.");
-        } else if (!"APPROVED".equals(usuario.getStatus())) {
+        } else if (!Usuario.StatusUsuario.APPROVED.equals(usuario.getStatus())) {
             throw new DisabledException("Estado de cuenta no válido.");
         }
 

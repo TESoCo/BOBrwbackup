@@ -1,19 +1,27 @@
 // FotoDato.java
 package com.example.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Entity
-@Table(name = "fotodato")
-@SecondaryTables({
-        @SecondaryTable(name = "imagen_fotodato", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_FotoDato")),
-        @SecondaryTable(name = "ubicacion_fotodato", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_FotoDato")),
-        @SecondaryTable(name = "fecha_fotodato", pkJoinColumns = @PrimaryKeyJoinColumn(name = "id_FotoDato"))
-})
+@Table(name = "foto_dato",
+        indexes = {
+                @Index(name = "idx_foto_avance", columnList = "id_avance"),
+                @Index(name = "idx_foto_fecha", columnList = "fecha_foto")
+        })
 public class FotoDato implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -22,34 +30,68 @@ public class FotoDato implements Serializable {
     @Column(name = "id_FotoDato")
     private Long idFotoDato;
 
+
+    // ---------- RELACIONES ----------
     // From contexto_fotodato
-    @ManyToOne
-    @JoinColumn(name = "id_Avance")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_Avance", nullable = false)
+    @JsonIgnore
+    @ToString.Exclude
     private Avance idAvance;
 
+    // ---------- METADATOS DE IMAGEN ----------
     // From imagen_fotodato
     // ID del archivo en MongoDB GridFS
-    @Column(name = "gridfs_file_id", table = "imagen_fotodato", length = 100)
+    @NotEmpty(message = "El ID del archivo es obligatorio")
+    @Column(name = "gridfs_file_id", nullable = false, length = 100)
     private String gridfsFileId;
 
-    @Column(name = "nombre_archivo", table = "imagen_fotodato", length = 255)
+    @NotEmpty(message = "El nombre del archivo es obligatorio")
+    @Column(name = "nombre_archivo", nullable = false, length = 255)
     private String nombreArchivo;
 
-    @Column(name = "tamanio_archivo", table = "imagen_fotodato")
+    @NotNull(message = "El tamaño del archivo es obligatorio")
+    @Column(name = "tamanio_archivo", nullable = false)
     private Long tamanioArchivo;
 
-    @Column(name = "tipo_mime", table = "imagen_fotodato", length = 100)
+    @NotEmpty(message = "El tipo MIME es obligatorio")
+    @Column(name = "tipo_mime", nullable = false, length = 100)
     private String tipoMime;
 
 
+    // ---------- UBICACIÓN ----------
     // From ubicacion_fotodato
-    @Column(name = "CooN_Foto", table = "ubicacion_fotodato")
+    @Column(name = "coordenada_norte")
     private Double cooNFoto;
 
-    @Column(name = "CooE_Foto", table = "ubicacion_fotodato")
+    @Column(name = "coordenada_este")
     private Double cooEFoto;
 
+
+    // ---------- FECHAS ----------
     // From fecha_fotodato
-    @Column(name = "Fecha_Foto", table = "fecha_fotodato")
+    @NotNull(message = "La fecha de la foto es obligatoria")
+    @Column(name = "fecha_foto", nullable = false)
     private LocalDate fechaFoto;
+
+    @Column(name = "descripcion", columnDefinition = "TEXT")
+    private String descripcion;
+
+
+    // ---------- AUDITORÍA ----------
+    @Column(name = "fecha_creacion", updatable = false)
+    private LocalDateTime fechaCreacion;
+
+    @Column(name = "activo")
+    private Boolean activo = true;
+
+    @PrePersist
+    protected void onCreate() {
+        fechaCreacion = LocalDateTime.now();
+        if (fechaFoto == null) {
+            fechaFoto = LocalDate.now();
+        }
+    }
+
+
 }
