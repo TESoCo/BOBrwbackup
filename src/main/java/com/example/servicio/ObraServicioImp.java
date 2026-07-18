@@ -326,6 +326,8 @@ public class ObraServicioImp implements ObraServicio {
         obraPresupuesto.setIdUsuario(usuarioCreador);
         obraPresupuesto.setProyecto(proyecto);
 
+
+
         // Guardar obra
         obraDao.save(obraPresupuesto);
 
