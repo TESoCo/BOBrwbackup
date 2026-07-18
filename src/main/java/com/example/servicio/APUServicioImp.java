@@ -229,7 +229,7 @@ public class APUServicioImp implements APUServicio {
             apu.setNombreAPU(record.length > 1 ? cleanValue(record[1]) : "");     // nombreAPU (column 1)
             apu.setDescAPU(record.length > 2 ? cleanValue(record[2]) : "");       // descAPU (column 2)
             apu.setUnidadesAPU(record.length > 3 ? cleanValue(record[3]) : "");   // unidades (column 3)
-            apu.setDuracionAPU(record.length > 4 ? parseBigDecimal(record[4]) : BigDecimal.ZERO);   // duracion (column 4)
+            apu.setDuracionAPU(record.length > 4 ? parseBigDecimal(record[4]) : new BigDecimal("1.0"));   // duracion (column 4)
 
             // Handle optional numeric values (columns 4-7)
             apu.setVMaterialesAPU(record.length > 5 ? parseBigDecimal(record[5]) : BigDecimal.ZERO);    // vMaterialesAPU

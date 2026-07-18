@@ -49,4 +49,6 @@ public class EquipoServicioImpl implements EquipoServicio {
     public List<Equipo> buscarEquiposSinProyectos() {
         return equipoDao.findByProyectosCount(0);
     }
+
+
 }

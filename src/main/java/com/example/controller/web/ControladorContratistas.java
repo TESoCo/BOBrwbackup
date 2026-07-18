@@ -51,6 +51,8 @@ public class ControladorContratistas {
     @Autowired
     private EmailService emailService;
 
+
+
     @GetMapping
     public String inicioContrat(Model model){
         List<Contratista> contratistas = contratistaServicio.listarContratistas();
@@ -303,7 +305,8 @@ public class ControladorContratistas {
             @RequestParam(required = false) String customEmail,
             @RequestParam String subject,
             @RequestParam String message,
-            RedirectAttributes ra) {
+            RedirectAttributes ra,
+            Authentication authentication) {
 
         try {
             // Procesar correos personalizados
@@ -344,12 +347,16 @@ public class ControladorContratistas {
             byte[] excelBytes = generarReporteContratistasExcel();
 
             // 2. Enviar por correo (enviar masivamente)
+
+            String username = authentication.getName();
+
             EmailService.EmailResult result = emailService.sendMassEmailWithAttachment(
                     allRecipients,
                     subject,
                     message,
                     excelBytes,
-                    "reporte_contratistas.xlsx"
+                    "reporte_contratistas.xlsx",
+                    username
             );
 
             if (result.getSuccessCount() > 0) {

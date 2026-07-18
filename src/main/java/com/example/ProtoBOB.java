@@ -79,7 +79,13 @@ public class ProtoBOB {
                                             "/BOBWS/*",
                                             "/BOBWS*",
                                             "/api/**",// Allow API access with no auth
-                                            "/usuarios/foto/**"// Permitir acceso a fotos de perfil
+                                            "/usuarios/foto/**",// Permitir acceso a fotos de perfil
+                                            "/oauth2/**",           // Todas las rutas de OAuth2
+                                            "/usuarios/registrar-google", // Formulario de registro Google
+                                            "/usuarios/registrar-google/**",
+                                            "/usuarios/registrar-microsoft",
+                                            "/usuarios/registrar-microsoft/**",
+                                            "/oauth2/authorization/microsoft" // Ruta de autorización de Microsoft
                                     ).permitAll()
 
 
@@ -149,7 +155,7 @@ public class ProtoBOB {
 
                     .httpBasic(httpSecurityHttpBasicConfigurer -> {})
                     .csrf(csrf -> csrf
-                            .ignoringRequestMatchers("/api/**", "/material/refinarMateriales", "/material/generarConAgente", "/scraper/**") // Disable CSRF for API & scrapper endpoints
+                            .ignoringRequestMatchers("/api/**", "/material/refinarMateriales", "/material/generarConAgente", "/scraper/**", "/oauth2/callback/google") // Disable CSRF for API, google & scrapper endpoints
                     );
 
             return http.build();

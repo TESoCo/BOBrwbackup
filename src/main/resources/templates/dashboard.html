@@ -263,7 +263,7 @@
             <i class="fas fa-box"></i>
           </div>
           <div class="activity-content">
-            <div class="activity-title" th:text="'Inventario: ' + ${inventario.tipoInv}">Cambio en inventario</div>
+            <div class="activity-title" th:text="'Inventario: ' + ${inventario.aprobacion}">Cambio en inventario</div>
             <div class="activity-time" th:text="${#temporals.format(inventario.fechaIngreso, 'dd/MM/yyyy')}">Fecha</div>
           </div>
         </li>

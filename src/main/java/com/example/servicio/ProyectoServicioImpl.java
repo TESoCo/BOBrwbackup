@@ -54,4 +54,7 @@ public class ProyectoServicioImpl implements ProyectoServicio {
     public List<Proyecto> buscarProyectosConObras() {
         return proyectoDao.findByObrasIsEmpty();
     }
+
+
+
 }

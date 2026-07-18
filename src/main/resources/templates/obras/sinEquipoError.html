@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Restringido - Construction Optimization Baseline</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
+    <style>
+        .error-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 200px);
+            padding: 2rem;
+        }
+
+        .error-card {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            color: #f59e0b;
+            margin-bottom: 1.5rem;
+        }
+
+        .error-card h1 {
+            color: #1f2937;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .error-card .subtitle {
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .error-card .message-box {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+
+        .error-card .message-box i {
+            color: #f59e0b;
+            margin-right: 10px;
+        }
+
+        .error-card .message-box p {
+            margin: 0.5rem 0;
+            color: #92400e;
+        }
+
+        .error-card .message-box ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            color: #92400e;
+        }
+
+        .error-card .message-box ul li {
+            margin: 0.3rem 0;
+        }
+
+        .btn-dashboard {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 2rem;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-dashboard:hover {
+            background: #1d4ed8;
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-dashboard i {
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+<button id="menu-toggle" class="menu-toggle">
+    <i class="fas fa-bars"></i>
+</button>
+<div class="app-container" id="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
+        </div>
+        <ul class="nav-links">
+            <!-- Dashboard -->
+            <div sec:authorize="isAuthenticated()">
+                <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            </div>
+
+            <!-- Obras - visible pero con mensaje -->
+            <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
+                <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
+            </div>
+
+            <li>
+                <form th:action="@{/logout}" method="post" id="logoutForm">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <a href="#" onclick="document.getElementById('logoutForm').submit()">
+                        <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                    </a>
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h2><i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> Acceso Restringido</h2>
+                <p>No puedes acceder al módulo de obras en este momento</p>
+            </div>
+            <div class="user-menu">
+                <div>
+                    <div>
+                        <a th:href="@{/perfil}" class="user-name-link">
+                            <span sec:authentication="name"></span>
+                        </a>
+                    </div>
+                    <div>
+                        <span class="role-badge">
+                            <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="error-container">
+            <div class="error-card">
+                <div class="error-icon">
+                    <i class="fas fa-users-slash"></i>
+                </div>
+
+                <h1>⚠️ Sin Equipo Asignado</h1>
+
+                <p class="subtitle">
+                    Para acceder al módulo de <strong>Obras</strong> y poder crear o gestionar obras,
+                    necesitas estar asignado a un equipo de trabajo.
+                </p>
+
+                <div class="message-box">
+                    <p><i class="fas fa-info-circle"></i> <strong>¿Qué significa esto?</strong></p>
+                    <p>
+                        Las obras están organizadas por equipos. Para crear una obra, debes pertenecer
+                        a un equipo que tenga proyectos asignados.
+                    </p>
+                    <ul>
+                        <li>Los <strong>administradores</strong> pueden crear equipos y asignar usuarios.</li>
+                        <li>Los <strong>usuarios</strong> deben ser asignados a un equipo por un administrador.</li>
+                        <li>Las <strong>obras</strong> se asocian a proyectos, y los proyectos a equipos.</li>
+                    </ul>
+                </div>
+
+                <div style="margin: 1.5rem 0; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+                    <p style="margin: 0; color: #4b5563; font-size: 0.95rem;">
+                        <i class="fas fa-lightbulb" style="color: #f59e0b;"></i>
+                        <strong>Sugerencia:</strong> Contacta a un administrador del sistema para que te asigne
+                        a un equipo y puedas acceder a este módulo.
+                    </p>
+                </div>
+
+                <a th:href="@{/redirigir}" class="btn-dashboard">
+                    <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                </a>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Script para el menú móvil -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuToggle = document.getElementById('menu-toggle');
+        const appContainer = document.getElementById('app-container');
+        const sidebar = document.querySelector('.sidebar');
+        const menuIcon = menuToggle ? menuToggle.querySelector('i') : null;
+
+        if (menuToggle && appContainer && sidebar && menuIcon) {
+            menuToggle.addEventListener('click', function() {
+                appContainer.classList.toggle('sidebar-active');
+                if (appContainer.classList.contains('sidebar-active')) {
+                    menuIcon.classList.remove('fa-bars');
+                    menuIcon.classList.add('fa-times');
+                } else {
+                    menuIcon.classList.remove('fa-times');
+                    menuIcon.classList.add('fa-bars');
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768 && appContainer.classList.contains('sidebar-active')) {
+                    if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                        appContainer.classList.remove('sidebar-active');
+                        menuIcon.classList.remove('fa-times');
+                        menuIcon.classList.add('fa-bars');
+                    }
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

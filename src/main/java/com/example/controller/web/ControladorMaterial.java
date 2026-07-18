@@ -56,8 +56,14 @@ public class ControladorMaterial {
 
     @Autowired
     private OllamaService ollamaService;
+
     @Autowired
     private ProveedorServicio proveedorServicio;
+
+
+    @Autowired
+    private QuantityEstimationService quantityEstimationService;
+
 
     @GetMapping("/inicioMaterial")
     public String inicioMaterial(Model model, Authentication authentication) {
@@ -125,7 +131,12 @@ public class ControladorMaterial {
     @GetMapping("/detalle/{id}")
     public String verDetalleMaterial(@PathVariable Long id, Model model) {
         Material material = materialServicio.obtenerPorId(id);
+
+        BigDecimal precio = materialServicio.getPrecioActual(id);
+
         model.addAttribute("material", material);
+        model.addAttribute("precio", precio);
+
         return "material/detalleMaterial";
     }
 
@@ -689,7 +700,7 @@ public class ControladorMaterial {
         String descripcionPrueba = "Construcción de muro de contención en concreto reforzado";
         resultado.append("Descripción: ").append(descripcionPrueba).append("\n\n");
 
-        // Esta llamada probará todo el orden: OpenRouter -> Gemini -> DeepSeek -> Ollama -> Local
+        // Esta llamada probará tod0 el orden: OpenRouter -> Gemini -> DeepSeek -> Ollama -> Local
         try {
             long startTime = System.currentTimeMillis();
             List<Map<String, String>> materiales = aiService.generarMateriales(descripcionPrueba);
@@ -715,7 +726,7 @@ public class ControladorMaterial {
     ///////////////////////////////////////////////////////////////////////////////////////////
 
 //WEB SCRAPER +++++++++++++++++++++++++++++++
-//TODO: probar el modo cotización (integración webscraper)
+//
     @PostMapping("/recibirMaterialCotizado")
     @ResponseBody
     public Map<String, Object> recibirMaterialCotizado(@RequestBody Map<String, Object> materialData, HttpSession session) {
@@ -755,6 +766,78 @@ public class ControladorMaterial {
     }
 
 
+    // Estimación de cantidades con IA
+    @PostMapping("/estimarCantidades")
+    @ResponseBody
+    public Map<String, Object> estimarCantidades(
+            @RequestBody Map<String, Object> request,
+            Authentication authentication) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            System.out.println("=== ESTIMAR CANTIDADES RECIBIDO ===");
+            System.out.println("Request body: " + request);
+
+            // Obtener el APU ID
+            Object apuIdObj = request.get("apuId");
+            if (apuIdObj == null) {
+                response.put("success", false);
+                response.put("error", "No se recibió el ID del APU");
+                return response;
+            }
+
+            Long apuId = Long.valueOf(apuIdObj.toString());
+            System.out.println("APU ID: " + apuId);
+
+            // Obtener materiales
+            @SuppressWarnings("unchecked")
+            List<Map<String, String>> materiales = (List<Map<String, String>>) request.get("materiales");
+            String descripcion = (String) request.get("descripcion");
+            String unidadBase = (String) request.getOrDefault("unidadBase", "unidad");
+
+            System.out.println("Materiales recibidos: " + (materiales != null ? materiales.size() : 0));
+            System.out.println("Descripción: " + descripcion);
+
+            // Si no hay materiales, generarlos desde el APU
+            if (materiales == null || materiales.isEmpty()) {
+                Apu apu = apuServicio.obtenerPorId(apuId);
+                if (apu != null) {
+                    materiales = aiService.generarMateriales(apu.getDescAPU());
+                    descripcion = apu.getDescAPU();
+                    unidadBase = apu.getUnidadesAPU() != null ? apu.getUnidadesAPU() : "unidad";
+                    System.out.println("Materiales generados desde APU: " + materiales.size());
+                }
+            }
+
+            if (materiales == null || materiales.isEmpty()) {
+                response.put("success", false);
+                response.put("error", "No hay materiales para estimar");
+                return response;
+            }
+
+            // Usar QuantityEstimationService
+            List<Map<String, String>> materialesConCantidades =
+                    quantityEstimationService.estimarCantidades(materiales, descripcion, unidadBase);
+
+            response.put("success", true);
+            response.put("materiales", materialesConCantidades);
+            response.put("mensaje", "Cantidades estimadas correctamente");
+            response.put("total", materialesConCantidades.size());
+
+        } catch (NumberFormatException e) {
+            System.err.println("❌ Error parseando APU ID: " + e.getMessage());
+            response.put("success", false);
+            response.put("error", "ID de APU inválido");
+        } catch (Exception e) {
+            System.err.println("❌ Error en estimación: " + e.getMessage());
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("error", e.getMessage());
+        }
+
+        return response;
+    }
 
 
 

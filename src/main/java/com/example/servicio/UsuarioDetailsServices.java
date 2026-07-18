@@ -5,6 +5,7 @@ import com.example.domain.Permiso;
 import com.example.domain.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,39 +29,64 @@ public class UsuarioDetailsServices implements UserDetailsService {
 
 //Method for loading a user by their name
     @Override
+    @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
         Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
 
+        //¿el usuario existe?
         if (usuario == null) {
             System.out.println("User not found: " + username);
             throw new UsernameNotFoundException("Usuario NO encontrado: " + username);
         }
 
-        // Handle case where rol might be null
-        String role = (usuario.getRol() != null && usuario.getRol().getNombreRol()!= null)
-                ? usuario.getRol().getNombreRol().toUpperCase()
-                : "USER";
+        //¿el usuario ha sido aprobado?
+        if (Usuario.StatusUsuario.PENDING.equals(usuario.getStatus())) {
+            throw new DisabledException("Cuenta pendiente de aprobación administrativa.");
+        } else if (Usuario.StatusUsuario.REJECTED.equals(usuario.getStatus())) {
+            throw new DisabledException("Cuenta rechazada por el administrador.");
+        } else if (!Usuario.StatusUsuario.APPROVED.equals(usuario.getStatus())) {
+            throw new DisabledException("Estado de cuenta no válido.");
+        }
+
+
 
         // Get permissions and convert to Spring Security authorities
         // Crear autoridades
         List<GrantedAuthority> authorities = new ArrayList<>();
+
         // Add role authority
         // 1. Agregar el rol como autoridad con prefijo ROLE_
         if (usuario.getRol() != null && usuario.getRol().getNombreRol() != null) {
             String roleName = usuario.getRol().getNombreRol();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName.toUpperCase()));
-            // 2. Agregar permisos específicos
-            // Add permissions from the role
+
+        // 2. Agregar permisos específicos
+        // Add permissions from the role
             if (usuario.getRol().getPermisoList() != null) {
                 for (Permiso permiso : usuario.getRol().getPermisoList()) {
                     authorities.add(new SimpleGrantedAuthority(permiso.getNombrePermiso()));
                 }
             }
+        } else {
+            // Rol por defecto si no tiene
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
+
+        // Manejar el caso donde pass_usuario puede ser null (usuarios OAuth2)
+        String password = usuario.getPass_usuario();
+        if (password == null) {
+            // Para usuarios OAuth2, usar un placeholder
+            password = "oauth2_placeholder";
+            System.out.println(" Usuario OAuth2 sin contraseña en loadUserByUsername");
+        }
+
+
+
         return User.builder()
                 .username(usuario.getNombreUsuario())
-                .password(usuario.getPass_usuario())
+                .password(password)
                 .authorities(authorities) // Use authorities instead of roles()
                 .build();
     }
+
 }

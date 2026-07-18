@@ -6,6 +6,8 @@ import com.example.domain.Usuario;
 import com.example.servicio.PersonaServicio;
 import com.example.servicio.RolServicio;
 import com.example.servicio.UsuarioServicio;
+import com.example.servicioWeb.EncryptionService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -42,6 +44,9 @@ public class ControladorUsuarios {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EncryptionService encryptionService;
 
 
     /**
@@ -132,8 +137,12 @@ public class ControladorUsuarios {
             @RequestParam String cargo,
             @RequestParam String rolSeleccionado,
             @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
+            @RequestParam(value = "authProvider", defaultValue = "LOCAL") String authProvider,
+            @RequestParam(value = "refreshToken", required = false) String refreshToken,
             RedirectAttributes redirectAttributes) {
 
+        System.out.println("=== REGISTRO DE USUARIO ===");
+        System.out.println("Auth Provider: " + authProvider);
         System.out.println("Foto recibida: " + (fotoPerfil != null ? fotoPerfil.getOriginalFilename() : "null"));
         System.out.println("Tamaño: " + (fotoPerfil != null ? fotoPerfil.getSize() : "0"));
         System.out.println("Tipo: " + (fotoPerfil != null ? fotoPerfil.getContentType() : "null"));
@@ -151,6 +160,12 @@ public class ControladorUsuarios {
                     rolSeleccionado == null || rolSeleccionado.isEmpty()) {
 
                 redirectAttributes.addFlashAttribute("error", "Todos los campos son obligatorios");
+                return "redirect:/usuarios/registrar";
+            }
+
+            // Validar contraseña solo para registros LOCALES
+            if ("LOCAL".equals(authProvider) && (password == null || password.isEmpty())) {
+                redirectAttributes.addFlashAttribute("error", "La contraseña es obligatoria para registros locales");
                 return "redirect:/usuarios/registrar";
             }
 
@@ -204,12 +219,53 @@ public class ControladorUsuarios {
             // 3. CREAR EL NUEVO USUARIO
             Usuario usuario = new Usuario();
             usuario.setNombreUsuario(nombreUsuario);
-            usuario.setPass_usuario(passwordEncoder.encode(password));
+            //la contraseña se encripta y guarda más abajo
             usuario.setCargo(cargo);
             usuario.setPersona(persona);
             usuario.setRol(rol);
 
-            // 3. PROCESAR LA FOTO DE PERFIL (si se subió)
+
+            //Forzar estado inicial (sin aprobación)
+            usuario.setStatus(Usuario.StatusUsuario.PENDING);
+
+            // Establecer el proveedor de autenticación
+            if ("LOCAL".equals(authProvider)) {
+                usuario.setAuthProvider(Usuario.AuthProvider.LOCAL);
+            } else if ("GOOGLE".equals(authProvider)) {
+                usuario.setAuthProvider(Usuario.AuthProvider.GOOGLE);
+            }
+
+            // Encriptación condicional según el proveedor
+            if ("LOCAL".equals(authProvider)) {
+                // Para usuarios locales: encriptar la contraseña
+                usuario.setPass_usuario(passwordEncoder.encode(password));
+                System.out.println("Usuario LOCAL con contraseña encriptada");
+            } else if ("GOOGLE".equals(authProvider) || "FACEBOOK".equals(authProvider)) {
+                // Para OAuth2: Generar una contraseña aleatoria para usuarios OAuth2
+                String randomPassword = java.util.UUID.randomUUID().toString();
+                usuario.setPass_usuario(passwordEncoder.encode(randomPassword));
+                System.out.println("Usuario OAuth2 con contraseña generada aleatoriamente");
+
+                // Encriptar el refresh token si existe
+                if (refreshToken != null && !refreshToken.isEmpty()) {
+                    try {
+                        // Encriptar el refresh token antes de guardarlo
+                        String encryptedRefreshToken = encryptionService.encrypt(refreshToken);
+                        usuario.setGoogleRefreshToken(encryptedRefreshToken);
+                        System.out.println("Refresh token encriptado guardado");
+                    } catch (Exception e) {
+                        System.err.println("Error al encriptar refresh token: " + e.getMessage());
+                        redirectAttributes.addFlashAttribute("error", "Error al procesar token de autenticación");
+                        return "redirect:/usuarios/registrar";
+                    }
+                }
+
+
+            }
+
+
+
+            // 4. PROCESAR LA FOTO DE PERFIL (si se subió)
             if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
                 // Validar tipo de archivo
                 String contentType = fotoPerfil.getContentType();
@@ -239,7 +295,16 @@ public class ControladorUsuarios {
                 usuarioServicio.guardar(usuario);
             }
 
-            redirectAttributes.addFlashAttribute("success", "Usuario registrado exitosamente");
+            // Mensaje de éxito según el tipo de registro
+            String mensajeExito;
+            if ("LOCAL".equals(authProvider)) {
+                mensajeExito = "¡Registro exitoso! Tu cuenta está a la espera de aprobación por un administrador.";
+            } else {
+                mensajeExito = "¡Registro con " + authProvider + " exitoso! Tu cuenta está a la espera de aprobación.";
+            }
+
+            redirectAttributes.addFlashAttribute("mensaje", mensajeExito);
+            redirectAttributes.addFlashAttribute("success", "Usuario registrado exitosamente. Pendiente de aprobación.");
             return "redirect:/usuarios?registroExitoso=true";
 
         } catch (Exception e) {
@@ -249,6 +314,361 @@ public class ControladorUsuarios {
             return "redirect:/usuarios/registrar";
         }
     }
+
+
+    /**
+     * Mostrar formulario de registro para usuarios de Google
+     */
+    @GetMapping("/registrar-google")
+    public String mostrarFormularioRegistroGoogle(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            System.out.println("=== GET /registrar-google ===");
+            System.out.println("ID de sesión: " + session.getId());
+
+            ControladorOAuth2.GoogleUserData googleData =
+                    (ControladorOAuth2.GoogleUserData) session.getAttribute("googleData");
+
+            System.out.println("googleData en sesión: " + (googleData != null ? "EXISTE" : "null"));
+            if (googleData != null) {
+                System.out.println("Email: " + googleData.email);
+                System.out.println("Name: " + googleData.name);
+            }
+
+            // Si no hay datos en sesión, intentar con flash attributes
+            if (googleData == null && model.containsAttribute("googleData")) {
+                googleData = (ControladorOAuth2.GoogleUserData) model.getAttribute("googleData");
+                System.out.println("googleData recuperado de flash attributes");
+            }
+
+            if (googleData == null) {
+                System.out.println("❌ No se encontraron datos de Google");
+                redirectAttributes.addFlashAttribute("error",
+                        "No se encontraron datos de autenticación. Por favor, intenta de nuevo.");
+                return "redirect:/login";
+            }
+
+            String suggestedUsername = googleData.email != null ? googleData.email.split("@")[0] : "";
+            model.addAttribute("nombreUsuario", suggestedUsername);
+
+            // Pasar datos al modelo
+            model.addAttribute("googleData", googleData);
+            model.addAttribute("nombre", googleData.givenName != null ? googleData.givenName : "");
+            model.addAttribute("apellido", googleData.familyName != null ? googleData.familyName : "");
+            model.addAttribute("correo", googleData.email != null ? googleData.email : "");
+
+
+            // Obtener roles disponibles para el registro
+            List<Rol> roles = rolServicio.listarRoles();
+            model.addAttribute("roles", roles);
+
+            return "usuarios/registrarGoogle";
+
+        } catch (Exception e) {
+            System.err.println("Error al cargar formulario de registro Google: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al cargar el formulario");
+            return "redirect:/login";
+        }
+    }
+
+
+    /**
+     * Procesar registro de usuario desde Google (sin contraseña)
+     */
+    @PostMapping("/registrar-google")
+    public String registrarUsuarioGoogle(
+            @RequestParam String nombreUsuario,
+            @RequestParam String cargo,
+            @RequestParam String rolSeleccionado,
+            @RequestParam(required = false) String telefono,
+            @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
+            @RequestParam(required = false) String googleEmail,
+            @RequestParam(required = false) String googleName,
+            @RequestParam(required = false) String googleGivenName,
+            @RequestParam(required = false) String googleFamilyName,
+            @RequestParam(required = false) String googlePicture,
+            @RequestParam(required = false) Boolean googleEmailVerified,
+            @RequestParam(required = false) String encryptedRefreshToken,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+
+        System.out.println("=== POST /registrar-google ===");
+        System.out.println("nombreUsuario: " + nombreUsuario);
+        System.out.println("cargo: " + cargo);
+        System.out.println("rolSeleccionado: " + rolSeleccionado);
+        System.out.println("googleEmail: " + googleEmail);
+        System.out.println("googleName: " + googleName);
+        System.out.println("googleGivenName: " + googleGivenName);
+        System.out.println("googleFamilyName: " + googleFamilyName);
+
+        //ControladorOAuth2.GoogleUserData googleData = (ControladorOAuth2.GoogleUserData) session.getAttribute("googleData");
+
+        try {
+
+            //  1. RECONSTRUIR DATOS DE GOOGLE desde los hidden fields
+            ControladorOAuth2.GoogleUserData googleData = new ControladorOAuth2.GoogleUserData();
+            googleData.email = googleEmail;
+            googleData.name = googleName;
+            googleData.givenName = googleGivenName;
+            googleData.familyName = googleFamilyName;
+            googleData.emailVerified = googleEmailVerified != null ? googleEmailVerified : false;
+            googleData.encryptedRefreshToken = encryptedRefreshToken;
+
+            //  2. VALIDAR QUE EXISTAN DATOS DE GOOGLE
+            if (googleData.email == null || googleData.email.isEmpty()) {
+                System.err.println("❌ ERROR: Datos de Google no recibidos en el POST");
+                redirectAttributes.addFlashAttribute("error",
+                        "Datos de Google no encontrados. Por favor, inicia sesión nuevamente.");
+                return "redirect:/login";
+            }
+
+            System.out.println(" Datos de Google reconstruidos correctamente");
+            System.out.println("   Email: " + googleData.email);
+            System.out.println("   Name: " + googleData.name);
+
+            //  3. VALIDAR CAMPOS OBLIGATORIOS
+            if (nombreUsuario == null || nombreUsuario.isEmpty() ||
+                    cargo == null || cargo.isEmpty() ||
+                    rolSeleccionado == null || rolSeleccionado.isEmpty()) {
+
+                System.err.println("❌ ERROR: Campos obligatorios faltantes");
+                redirectAttributes.addFlashAttribute("error",
+                        "Todos los campos son obligatorios");
+                redirectAttributes.addFlashAttribute("googleData", googleData);
+                return "redirect:/usuarios/registrar-google";
+            }
+
+            // 4. VERIFICAR SI EL NOMBRE DE USUARIO YA EXISTE
+            Usuario usuarioExistente = usuarioServicio.encontrarPorNombreUsuario(nombreUsuario);
+            if (usuarioExistente != null) {
+                System.err.println("❌ ERROR: Nombre de usuario ya existe: " + nombreUsuario);
+                redirectAttributes.addFlashAttribute("error",
+                        "El nombre de usuario '" + nombreUsuario + "' ya existe");
+                redirectAttributes.addFlashAttribute("googleData", googleData);
+                return "redirect:/usuarios/registrar-google";
+            }
+
+            // 5. VERIFICAR SI EL EMAIL YA ESTÁ REGISTRADO
+            if (googleData.email != null) {
+                List<Usuario> usuariosPorEmail = usuarioServicio.encontrarPorCorreo(googleData.email);
+                if (!usuariosPorEmail.isEmpty()) {
+                    Usuario usuarioPorEmail = usuariosPorEmail.get(0);
+                    if (usuarioPorEmail != null) {
+                        System.err.println("❌ ERROR: Email ya registrado: " + googleData.email);
+                        redirectAttributes.addFlashAttribute("error",
+                                "Este email ya está registrado. Por favor, inicia sesión.");
+                        return "redirect:/login";
+                    }
+                }
+            }
+
+            // 6. CREAR PERSONA
+            Persona persona = new Persona();
+
+            // 6.1.  Verificar que los datos de Google no sean null
+            System.out.println("=== DATOS RECIBIDOS DE GOOGLE ===");
+            System.out.println("googleData.name: " + googleData.name);
+            System.out.println("googleData.givenName: " + googleData.givenName);
+            System.out.println("googleData.familyName: " + googleData.familyName);
+            System.out.println("googleData.email: " + googleData.email);
+
+
+
+
+
+            // 6.2. Extraer nombre y apellido
+            String nombre = googleGivenName != null ? googleGivenName : "";
+            String apellido = googleFamilyName != null ? googleFamilyName : "";
+
+            // 6.3. Si no hay nombre, usar el email
+            if (nombre.isEmpty() && googleData.email != null) {
+                nombre = googleData.email.split("@")[0];
+            }
+            if (nombre.isEmpty()) {
+                nombre = "Usuario";
+            }
+            if (apellido.isEmpty()) {
+                apellido = "Google";
+            }
+
+            persona.setNombre(nombre);
+            persona.setApellido(apellido);
+            persona.setTelefono(telefono != null && !telefono.isEmpty() ? telefono : "0000000000");
+            persona.setCorreo(googleData.email != null ? googleData.email : nombreUsuario + "@google.com");
+
+            personaServicio.salvar(persona);
+            System.out.println("Persona creada con ID: " + persona.getIdPersona());
+
+            // 6.4.  Si después de tod0 sigue vacío, asignar valores por defecto
+            if (nombre.isEmpty()) {
+                System.out.println("WARNING: No se pudo extraer nombre, usando valor por defecto");
+                nombre = "Usuario";
+            }
+            if (apellido.isEmpty()) {
+                System.out.println("WARNING: No se pudo extraer apellido, usando valor por defecto");
+                apellido = "Google";
+            }
+
+            System.out.println("=== RESULTADO FINAL ===");
+            System.out.println("Nombre asignado: " + nombre);
+            System.out.println("Apellido asignado: " + apellido);
+
+
+            // 7. BUSCAR ROL
+            Rol rol = rolServicio.listarRoles().stream()
+                    .filter(r -> r.getNombreRol().equalsIgnoreCase(rolSeleccionado))
+                    .findFirst()
+                    .orElse(null);
+
+            if (rol == null) {
+                System.err.println("⚠️ Rol no encontrado: " + rolSeleccionado + ", buscando fallback...");
+                rol = rolServicio.listarRoles().stream()
+                        .filter(r -> "USER".equalsIgnoreCase(r.getNombreRol()) ||
+                                "OPERATIVO".equalsIgnoreCase(r.getNombreRol()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (rol == null && !rolServicio.listarRoles().isEmpty()) {
+                    rol = rolServicio.listarRoles().get(0);
+                }
+            }
+
+            if (rol == null) {
+                System.err.println("❌ ERROR: No se pudo asignar un rol válido");
+                redirectAttributes.addFlashAttribute("error",
+                        "No se pudo asignar un rol válido");
+                return "redirect:/usuarios/registrar-google";
+            }
+
+            System.out.println("Rol asignado: " + rol.getNombreRol() + " (ID: " + rol.getIdRol() + ")");
+
+
+
+
+            // 8. CREAR USUARIO
+            Usuario usuario = new Usuario();
+            usuario.setNombreUsuario(nombreUsuario);
+            usuario.setCargo(cargo);
+            usuario.setPersona(persona);
+            usuario.setRol(rol);
+            usuario.setStatus(Usuario.StatusUsuario.PENDING);
+            usuario.setAuthProvider(Usuario.AuthProvider.GOOGLE);
+            usuario.setEmailVerified(googleData.emailVerified);
+
+            // 8.1. Contraseña aleatoria para usuarios OAuth2
+            String randomPassword = java.util.UUID.randomUUID().toString();
+            usuario.setPass_usuario(passwordEncoder.encode(randomPassword));
+            System.out.println("Contraseña generada para OAuth2");
+
+            // 8.2. Guardar refresh token encriptado
+            if (googleData.encryptedRefreshToken != null) {
+                usuario.setGoogleRefreshToken(googleData.encryptedRefreshToken);
+            }
+
+            // 9. PROCESAR FOTO DE PERFIL
+            // Opción A: Foto de Google
+            if (googlePicture != null && !googlePicture.isEmpty()) {
+                try {
+                    byte[] fotoBytes = usuarioServicio.downloadImageFromUrl(googlePicture);
+                    if (fotoBytes != null) {
+                        usuario.setFotoPerfil(fotoBytes);
+                        usuario.setFotoTipo("image/jpeg");
+                        System.out.println(" Foto de Google descargada");
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al descargar foto de Google: " + e.getMessage());
+                }
+            }
+
+            // Opción B: Foto subida por el usuario (sobrescribe la de Google)
+            if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+                try {
+                    String contentType = fotoPerfil.getContentType();
+                    if (contentType != null && contentType.startsWith("image/") &&
+                            fotoPerfil.getSize() <= 5 * 1024 * 1024) {
+                        usuario.setFotoPerfil(fotoPerfil.getBytes());
+                        usuario.setFotoTipo(contentType);
+                        System.out.println("✅ Foto subida por el usuario guardada");
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al procesar foto de perfil: " + e.getMessage());
+                }
+            }
+
+            // 10. GUARDAR USUARIO
+            usuarioServicio.guardar(usuario);
+            System.out.println("Usuario Google creado con ID: " + usuario.getIdUsuario());
+
+            // 11. LIMPIAR SESIÓN
+            session.removeAttribute("googleData");
+            session.removeAttribute("googleDataTimestamp");
+            System.out.println("Sesión limpiada");
+
+            // 12. MENSAJE DE ÉXITO
+            redirectAttributes.addFlashAttribute("success",
+                    "¡Registro completado! Tu cuenta está pendiente de aprobación por un administrador.");
+            System.out.println("=== REGISTRO GOOGLE COMPLETADO EXITOSAMENTE ===");
+
+            redirectAttributes.addFlashAttribute("success",
+                    "¡Registro completado! Tu cuenta está pendiente de aprobación por un administrador.");
+            return "redirect:/login?pending=true";
+
+        } catch (Exception e) {
+            System.err.println("Error al registrar usuario Google: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al registrar" + e.getMessage());
+            return "redirect:/usuarios/registrar-google";
+        }
+    }
+
+
+
+    /**
+     * Aprobar un usuario pendiente
+     */
+    @PostMapping("/aprobar/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_USUARIO') or hasRole('ADMIN')")
+    public String aprobarUsuario(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            usuarioServicio.aprobarUsuario(id);
+            redirectAttributes.addFlashAttribute("success", "Usuario aprobado exitosamente");
+        } catch (Exception e) {
+            System.err.println("Error al aprobar usuario: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al aprobar usuario: " + e.getMessage());
+        }
+        return "redirect:/usuarios";
+    }
+
+    /**
+     * Rechazar un usuario pendiente
+     */
+    @PostMapping("/rechazar/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_USUARIO') or hasRole('ADMIN')")
+    public String rechazarUsuario(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            Usuario usuario = usuarioServicio.encontrarPorId(id);
+            if (usuario != null) {
+                usuario.setStatus(Usuario.StatusUsuario.REJECTED);
+                usuarioServicio.guardar(usuario);
+                redirectAttributes.addFlashAttribute("success", "Usuario rechazado");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al rechazar usuario: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al rechazar usuario: " + e.getMessage());
+        }
+        return "redirect:/usuarios";
+    }
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Eliminar usuario
@@ -556,4 +976,258 @@ public class ControladorUsuarios {
 
         return "usuarios/usuarios";
     }
+
+    /**
+     * Mostrar formulario de registro para usuarios de Microsoft
+     */
+    @GetMapping("/registrar-microsoft")
+    public String mostrarFormularioRegistroMicrosoft(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            System.out.println("=== GET /registrar-microsoft ===");
+            System.out.println("ID de sesión: " + session.getId());
+
+            // Intentar obtener datos de Microsoft desde flash attributes o sesión
+            ControladorOAuth2.MicrosoftUserData microsoftData = null;
+
+            // Primero intentar desde flash attributes (pasado por redirect)
+            if (model.containsAttribute("microsoftData")) {
+                microsoftData = (ControladorOAuth2.MicrosoftUserData) model.getAttribute("microsoftData");
+                System.out.println("microsoftData recuperado de flash attributes");
+            }
+
+            // Si no, intentar desde sesión
+            if (microsoftData == null) {
+                microsoftData = (ControladorOAuth2.MicrosoftUserData) session.getAttribute("microsoftData");
+                System.out.println("microsoftData en sesión: " + (microsoftData != null ? "EXISTE" : "null"));
+            }
+
+            if (microsoftData != null) {
+                System.out.println("Email: " + microsoftData.email);
+                System.out.println("Name: " + microsoftData.name);
+            }
+
+            if (microsoftData == null) {
+                System.out.println("❌ No se encontraron datos de Microsoft");
+                redirectAttributes.addFlashAttribute("error",
+                        "No se encontraron datos de autenticación. Por favor, intenta de nuevo.");
+                return "redirect:/login";
+            }
+
+            String suggestedUsername = microsoftData.email != null ? microsoftData.email.split("@")[0] : "";
+            model.addAttribute("nombreUsuario", suggestedUsername);
+
+            // Pasar datos al modelo
+            model.addAttribute("microsoftData", microsoftData);
+            model.addAttribute("nombre", microsoftData.givenName != null ? microsoftData.givenName : "");
+            model.addAttribute("apellido", microsoftData.familyName != null ? microsoftData.familyName : "");
+            model.addAttribute("correo", microsoftData.email != null ? microsoftData.email : "");
+
+            // Obtener roles disponibles
+            List<Rol> roles = rolServicio.listarRoles();
+            model.addAttribute("roles", roles);
+
+            return "usuarios/registrarMicrosoft";
+
+        } catch (Exception e) {
+            System.err.println("Error al cargar formulario de registro Microsoft: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al cargar el formulario");
+            return "redirect:/login";
+        }
+    }
+
+    /**
+     * Procesar registro de usuario desde Microsoft
+     */
+    @PostMapping("/registrar-microsoft")
+    public String registrarUsuarioMicrosoft(
+            @RequestParam String nombreUsuario,
+            @RequestParam String cargo,
+            @RequestParam String rolSeleccionado,
+            @RequestParam(required = false) String telefono,
+            @RequestParam(value = "fotoPerfil", required = false) MultipartFile fotoPerfil,
+            @RequestParam(required = false) String microsoftEmail,
+            @RequestParam(required = false) String microsoftName,
+            @RequestParam(required = false) String microsoftGivenName,
+            @RequestParam(required = false) String microsoftFamilyName,
+            @RequestParam(required = false) Boolean microsoftEmailVerified,
+            @RequestParam(required = false) String encryptedRefreshToken,
+            @RequestParam(required = false) String microsoftPicture,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        System.out.println("=== POST /registrar-microsoft ===");
+        System.out.println("nombreUsuario: " + nombreUsuario);
+        System.out.println("cargo: " + cargo);
+        System.out.println("rolSeleccionado: " + rolSeleccionado);
+        System.out.println("microsoftEmail: " + microsoftEmail);
+
+        try {
+            // 1. RECONSTRUIR DATOS DE MICROSOFT
+            ControladorOAuth2.MicrosoftUserData microsoftData = new ControladorOAuth2.MicrosoftUserData();
+            microsoftData.email = microsoftEmail;
+            microsoftData.name = microsoftName;
+            microsoftData.givenName = microsoftGivenName;
+            microsoftData.familyName = microsoftFamilyName;
+            microsoftData.emailVerified = microsoftEmailVerified != null ? microsoftEmailVerified : false;
+            microsoftData.encryptedRefreshToken = encryptedRefreshToken;
+            microsoftData.picture = microsoftPicture;
+
+            // 2. VALIDAR DATOS DE MICROSOFT
+            if (microsoftData.email == null || microsoftData.email.isEmpty()) {
+                System.err.println("❌ ERROR: Datos de Microsoft no recibidos en el POST");
+                redirectAttributes.addFlashAttribute("error",
+                        "Datos de Microsoft no encontrados. Por favor, inicia sesión nuevamente.");
+                return "redirect:/login";
+            }
+
+            System.out.println("✅ Datos de Microsoft reconstruidos correctamente");
+            System.out.println("   Email: " + microsoftData.email);
+            System.out.println("   Name: " + microsoftData.name);
+
+            // 3. VALIDAR CAMPOS OBLIGATORIOS
+            if (nombreUsuario == null || nombreUsuario.isEmpty() ||
+                    cargo == null || cargo.isEmpty() ||
+                    rolSeleccionado == null || rolSeleccionado.isEmpty()) {
+
+                System.err.println("❌ ERROR: Campos obligatorios faltantes");
+                redirectAttributes.addFlashAttribute("error", "Todos los campos son obligatorios");
+                redirectAttributes.addFlashAttribute("microsoftData", microsoftData);
+                return "redirect:/usuarios/registrar-microsoft";
+            }
+
+            // 4. VERIFICAR SI EL NOMBRE DE USUARIO YA EXISTE
+            Usuario usuarioExistente = usuarioServicio.encontrarPorNombreUsuario(nombreUsuario);
+            if (usuarioExistente != null) {
+                System.err.println("❌ ERROR: Nombre de usuario ya existe: " + nombreUsuario);
+                redirectAttributes.addFlashAttribute("error",
+                        "El nombre de usuario '" + nombreUsuario + "' ya existe");
+                redirectAttributes.addFlashAttribute("microsoftData", microsoftData);
+                return "redirect:/usuarios/registrar-microsoft";
+            }
+
+            // 5. VERIFICAR SI EL EMAIL YA ESTÁ REGISTRADO
+            if (microsoftData.email != null) {
+                List<Usuario> usuariosPorEmail = usuarioServicio.encontrarPorCorreo(microsoftData.email);
+                if (!usuariosPorEmail.isEmpty()) {
+                    System.err.println("❌ ERROR: Email ya registrado: " + microsoftData.email);
+                    redirectAttributes.addFlashAttribute("error",
+                            "Este email ya está registrado. Por favor, inicia sesión.");
+                    return "redirect:/login";
+                }
+            }
+
+            // 6. CREAR PERSONA
+            Persona persona = new Persona();
+            String nombre = microsoftGivenName != null ? microsoftGivenName : "";
+            String apellido = microsoftFamilyName != null ? microsoftFamilyName : "";
+
+            if (nombre.isEmpty() && microsoftData.email != null) {
+                nombre = microsoftData.email.split("@")[0];
+            }
+            if (nombre.isEmpty()) {
+                nombre = "Usuario";
+            }
+            if (apellido.isEmpty()) {
+                apellido = "Microsoft";
+            }
+
+            persona.setNombre(nombre);
+            persona.setApellido(apellido);
+            persona.setTelefono(telefono != null && !telefono.isEmpty() ? telefono : "0000000000");
+            persona.setCorreo(microsoftData.email != null ? microsoftData.email : nombreUsuario + "@microsoft.com");
+
+            personaServicio.salvar(persona);
+            System.out.println("Persona creada con ID: " + persona.getIdPersona());
+
+            // 7. BUSCAR ROL
+            Rol rol = rolServicio.listarRoles().stream()
+                    .filter(r -> r.getNombreRol().equalsIgnoreCase(rolSeleccionado))
+                    .findFirst()
+                    .orElse(null);
+
+            if (rol == null) {
+                System.err.println("⚠️ Rol no encontrado: " + rolSeleccionado + ", buscando fallback...");
+                rol = rolServicio.listarRoles().stream()
+                        .filter(r -> "USER".equalsIgnoreCase(r.getNombreRol()) ||
+                                "OPERATIVO".equalsIgnoreCase(r.getNombreRol()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (rol == null && !rolServicio.listarRoles().isEmpty()) {
+                    rol = rolServicio.listarRoles().get(0);
+                }
+            }
+
+            if (rol == null) {
+                System.err.println("❌ ERROR: No se pudo asignar un rol válido");
+                redirectAttributes.addFlashAttribute("error", "No se pudo asignar un rol válido");
+                return "redirect:/usuarios/registrar-microsoft";
+            }
+
+            System.out.println("Rol asignado: " + rol.getNombreRol() + " (ID: " + rol.getIdRol() + ")");
+
+            // 8. CREAR USUARIO
+            Usuario usuario = new Usuario();
+            usuario.setNombreUsuario(nombreUsuario);
+            usuario.setCargo(cargo);
+            usuario.setPersona(persona);
+            usuario.setRol(rol);
+            usuario.setStatus(Usuario.StatusUsuario.PENDING);
+            usuario.setAuthProvider(Usuario.AuthProvider.MICROSOFT);
+            usuario.setEmailVerified(microsoftData.emailVerified != null ? microsoftData.emailVerified : false);
+
+            // Contraseña aleatoria para usuarios OAuth2
+            String randomPassword = java.util.UUID.randomUUID().toString();
+            usuario.setPass_usuario(passwordEncoder.encode(randomPassword));
+            System.out.println("Contraseña generada para OAuth2");
+
+            // Guardar refresh token encriptado
+            if (microsoftData.encryptedRefreshToken != null) {
+                usuario.setGoogleRefreshToken(microsoftData.encryptedRefreshToken);
+            }
+
+            // 9. PROCESAR FOTO DE PERFIL
+            if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+                try {
+                    String contentType = fotoPerfil.getContentType();
+                    if (contentType != null && contentType.startsWith("image/") &&
+                            fotoPerfil.getSize() <= 5 * 1024 * 1024) {
+                        usuario.setFotoPerfil(fotoPerfil.getBytes());
+                        usuario.setFotoTipo(contentType);
+                        System.out.println("✅ Foto subida por el usuario guardada");
+                    }
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al procesar foto de perfil: " + e.getMessage());
+                }
+            }
+
+            // 10. GUARDAR USUARIO
+            usuarioServicio.guardar(usuario);
+            System.out.println("Usuario Microsoft creado con ID: " + usuario.getIdUsuario());
+
+            // 11. LIMPIAR SESIÓN
+            session.removeAttribute("microsoftData");
+            session.removeAttribute("microsoftDataTimestamp");
+            System.out.println("Sesión limpiada");
+
+            // 12. MENSAJE DE ÉXITO
+            redirectAttributes.addFlashAttribute("success",
+                    "¡Registro completado! Tu cuenta está pendiente de aprobación por un administrador.");
+            System.out.println("=== REGISTRO MICROSOFT COMPLETADO EXITOSAMENTE ===");
+
+            return "redirect:/login?pending=true";
+
+        } catch (Exception e) {
+            System.err.println("Error al registrar usuario Microsoft: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al registrar: " + e.getMessage());
+            return "redirect:/usuarios/registrar-microsoft";
+        }
+    }
+
+
+
+
+
 }

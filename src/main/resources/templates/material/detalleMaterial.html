@@ -189,7 +189,7 @@
                         <div class="detail-grid">
                             <div class="detail-item">
                                 <span class="detail-label">Precio Unitario</span>
-                                <div class="detail-value" th:text="${material.precioMaterial != null ? '₡' + #numbers.formatDecimal(material.precioMaterial, 1, 2) : 'No disponible'}">
+                                <div class="detail-value" th:text="${precio != null ? '₡' + #numbers.formatDecimal(precio, 1, 2) : 'No disponible'}">
                                     Precio
                                 </div>
                             </div>
@@ -214,7 +214,7 @@
                             </div>
                         </div>
                     </div>
-                    <!-- TODO relaciones con APU, inventario y proveedor. -->
+                    <!-- TODO relaciones con APU, inventario y ¡¡proveedor!!. -->
                     <!-- Related Information Section -->
                     <div class="detail-section">
                         <h3><i class="fas fa-link"></i> Información Relacionada</h3>

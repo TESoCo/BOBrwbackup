@@ -86,4 +86,5 @@ public interface ProyectoDao extends JpaRepository<Proyecto, Long> {
     List<Proyecto> buscarPorTextoEnProyectoYObras(@Param("texto") String texto);
 
 
+
 }

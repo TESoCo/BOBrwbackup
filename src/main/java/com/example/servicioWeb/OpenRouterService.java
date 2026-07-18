@@ -189,4 +189,189 @@ public class OpenRouterService {
             throw new Exception("La IA no respondió en formato JSON válido");
         }
     }
+
+    // ============================================
+    // MÉTOD PARA ESTIMACIÓN
+    // ============================================
+
+    /**
+     * Estima cantidades
+     */
+    public List<Map<String, String>> estimarCantidades(String descripcionApu, List<Map<String, String>> materiales, String unidadBase) {
+        System.out.println("=== OPENROUTER - ESTIMACIÓN DE CANTIDADES ===");
+        System.out.println("Intentando con " + modelos.length + " modelos...");
+
+        String prompt = crearPromptCantidades(descripcionApu, materiales, unidadBase);
+
+        for (int i = 0; i < modelos.length; i++) {
+            String modeloActual = modelos[i];
+            try {
+                System.out.println("\n🔄 Intento " + (i+1) + "/" + modelos.length);
+                System.out.println("Modelo: " + modeloActual);
+
+                String respuesta = llamarAPI(prompt, modeloActual);
+                List<Map<String, String>> resultado = parsearRespuestaCantidades(respuesta);
+
+                System.out.println("✅ Éxito con modelo: " + modeloActual);
+                return resultado;
+
+            } catch (Exception e) {
+                System.out.println("❌ Falló modelo " + modeloActual + ": " + e.getMessage());
+                if (i < modelos.length - 1) {
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                }
+            }
+        }
+
+        throw new RuntimeException("Todos los modelos de OpenRouter fallaron para estimación");
+    }
+
+    // ============================================
+    // MÉTODOS DE PROMPT Y PARSING PARA CANTIDADES
+    // ============================================
+
+    private String crearPromptCantidades(String descripcionApu, List<Map<String, String>> materiales, String unidadBase) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Eres un ingeniero civil experto en construcción y presupuestos.\n\n");
+        sb.append("ACTIVIDAD A REALIZAR (para 1 UNIDAD del APU):\n");
+        sb.append(descripcionApu).append("\n\n");
+        sb.append("UNIDAD DE MEDIDA BASE DEL APU: ").append(unidadBase).append("\n\n");
+        sb.append("MATERIALES NECESARIOS (sin cantidades aún):\n");
+
+        for (Map<String, String> material : materiales) {
+            sb.append("- ").append(material.get("nombre"));
+            sb.append(" (").append(material.get("unidad")).append(")\n");
+        }
+
+        sb.append("""
+
+            ═══════════════════════════════════════════════════════════
+            INSTRUCCIONES MUY IMPORTANTES - LEER CON ATENCIÓN:
+            ═══════════════════════════════════════════════════════════
+
+            1. Tu tarea es ESTIMAR LAS CANTIDADES FÍSICAS de cada material.
+               NO debes devolver precios, NO debes devolver costos.
+
+            2. Para CADA material, responde con:
+               - nombre: el nombre exacto del material
+               - cantidad: la cantidad necesaria (solo el número, ej: 45.50)
+               - unidad: la misma unidad del material
+               - justificacion: breve explicación de cómo calculaste la cantidad
+
+            3. La cantidad es CUÁNTO material se necesita, NO cuánto cuesta.
+
+            4. Para una base de concreto pobre, piensa en cantidades reales:
+               - Cemento: ~300 kg por m³ de concreto
+               - Arena: ~0.6 m³ por m³ de concreto
+               - Grava: ~0.8 m³ por m³ de concreto
+               - Agua: ~0.2 m³ por m³ de concreto
+
+            5. EJEMPLO CORRECTO:
+               {"nombre": "Cemento", "cantidad": 45.50, "unidad": "kg", "justificacion": "Para 1 m³ de concreto"}
+
+            6. EJEMPLO INCORRECTO (NO HACER ESTO):
+               {"nombre": "Cemento", "precio": 10000.00, "unidad": "kg"}  ← ESTO ES UN PRECIO, NO UNA CANTIDAD
+
+            ═══════════════════════════════════════════════════════════
+            AHORA GENERA TU RESPUESTA (SOLO EL ARRAY JSON):
+            ═══════════════════════════════════════════════════════════
+            """);
+
+        return sb.toString();
+    }
+
+    private List<Map<String, String>> parsearRespuestaCantidades(String respuesta) throws Exception {
+        try {
+            String json = limpiarRespuesta(respuesta);
+            System.out.println("🔧 JSON de cantidades OpenRouter: " + json);
+
+            JsonNode array = objectMapper.readTree(json);
+            List<Map<String, String>> resultados = new ArrayList<>();
+
+            for (JsonNode item : array) {
+                Map<String, String> resultado = new HashMap<>();
+
+                // Obtener nombre
+                String nombre = item.has("nombre") ? item.path("nombre").asText() :
+                        (item.has("material") ? item.path("material").asText() : "");
+
+                if (nombre == null || nombre.isEmpty()) {
+                    continue;
+                }
+
+                // Obtener cantidad - probar diferentes formatos
+                String cantidad = "0";
+                if (item.has("cantidad")) {
+                    cantidad = item.path("cantidad").asText();
+                } else if (item.has("cantidad_estimada")) {
+                    cantidad = item.path("cantidad_estimada").asText();
+                } else if (item.has("quantity")) {
+                    cantidad = item.path("quantity").asText();
+                } else if (item.has("valor")) {
+                    cantidad = item.path("valor").asText();
+                } else if (item.has("precio")) {
+                    // Algunas IA ponen la cantidad en precio
+                    cantidad = item.path("precio").asText();
+                }
+
+                // Limpiar y formatear cantidad
+                try {
+                    // Remover cualquier texto no numérico
+                    String cleanCantidad = cantidad.replaceAll("[^0-9.]", "");
+                    if (cleanCantidad.isEmpty()) {
+                        cleanCantidad = "1.00";
+                    }
+                    double cant = Double.parseDouble(cleanCantidad);
+                    cantidad = String.format("%.2f", cant);
+                } catch (NumberFormatException e) {
+                    cantidad = "1.00";
+                }
+
+                // Obtener unidad
+                String unidad = item.has("unidad") ? item.path("unidad").asText() :
+                        (item.has("unit") ? item.path("unit").asText() : "und");
+
+                // Obtener justificación
+                String justificacion = item.has("justificacion") ? item.path("justificacion").asText() :
+                        (item.has("justification") ? item.path("justification").asText() : "Estimado por IA");
+
+                resultado.put("nombre", nombre);
+                resultado.put("cantidadEstimada", cantidad);
+                resultado.put("unidad", unidad);
+                resultado.put("justificacion", justificacion);
+
+                System.out.println("📊 " + nombre + ": " + cantidad + " " + unidad);
+                resultados.add(resultado);
+            }
+
+            return resultados;
+        } catch (Exception e) {
+            System.out.println("❌ Error parseando cantidades OpenRouter: " + e.getMessage());
+            throw new Exception("Formato de respuesta inválido");
+        }
+    }
+
+    // LimpiarRespuesta
+    private String limpiarRespuesta(String respuesta) {
+        String json = respuesta.trim();
+        json = json.replace("<s>", "").replace("</s>", "")
+                .replace("[INST]", "").replace("[/INST]", "");
+        if (json.contains("```json")) {
+            json = json.substring(json.indexOf("```json") + 7);
+        }
+        if (json.contains("```")) {
+            json = json.substring(0, json.lastIndexOf("```"));
+        }
+        json = json.replace("```json", "").replace("```", "").trim();
+        int firstBracket = json.indexOf('[');
+        if (firstBracket > 0) {
+            json = json.substring(firstBracket);
+        }
+        int lastBracket = json.lastIndexOf(']');
+        if (lastBracket > 0 && lastBracket < json.length() - 1) {
+            json = json.substring(0, lastBracket + 1);
+        }
+        return json.replace("\n", " ").replace("\r", " ").trim();
+    }
+
 }

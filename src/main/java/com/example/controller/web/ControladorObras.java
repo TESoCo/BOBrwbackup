@@ -1,10 +1,7 @@
 package com.example.controller.web;
 
-import com.example.domain.Apu;
-import com.example.domain.ApusObra;
-import com.example.domain.Obra;
-import com.example.servicio.APUServicio;
-import com.example.servicio.ObraServicio;
+import com.example.domain.*;
+import com.example.servicio.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,109 +28,326 @@ public class ControladorObras
     @Autowired
     private APUServicio apuServicio;
 
+    @Autowired
+    private ProyectoServicio proyectoServicio;
+
+    @Autowired
+    private UsuarioServicio usuarioServicio;
+
+    @Autowired
+    private EquipoServicio equipoServicio;
 
 
     //Acá están los métodos para presupuestos
     @GetMapping("/inicioObra")
     public String inicioObra(Model model, Authentication authentication){
+        // 0. Todas las obras
         List<Obra> obras = obraServicio.listaObra();
-        model.addAttribute("obras",obras);
 
-        //FILTRAR OBRAS CON COORDENADAS PARA EL MAPA
+
+
+
+
+        // 1 .FILTRAR OBRAS CON COORDENADAS PARA EL MAPA
         // Filtrar obras que tengan coordenadas (opcional)
         List<Obra> obrasConCoordenadas = obras.stream()
                 .filter(obra -> obra.getCooNObra() != null && obra.getCooEObra() != null)
                 .collect(Collectors.toList());
 
-        model.addAttribute("obras", obrasConCoordenadas);
-        model.addAttribute("fotoDatos", new ArrayList<>()); // o tu lista real de fotos
+
+        //model.addAttribute("fotoDatos", new ArrayList<>()); // todo lista real de fotos?
         // TODO: conexion con fotodato
+
+
+
+        /// ////////////////////////////////////////////////////////////////////
+        // 2. FILTROS PARA CONTROL DE ACCESOS POR EQUIPOS
+        Usuario usuarioActual = usuarioServicio.encontrarPorNombreUsuario(authentication.getName());
+        // VERIFICAR SI EL USUARIO TIENE EQUIPO
+        if (usuarioActual.getEquipo() == null) {
+            // Si es ADMIN, permitir acceso con mensaje informativo
+            if (usuarioActual.getRol() != null && "ADMIN".equals(usuarioActual.getRol().getNombreRol())) {
+                model.addAttribute("esAdminSinEquipo", true);
+                model.addAttribute("mensajeInfo", "⚠️ Usted es ADMIN pero no tiene equipo asignado. Puede ver todas las obras pero no crear nuevas hasta que se le asigne un equipo.");
+            } else {
+                // Usuario normal sin equipo - redirigir a página de error
+                return "obras/sinEquipoError";
+            }
+        }
+        /// /////////////////////////////////////////////////////////////////////
+
+
+        // 3. Obtener obras según permisos
+        List<Obra> obrasVisibles = obraServicio.obtenerObrasVisibles(usuarioActual);
+        System.out.println("Obras visibles para el usuario: " + obrasVisibles.size());
+
+
+
+        // 4. Proyectos y obras para la vista agrupada
+        List<Proyecto> proyectos = new ArrayList<>();
+        if (usuarioActual.getRol() != null && "ADMIN".equals(usuarioActual.getRol().getNombreRol())) {
+            proyectos = proyectoServicio.listarProyectos();
+        } else {
+            // Usuario normal: proyectos de su equipo
+            if (usuarioActual.getEquipo() != null) {
+                proyectos = proyectoServicio.buscarPorEquipo(usuarioActual.getEquipo().getIdEquipo());
+            } else {
+                proyectos = new ArrayList<>();
+            }
+        }
+
+
+
+        // 5. Obras sin proyecto (solo las visibles)
+        model.addAttribute("obrasSinProyecto", obrasVisibles.stream()
+                .filter(o -> o.getProyecto() == null)
+                .collect(Collectors.toList()));
+
+
+        // 6. Verificar si puede crear obra
+        boolean puedeCrear = obraServicio.puedeCrearObra(usuarioActual);
+        // Mensaje si no puede crear
+        if (!puedeCrear) {
+            model.addAttribute("mensajeInfo", "Contacte a un administrador para poder crear obras.");
+        }
+
+        model.addAttribute("obras", obras); // 0
+        model.addAttribute("obrasMapa", obrasConCoordenadas); // 1
+        // 2. Filtro por equipos
+        model.addAttribute("obrasVisibles", obrasVisibles);// ← Esta es la lista para la tabla // 3
+        model.addAttribute("proyectos", proyectos);// 4
+        // model.addAttribute("proyectos", proyectoServicio.listarProyectos()); // 4 (lista todos los proyectos si el filtro se daña)
+        // 5. Obras sin proyecto
+        model.addAttribute("obrasSinProyecto", obraServicio.findByProyectoIsNull()); // 5 (sacado de la capa de servicio
+        model.addAttribute("puedeCrearObra", puedeCrear); // 6
+        model.addAttribute("equipos", equipoServicio.listarEquipos()); // 7
+
 
         return "obras/inicioObra";
     }
 
+
+
+
+
     //Agregar nuevo presupuesto
     @GetMapping("/agregarObra")
-    public String formAnexarPresupuesto(Model model){
+    public String formAnexarPresupuesto(Model model, Authentication authentication){
+
+        Usuario usuarioActual = usuarioServicio.encontrarPorNombreUsuario(authentication.getName());
+
+        // Verificar que puede crear obra
+        if (!obraServicio.puedeCrearObra(usuarioActual)) {
+            return "redirect:/obras/inicioObra?error=sinEquipo";
+        }
+
+        // Proyectos disponibles para el usuario
+        List<Proyecto> proyectosDisponibles = obraServicio.obtenerProyectosDisponibles(usuarioActual);
+
+        // Si el usuario es ADMIN pero no tiene equipo, mostrar mensaje
+        if (usuarioActual.getRol() != null && "ADMIN".equals(usuarioActual.getRol().getNombreRol())
+                && usuarioActual.getEquipo() == null) {
+            model.addAttribute("mensajeInfo", "⚠️ Como ADMIN sin equipo, solo puede ver proyectos. Para crear obras debe tener un equipo asignado.");
+            model.addAttribute("proyectos", new ArrayList<>());
+        } else {
+            model.addAttribute("proyectos", proyectosDisponibles);
+        }
+
         model.addAttribute("obra", new Obra());
         model.addAttribute("APUs", APUServicio.listarElementos());
+        model.addAttribute("proyectos", proyectosDisponibles);
 
         return "obras/agregarObra";
     }
 
-    //Función de guardado
-    @PostMapping("/salvar")
-    public String salvarObra(
 
+
+
+
+
+    //Funciónes de guardado y flujo
+    // Crear obra en PRESUPUESTO
+    @PostMapping("/salvarPresupuesto")
+    public String salvarPresupuesto(
             @RequestParam String nombreObra,
             @RequestParam String etapa,
             @RequestParam LocalDate fechaIni,
             @RequestParam LocalDate fechaFin,
             @RequestParam Double cooNObra,
             @RequestParam Double cooEObra,
-            @RequestParam List<Long> apuIds, // Changed from actividadIds to apuIds
-            @RequestParam List<Double> cantidades, // Changed from actividadIds to apuIds
+            @RequestParam List<Long> apuIds,
+            @RequestParam List<Double> cantidades,
+            @RequestParam(required = false) Long idProyecto,
+            RedirectAttributes redirectAttributes,
+            Authentication authentication) {
+
+        try {
+
+
+
+            // Validar que el proyecto es obligatorio
+            if (idProyecto == null) {
+                redirectAttributes.addFlashAttribute("error", "El proyecto es obligatorio. Seleccione un proyecto.");
+                return "redirect:/obras/agregarObra";
+            }
+
+            // Validar que la etapa sea PRESUPUESTO
+            if (!Obra.EtapaObra.PRESUPUESTO.equals(etapa)) {
+                redirectAttributes.addFlashAttribute("error",
+                        "Para crear una obra en PRESUPUESTO use el formulario de presupuesto");
+                return "redirect:/obras/agregarObra";
+            }
+
+            // Validar tamaños
+            if (apuIds.size() != cantidades.size()) {
+                redirectAttributes.addFlashAttribute("error",
+                        "La cantidad de actividades y cantidades no coincide");
+                return "redirect:/obras/agregarObra";
+            }
+
+            // Crear mapa de actividades
+            Map<Long, Double> actividadesCantidades = new HashMap<>();
+            for (int i = 0; i < apuIds.size(); i++) {
+                actividadesCantidades.put(apuIds.get(i), cantidades.get(i));
+            }
+
+            // Obtener usuario actual
+            String username = authentication.getName();
+            Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
+            // Crear obra en PRESUPUESTO usando el nuevo métod0 de servicio
+            Obra obraPresupuesto = obraServicio.crearObraPresupuesto(
+                    nombreObra, fechaIni, fechaFin, cooNObra, cooEObra,
+                    actividadesCantidades, idProyecto, usuario);
+
+            // Asignar usuario
+            obraPresupuesto.setIdUsuario(usuario);
+            obraServicio.actualizar(obraPresupuesto);
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Presupuesto creado exitosamente. ID: " + obraPresupuesto.getIdObra());
+
+            return "redirect:/obras/detalle/" + obraPresupuesto.getIdObra();
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al crear presupuesto: " + e.getMessage());
+            return "redirect:/obras/agregarObra";
+        }
+    }
+
+    // Avanzar de PRESUPUESTO a EJECUCIÓN
+    @PostMapping("/avanzarAEjecucion/{idObra}")
+    public String avanzarAEjecucion(
+            @PathVariable Long idObra,
+
             RedirectAttributes redirectAttributes) {
-        // Create the nuevaObra first to get its ID
-        Obra nuevaObra = new Obra();
-        //no repetir nombres de obras
-        List<Obra> obrasExt = obraServicio.findByObraName(nombreObra);
-        if (obrasExt!=null&&!obrasExt.isEmpty())
-        {
-            for(Obra obraExistente:obrasExt)
-            {
-                if(Objects.equals(obraExistente.getNombreObra(), nombreObra))
-                {
-                    redirectAttributes.addFlashAttribute("error", "El nombre de obra ya existe");
-                    return "redirect:/obras/inicioObra";
-                }
-            }
-        }
 
-
-        nuevaObra.setNombreObra(nombreObra);
-        nuevaObra.setEtapa(etapa);
-        nuevaObra.setFechaIni(fechaIni);
-        nuevaObra.setFechaFin(fechaFin);
-        nuevaObra.setCooNObra(cooNObra);
-        nuevaObra.setCooEObra(cooEObra);
-        nuevaObra.setAnular(false);
-        obraServicio.salvar(nuevaObra);
-
-        // Validate input sizes match
-        if (apuIds.size() != cantidades.size()) {
-            throw new IllegalArgumentException("La cantidad de IDs y cantidades no coincide");
-        }
-
-        // Add APUs with quantities
-        for (int i = 0; i < apuIds.size(); i++) {
-            Apu apu = APUServicio.obtenerPorId(apuIds.get(i));
-            if (apu != null) {
-                // You'll need to implement a method that accepts quantity<-DONE
-                obraServicio.agregarApuAObraConCantidad(nuevaObra, apu,cantidades.get(i));
-                // For quantities, you'll need to update the junction table<-DONE
-            }
-        }
-
-    /*
-        // Convert to Map<Integer, Double> for JSON storage
-        Map<Integer, Double> APUValues = new HashMap<>();
-        for (int i = 0; i < apuIds.size(); i++) {
-            Integer id = apuIds.get(i);
-            Double cantidad = cantidades.get(i);
-
-            if (id == null) {
-                throw new IllegalArgumentException("ID de actividad no puede ser nulo");
-            }
-            if (cantidad == null || cantidad <= 0) {
-                throw new IllegalArgumentException("Cantidad inválida para actividad ID: " + id);
+        try {
+            if (!obraServicio.puedeAvanzarAEjecucion(idObra)) {
+                redirectAttributes.addFlashAttribute("error",
+                        "No se puede avanzar a EJECUCIÓN. Verifique que el presupuesto esté completo.");
+                return "redirect:/obras/detalle/" + idObra;
             }
 
-            APUValues.put(id, cantidad);
-        }
-*/
+            LocalDate fechaInicioReal = LocalDate.now();
+            Obra obraEjecucion = obraServicio.avanzarAEjecucion(idObra, fechaInicioReal);
 
-        return "redirect:inicioObra";
+            redirectAttributes.addFlashAttribute("success",
+                    "Obra avanzada a EJECUCIÓN. ID de ejecución: " + obraEjecucion.getIdObra());
+
+            return "redirect:/obras/detalle/" + obraEjecucion.getIdObra();
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Error al avanzar a EJECUCIÓN: " + e.getMessage());
+            return "redirect:/obras/detalle/" + idObra;
+        }
+    }
+
+    // Avanzar de EJECUCIÓN a CIERRE
+    @PostMapping("/avanzarACierre/{idObra}")
+    public String avanzarACierre(
+            @PathVariable Long idObra,
+            @RequestParam LocalDate fechaCierreReal,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            if (!obraServicio.puedeAvanzarACierre(idObra)) {
+                redirectAttributes.addFlashAttribute("error",
+                        "No se puede avanzar a CIERRE. Verifique que todas las actividades estén al 100%.");
+                return "redirect:/obras/detalle/" + idObra;
+            }
+
+            Obra obraCierre = obraServicio.avanzarACierre(idObra, fechaCierreReal);
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Obra avanzada a CIERRE. ID de cierre: " + obraCierre.getIdObra());
+
+            return "redirect:/obras/detalle/" + obraCierre.getIdObra();
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Error al avanzar a CIERRE: " + e.getMessage());
+            return "redirect:/obras/detalle/" + idObra;
+        }
+    }
+
+    // Ver comparativa de obra
+    @GetMapping("/comparativa/{idObra}")
+    public String verComparativa(@PathVariable Long idObra, Model model) {
+        try {
+            Map<String, Object> comparativa = obraServicio.obtenerComparativa(idObra);
+            model.addAttribute("comparativa", comparativa);
+
+            Obra obra = obraServicio.localizarObra(idObra);
+            model.addAttribute("obra", obra);
+
+            // Obtener todas las obras del mismo proyecto
+            if (obra.getIdentificadorUnico() != null && !obra.getIdentificadorUnico().isEmpty()) {
+                List<Obra> obrasProyecto = obraServicio.findObrasByIdentificador(
+                        obra.getIdentificadorUnico());
+                model.addAttribute("obrasProyecto", obrasProyecto);
+            }
+
+            return "obras/comparativa";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Error al obtener comparativa: " + e.getMessage());
+            return "redirect:/obras/detalle/" + idObra;
+        }
+    }
+
+    // Mostrar todas las obras de un proyecto
+    @GetMapping("/proyecto/{idProyecto}")
+    public String verObrasProyecto(@PathVariable Long idProyecto, Model model) {
+        List<Obra> obras = obraServicio.findByProyectoIdProyecto(idProyecto);
+        Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
+
+        model.addAttribute("obras", obras);
+        model.addAttribute("proyecto", proyecto);
+
+        // Obtener obras por etapa
+        Obra presupuesto = obraServicio.getObraPresupuesto(idProyecto);
+        Obra ejecucion = obraServicio.getObraEjecucion(idProyecto);
+        Obra cierre = obraServicio.getObraCierre(idProyecto);
+
+        model.addAttribute("presupuesto", presupuesto);
+        model.addAttribute("ejecucion", ejecucion);
+        model.addAttribute("cierre", cierre);
+
+        return "obras/obrasProyecto";
+    }
+
+    // Verificar si una obra puede avanzar a ejecución (endpoint AJAX)
+    @GetMapping("/puedeAvanzar/{idObra}")
+    @ResponseBody
+    public Map<String, Object> puedeAvanzarAEjecucion(@PathVariable Long idObra) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("puedeAvanzar", obraServicio.puedeAvanzarAEjecucion(idObra));
+        if (response.get("puedeAvanzar").equals(false)) {
+            response.put("mensaje", "El presupuesto no está completo o ya existe una ejecución");
+        }
+        return response;
     }
 
 
@@ -199,30 +413,31 @@ public class ControladorObras
     //funcionalidad para guardar cambios
     @PostMapping("/actualizar/{idObra}")
     public String actualizarPresupuesto(
-        @PathVariable Long idObra,
+            @PathVariable Long idObra,
+            @RequestParam(required = false) List<Long> actividadIds,
+            @RequestParam(required = false) List<Double> cantidades,
 
-        @ModelAttribute Obra obraActualizar,
-        BindingResult result,
-        @RequestParam List<Long> actividadIds,
-        @RequestParam List<Double> cantidades,
-        Model model) {
-        if (result.hasErrors() || actividadIds.isEmpty()) {
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            if (actividadIds == null || actividadIds.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Debe agregar al menos una actividad");
+                return "redirect:/obras/cambiar/" + idObra;
+            }
+
+            obraServicio.actualizarActividadesDeObra(idObra, actividadIds, cantidades);
+
+            redirectAttributes.addFlashAttribute("success", "Obra actualizada correctamente");
+            return "redirect:/obras/detalle/" + idObra;
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
             return "redirect:/obras/cambiar/" + idObra;
         }
-
-        Map<Long, Double> apuValues = new HashMap<>();
-        for (int i = 0; i < actividadIds.size(); i++) {
-            apuValues.put(actividadIds.get(i), cantidades.get(i));
-            obraServicio.agregarApuAObra(obraActualizar, APUServicio.obtenerPorId(actividadIds.get(i)));
-        }
-
-
-
-
-
-        obraServicio.actualizar(obraActualizar);
-        return "redirect:obras/inicioObra";
     }
+
+
+
 
     //Ver obraDetalle en detalle (sólo lectura)
     @GetMapping("/detalle/{idObra}")
@@ -314,6 +529,9 @@ public class ControladorObras
 
         return "obras/inicioObra";
     }
+
+
+
 
 
 

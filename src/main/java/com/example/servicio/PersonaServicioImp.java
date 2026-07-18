@@ -23,7 +23,25 @@ public class PersonaServicioImp implements PersonaServicio {
 
     @Override
     @Transactional
-    public Persona salvar(Persona persona) {return personaDao.save(persona);}
+    public Persona salvar(Persona persona) {
+
+        // Validar y asignar valores por defecto para evitar violaciones de constraint
+        if (persona.getNombre() == null || persona.getNombre().trim().isEmpty()) {
+            persona.setNombre("Usuario");
+        }
+        if (persona.getApellido() == null || persona.getApellido().trim().isEmpty()) {
+            persona.setApellido("Sin Apellido");
+        }
+        if (persona.getTelefono() == null || persona.getTelefono().trim().isEmpty()) {
+            persona.setTelefono("0000000000");
+        }
+        if (persona.getCorreo() == null || persona.getCorreo().trim().isEmpty()) {
+            persona.setCorreo("usuario@" + System.currentTimeMillis() + ".tmp");
+        }
+
+        return personaDao.save(persona);
+
+    }
 
     @Override
     @Transactional

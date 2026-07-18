@@ -80,4 +80,7 @@ public interface EquipoDao extends JpaRepository<Equipo, Long> {
     // Find teams by user ID
     @Query("SELECT e FROM Equipo e JOIN e.usuarios u WHERE u.idUsuario = :idUsuario")
     List<Equipo> findByUsuarioId(@Param("idUsuario") Long idUsuario);
+
+
+
 }

@@ -182,9 +182,9 @@
                 <div class="form-group">
                   <label for="etapa" class="detail-label required">Etapa</label>
                   <select id="etapa" th:field="*{etapa}" class="form-select" required>
-                    <option value="PRESU" th:selected="${obra.etapa == 'PRESU'}">Presupuesto</option>
-                    <option value="EJECU" th:selected="${obra.etapa == 'EJECU'}">Ejecución</option>
-                    <option value="LIQUI" th:selected="${obra.etapa == 'LIQUI'}">Liquidación</option>
+                    <option value="PRESUPUESTO" th:selected="${obra.etapa == 'PRESUPUESTO'}">Presupuesto</option>
+                    <option value="EJECUCION" th:selected="${obra.etapa == 'EJECUCION'}">Ejecución</option>
+                    <option value="CIERRE" th:selected="${obra.etapa == 'CIERRE'}">Liquidación</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -192,8 +192,14 @@
                   <input type="date" id="fechaIni" th:field="*{fechaIni}" class="form-input" required>
                 </div>
                 <div class="form-group">
-                  <label for="fechaFin" class="detail-label required">Fecha de fin</label>
-                  <input type="date" id="fechaFin" th:field="*{fechaFin}" class="form-input" required>
+                  <label for="fechaFinManual" class="detail-label required">Fecha de fin planificada</label>
+                  <input type="date" id="fechaFinManual" th:field="*{fechaFinManual}" class="form-input" required>
+                </div>
+                <!-- Mostrar la fecha calculada como solo lectura -->
+                <div class="form-group">
+                  <label for="fechaFinCalculada" class="detail-label">Fecha de fin calculada (por APUs)</label>
+                  <input type="date" id="fechaFinCalculada" th:field="*{fechaFinCalculada}" class="form-input" disabled>
+                  <small class="text-muted">Se calcula automáticamente según la duración de los APUs</small>
                 </div>
                 <div class="form-group">
                   <label for="cooNObra" class="detail-label required">Coordenada N</label>
@@ -214,7 +220,7 @@
               <div id="actividadesContainer">
                 <!-- Loop through existing activities -->
                 <div th:each="apuObraC, stat : ${apusObraCant}" class="activity-edit-row">
-                  <select th:name="'apus[' + ${stat.index} + ']'" required class="form-select activity-select">
+                  <select th:name="'actividadIds[' + ${stat.index} + ']'" required class="form-select activity-select">
                     <option value="">Seleccione...</option>
                     <option th:each="apu : ${todosApus}"
                             th:value="${apu.idAPU}"
@@ -261,9 +267,17 @@
                   <span class="detail-label">Fecha de Inicio</span>
                     <div class="detail-value" th:text="${#temporals.format(obra.fechaIni, 'dd-MM-yyyy')}">Fecha Ini</div>
                 </div>
-                <div class="detail-item">
-                  <span class="detail-label">Fecha de Fin</span>
-                    <div class="detail-value" th:text="${#temporals.format(obra.fechaFin, 'dd-MM-yyyy')}">Fecha Fin</div>
+                <div class="detail-grid">
+
+                  <div class="detail-item">
+                    <span class="detail-label">Fecha Fin Planificada</span>
+                    <div class="detail-value" th:text="${#temporals.format(obra.fechaFinManual, 'dd-MM-yyyy')}">Fecha Fin</div>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Fecha Fin Calculada (por APUs)</span>
+                    <div class="detail-value" th:text="${#temporals.format(obra.fechaFinCalculada, 'dd-MM-yyyy')}">Fecha Fin</div>
+                  </div>
+
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Coordenada N</span>
@@ -283,7 +297,7 @@
 
             <!-- Tabla de Actividades (Detalle) -->
             <div class="detail-section">
-              <h3><i class="fas fa-list-alt"></i> Actividades del Proyecto (APU)</h3>
+              <h3><i class="fas fa-list-alt"></i> Actividades de la Obra (APU)</h3>
               <div th:if="${obra.apusObraList != null and !obra.apusObraList.empty}" class="table-responsive">
                 <table class="data-table">
                   <thead>
@@ -303,9 +317,9 @@
                       <td th:text="${apuo.apu.unidadesAPU}"></td>
                       <td th:text="${apuo.cantidad}"></td>
                       <!-- Use valApusObra list that contains pre-calculated APU prices -->
-                      <td th:text="${valApusObra != null ? '₡' + #numbers.formatDecimal(valApusObra[iterStat.index], 1, 2) : 'N/A'}"></td>
+                      <td th:text="${valApus != null ? '₡' + #numbers.formatDecimal(valApus[iterStat.index], 1, 2) : 'N/A'}"></td>
                       <!-- Calculate subtotal: cantidad * precio unitario from valApusObra -->
-                      <td th:with="subtotal=${apuo.cantidad * (valApusObra != null ? valApusObra[iterStat.index] : 0)}"
+                      <td th:with="subtotal=${apuo.cantidad * (valApus != null ? valApus[iterStat.index] : 0)}"
                           th:text="${'₡' + #numbers.formatDecimal(subtotal, 1, 2)}">
                       </td>
                   </tr>
@@ -355,7 +369,7 @@
           const newRow = lastRow.cloneNode(true);
 
           // Actualizar los atributos name para el nuevo índice
-          newRow.querySelector('.activity-select').name = 'apus[' + nextIndex + ']';
+          newRow.querySelector('.activity-select').name = 'actividadIds[' + nextIndex + ']';
           newRow.querySelector('.activity-select').value = ''; // Resetear valor
           newRow.querySelector('.activity-quantity').name = 'cantidades[' + nextIndex + ']';
           newRow.querySelector('.activity-quantity').value = ''; // Resetear valor
@@ -380,7 +394,7 @@
    */
   function createNewEmptyRow(container) {
       // En modo edición, el controlador debe pasar `todosApus`
-      const templateSelect = document.querySelector('select[name^="apus"]');
+      const templateSelect = document.querySelector('select[name^="actividadIds"]');
       if (!templateSelect) {
           alert("Error: No se encontró la plantilla de APUs. Asegúrese de que el modelo 'todosApus' esté disponible.");
           return;
@@ -391,7 +405,7 @@
 
       // Clonar Select
       const select = templateSelect.cloneNode(true);
-      select.name = 'apus[' + nextIndex + ']';
+      select.name = 'actividadIds[' + nextIndex + ']';
       select.value = '';
       select.classList.add('activity-select'); // Asegura la clase
 

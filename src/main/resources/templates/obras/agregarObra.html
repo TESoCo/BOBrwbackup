@@ -4,11 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Nueva Obra - Construction Optimization Baseline</title>
+    <title>Crear Presupuesto de Obra - Construction Optimization Baseline</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
-    <link rel="stylesheet" th:href="@{/CSS/APUS/crearAPU.css}">
     <link rel="stylesheet" th:href="@{/CSS/OBRAS/agregarObra.css}">
 </head>
 <body>
@@ -16,92 +15,60 @@
     <i class="fas fa-bars"></i>
 </button>
 <div class="app-container" id="app-container">
-    <!-- Sidebar (Mantenido de tu estructura anterior) -->
+    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
         </div>
         <ul class="nav-links">
-
-            <!-- Dashboard - Para todos los usuarios autenticados -->
+            <!-- Dashboard -->
             <div sec:authorize="isAuthenticated()">
                 <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
             </div>
-
             <!-- Gestión de Equipos -->
             <div sec:authorize="hasAnyAuthority('CREAR_EQUIPO', 'EDITAR_EQUIPO')">
                 <li><a th:href="@{/equipos}"><i class="fas fa-users"></i> <span>Gestión de Equipos</span></a></li>
             </div>
-
             <!-- Gestión de Proyectos -->
             <div sec:authorize="hasAnyAuthority('CREAR_PROYECTO', 'EDITAR_PROYECTO')">
                 <li><a th:href="@{/proyectos}"><i class="fas fa-project-diagram"></i> <span>Gestión de Proyectos</span></a></li>
             </div>
-
-            <!-- Gestión de Usuarios - Solo con permisos de usuario -->
+            <!-- Gestión de Usuarios -->
             <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
                 <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Gestión de Usuarios</span></a></li>
             </div>
-
             <div sec:authorize="hasAnyAuthority('CREAR_ROL', 'EDITAR_ROL', 'LEER_ROL')">
                 <li><a th:href="@{/roles}"><i class="fas fa-user-shield"></i> <span>Gestión de Roles</span></a></li>
             </div>
-
-            <!-- Menu items for users with inventory permissions -->
-            <!-- Inventario - Con permisos de inventario -->
+            <!-- Inventario -->
             <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
                 <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
             </div>
-
-            <!-- Materiales - Con permisos de material -->
+            <!-- Materiales -->
             <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
                 <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Gestión de materiales</span></a></li>
             </div>
-
-            <!-- APUs - Con permisos de APU -->
+            <!-- APUs -->
             <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
                 <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
             </div>
-
-            <!-- Menu items for users with progress permissions -->
-            <!-- Avances - Con permisos de avance -->
+            <!-- Avances -->
             <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
                 <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
             </div>
-
-            <!-- Menu items for users with budget permissions -->
-            <!-- Obras - Con permisos de obra -->
+            <!-- Obras -->
             <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
                 <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
             </div>
-
-            <!-- Supervisor and Admin menu items -->
-            <!-- Contratistas - Con permisos de contratista -->
+            <!-- Contratistas -->
             <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
                 <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
             </div>
-            <!-- Proveedores - Con permisos de proveedor -->
+            <!-- Proveedores -->
             <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
                 <li><a href="/proveedores"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
             </div>
-
-            <!-- Menu items for users with report permissions -->
-            <!-- Reportes - Para roles ADMIN y SUPERVISOR
-            <div sec:authorize="hasAnyRole('ADMIN', 'SUPERVISOR')">
-              <li><a href="#"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
-            </div> -->
-
-            <!-- Fotodatos - Con permisos de fotodato
-            <div sec:authorize="hasAnyAuthority('CREAR_FOTODATO', 'EDITAR_FOTODATO')">
-              <li><a href="#"><i class="fas fa-camera"></i> <span>Fotodatos</span></a></li>
-            </div> -->
-
-            <!-- Admin-only configuration -->
-            <!-- Configuración - Solo ADMIN
-            <div sec:authorize="hasRole('ADMIN')">
-              <li><a href="#"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
-            </div> -->
-
+            <!-- Logout -->
             <li>
                 <form th:action="@{/logout}" method="post" id="logoutForm">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -113,11 +80,14 @@
         </ul>
     </aside>
 
-    <!-- Main content: Contenido específico de agregarObra -->
+    <!-- Main content -->
     <main class="main-content">
         <!-- Header -->
         <div class="header">
-            <h2>Crear Nueva Obra</h2>
+            <div>
+                <h2>Crear Presupuesto de Obra</h2>
+                <p>Registra un nuevo presupuesto para una obra</p>
+            </div>
             <div class="user-menu">
                 <div>
                     <div>
@@ -141,55 +111,73 @@
             </a>
         </div>
 
-        <!-- Create Form -->
+
+
+<!-- Create Form - SOLO PARA PRESUPUESTO -->
+
         <div class="form-container">
             <h3 class="form-title">
-                <i class="fas fa-building"></i> Información de la Obra
+                <i class="fas fa-file-invoice"></i> Crear Presupuesto de Obra
             </h3>
+            <p class="text-muted" style="margin-bottom: 1.5rem;">
+                <i class="fas fa-info-circle"></i> Esta obra se creará en etapa <strong>PRESUPUESTO</strong>.
+                Podrá avanzar a EJECUCIÓN y CIERRE posteriormente.
+            </p>
 
-            <form th:action="@{/obras/salvar}" method="post">
+            <form th:action="@{/obras/salvarPresupuesto}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-                <!-- Nombre y Etapa -->
+                <!-- Proyecto  -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="idProyecto" class="form-label">Proyecto </label>
+                        <select id="idProyecto" name="idProyecto" class="form-select" required>
+                            <option value="">Sin proyecto</option>
+                            <option th:each="proyecto : ${proyectos}"
+                                    th:value="${proyecto.idProyecto}"
+                                    th:text="${proyecto.descProyecto}">
+                            </option>
+                        </select>
+                        <small class="text-muted">Asociar a un proyecto para agrupar las etapas. El proyecto es obligatorio y debe pertenecer a su equipo</small>
+                    </div>
+                </div>
+
+                <!-- Nombre y Etapa (fija) -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="nombreObra" class="form-label required">Nombre de la obra</label>
                         <input type="text" id="nombreObra" name="nombreObra" class="form-input" required maxlength="255">
+                        <small class="text-muted">El nombre se usará como base para todas las etapas</small>
                     </div>
                     <div class="form-group">
-                        <label for="Etapa" class="form-label required">Etapa</label>
-                        <select id="Etapa" name="etapa" class="form-select" required>
-                            <option value="">Seleccionar Etapa...</option>
-                            <option value="PRESU">Presupuesto</option>
-                            <option value="EJECU">Ejecución</option>
-                            <option value="LIQUI">Liquidación</option>
-                        </select>
+                        <label class="form-label">Etapa</label>
+                        <input type="text" class="form-input" value="PRESUPUESTO" disabled style="background-color: #f3f4f6;">
+                        <input type="hidden" name="etapa" value="PRESUPUESTO">
+                        <small class="text-muted">La obra se creará automáticamente en PRESUPUESTO</small>
                     </div>
                 </div>
 
                 <!-- Fechas -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="fechaIni" class="form-label required">Fecha de inicio</label>
+                        <label for="fechaIni" class="form-label required">Fecha de inicio planificada</label>
                         <input type="date" id="fechaIni" name="fechaIni" class="form-input" required>
                     </div>
                     <div class="form-group">
-                        <label for="fechaFin" class="form-label required">Fecha de fin</label>
+                        <label for="fechaFin" class="form-label required">Fecha de fin planificada</label>
                         <input type="date" id="fechaFin" name="fechaFin" class="form-input" required>
                     </div>
                 </div>
 
-                <!-- Bloque de sugerencia de ubicación -->
+                <!-- Ubicación (igual que antes) -->
                 <div class="location-suggestion">
                     <div class="location-suggestion-header">
                         <i class="fas fa-map-marker-alt"></i>
                         <h4 style="margin: 0;">📍 Ubicación del dispositivo</h4>
                     </div>
-
                     <div class="location-status" id="locationStatus">
                         <i class="fas fa-spinner fa-spin"></i> Obteniendo ubicación...
                     </div>
-
                     <div class="location-buttons">
                         <button type="button" id="getLocationBtn" class="btn btn-primary btn-sm">
                             <i class="fas fa-location-dot"></i> Obtener mi ubicación actual
@@ -198,7 +186,6 @@
                             <i class="fas fa-check"></i> Usar esta ubicación
                         </button>
                     </div>
-
                     <div id="coordsPreview" class="coords-preview" style="display: none;">
                         <i class="fas fa-crosshairs"></i> Ubicación obtenida:<br>
                         <strong>Coordenada N (Latitud):</strong> <span id="previewLat">-</span><br>
@@ -206,31 +193,28 @@
                     </div>
                 </div>
 
-                <!-- Coordenadas -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="cooNObra" class="form-label required">Coordenada N (Latitud)</label>
                         <input type="number" id="cooNObra" step="0.000001" name="cooNObra" class="form-input" required
                                placeholder="Ej: 4.710989">
-                        <small class="text-muted">Formato: grados decimales (ej: 4.710989)</small>
                     </div>
                     <div class="form-group">
                         <label for="cooEObra" class="form-label required">Coordenada E (Longitud)</label>
                         <input type="number" id="cooEObra" step="0.000001" name="cooEObra" class="form-input" required
                                placeholder="Ej: -74.072092">
-                        <small class="text-muted">Formato: grados decimales (ej: -74.072092)</small>
                     </div>
                 </div>
 
-                <!-- Bloque de Actividades -->
+                <!-- Actividades (APU) -->
                 <h3 class="form-title" style="margin-top: 2.5rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
-                    <i class="fas fa-hammer"></i> Actividades (APU)
+                    <i class="fas fa-hammer"></i> Actividades (APU) - Presupuestadas
                 </h3>
 
                 <!-- Controles para añadir actividad -->
                 <div class="form-row activity-add-row" style="align-items: flex-end;">
                     <div class="form-group" style="flex: 2;">
-                        <label for="activityDropdown" class="form-label">Seleccionar APU</label>
+                        <label for="activityDropdown" class="form-label required">Seleccionar APU</label>
                         <select id="activityDropdown" class="form-select">
                             <option value="">Seleccione...</option>
                             <option th:each="apu : ${APUs}"
@@ -243,7 +227,7 @@
                     </div>
 
                     <div class="form-group" style="flex: 1;">
-                        <label for="activityQuantity" class="form-label">Cantidad</label>
+                        <label for="activityQuantity" class="form-label required">Cantidad</label>
                         <input type="number" id="activityQuantity" step="0.01" min="0.01" placeholder="0.00" class="form-input">
                     </div>
 
@@ -259,29 +243,30 @@
                     <!-- Selected activities will appear here -->
                 </div>
 
-                <!-- Hidden inputs that will be submitted -->
+                <!-- Hidden inputs que se enviarán -->
                 <div id="hiddenInputs"></div>
 
                 <!-- Submit Button -->
-                <div class="form-actions">
+                <div class="form-actions" style="margin-top: 2rem;">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Guardar Obra
+                        <i class="fas fa-save"></i> Crear Presupuesto
                     </button>
+                    <a th:href="@{/obras/inicioObra}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
                 </div>
             </form>
         </div>
     </main>
 </div>
 
-<!-- Lógica JavaScript (Mantenida de tu código original, compatible con la nueva estructura) -->
+<!-- ===== JAVASCRIPT COMPLETO ===== -->
 <script>
     // ========== VARIABLES GLOBALES ==========
     let activities = [];
     let currentLocation = null;
-    let lastLocationData = null;
 
     // ========== ELEMENTOS DOM ==========
-    // Elementos de geolocalización
     const locationStatus = document.getElementById('locationStatus');
     const getLocationBtn = document.getElementById('getLocationBtn');
     const useCurrentLocationBtn = document.getElementById('useCurrentLocationBtn');
@@ -308,8 +293,6 @@
                     longitude: position.coords.longitude,
                     accuracy: position.coords.accuracy
                 };
-
-                lastLocationData = currentLocation;
 
                 previewLat.textContent = currentLocation.latitude.toFixed(6);
                 previewLng.textContent = currentLocation.longitude.toFixed(6);
@@ -406,7 +389,7 @@
         }
     }
 
-    // ========== FUNCIONES DE ACTIVIDADES (APU) ==========
+    // ========== FUNCIONES DE ACTIVIDADES ==========
     function addActivity() {
         const dropdown = document.getElementById('activityDropdown');
         const quantityInput = document.getElementById('activityQuantity');
@@ -463,6 +446,7 @@
 
         if (activities.length === 0) {
             selectedActivitiesDiv.innerHTML = '<p class="no-activities"><i class="fas fa-info-circle"></i> No hay actividades agregadas a esta obra aún.</p>';
+            return;
         }
 
         activities.forEach((activity) => {
@@ -522,7 +506,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         updateActivityUI();
 
-        // ✅ INICIAR GEOLOCALIZACIÓN AUTOMÁTICAMENTE
+        // Iniciar geolocalización automáticamente
         getCurrentLocation();
 
         // Validación de fechas
@@ -568,6 +552,5 @@
         }
     });
 </script>
-
 </body>
 </html>

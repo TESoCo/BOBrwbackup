@@ -216,7 +216,36 @@
         }
 
     .form-actions .btn {
-        min-width: 100%; /* Asegura que el botón ocupe todo el ancho */
+        min-width: 100%; /* Asegura que el botón ocupe el ancho */
         margin-top: 0.5rem; /* Agrega un pequeño margen entre ellos */
     }
+}
+
+/* CrearMaterial.css - agregar al final */
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.cantidad-input {
+    transition: all 0.2s ease;
+}
+
+.cantidad-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.estimacion-badge {
+    display: inline-block;
+    background: #15803d;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
 }

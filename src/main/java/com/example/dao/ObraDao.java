@@ -1,12 +1,15 @@
 package com.example.dao;
 
 import com.example.domain.Obra;
+import com.example.domain.Proyecto;
+import com.example.domain.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 public interface ObraDao extends JpaRepository<Obra, Long> {
@@ -24,8 +27,7 @@ public interface ObraDao extends JpaRepository<Obra, Long> {
     List<Obra> findByNombreObraContainingIgnoreCase(String nombreObra);
 
     // Búsqueda por etapa
-    List<Obra> findByEtapa(String etapa);
-    List<Obra> findByEtapaContainingIgnoreCase(String etapa);
+    List<Obra> findByEtapa(Obra.EtapaObra etapa);
 
     // Búsqueda por usuario
     List<Obra> findByIdUsuario_IdUsuario(Long idUsuario);
@@ -36,9 +38,9 @@ public interface ObraDao extends JpaRepository<Obra, Long> {
 
     // Búsqueda por fechas
     List<Obra> findByFechaIni(LocalDate fecha);
-    List<Obra> findByFechaFin(LocalDate fecha);
+    List<Obra> findByFechaFinCalculada(LocalDate fecha);
     List<Obra> findByFechaIniBetween(LocalDate start, LocalDate end);
-    List<Obra> findByFechaFinBetween(LocalDate start, LocalDate end);
+    List<Obra> findByFechaFinCalculadaBetween(LocalDate start, LocalDate end);
 
     // Búsqueda por ubicación
     List<Obra> findByCooNObraBetween(Double minN, Double maxN);
@@ -52,10 +54,10 @@ public interface ObraDao extends JpaRepository<Obra, Long> {
     List<Obra> findByProyecto_IdProyectoAndAnularFalse(Long idProyecto);
 
     // Consultas complejas
-    @Query("SELECT o FROM Obra o WHERE o.fechaIni <= :today AND o.fechaFin >= :today")
+    @Query("SELECT o FROM Obra o WHERE o.fechaIni <= :today AND o.fechaFinManual >= :today")
     List<Obra> findObrasEnCurso(@Param("today") LocalDate today);
 
-    @Query("SELECT o FROM Obra o WHERE o.fechaFin < :today")
+    @Query("SELECT o FROM Obra o WHERE o.fechaFinManual < :today")
     List<Obra> findObrasFinalizadas(@Param("today") LocalDate today);
 
     @Query("SELECT o FROM Obra o WHERE o.fechaIni > :today")
@@ -79,5 +81,29 @@ public interface ObraDao extends JpaRepository<Obra, Long> {
     // Ordenamiento
     List<Obra> findAllByOrderByFechaIniDesc();
     List<Obra> findByProyecto_IdProyectoOrderByNombreObraAsc(Long idProyecto);
+
+    //Métodos para el nuevo identificador global de obra
+    // NUEVOS MÉTODOS PARA EL FLUJO DE ETAPAS
+    List<Obra> findByIdentificadorUnico(String identificadorUnico);
+
+    @Query("SELECT o FROM Obra o WHERE o.identificadorUnico = :identificador AND o.etapa = :etapa")
+    Obra findByIdentificadorUnicoAndEtapa(@Param("identificador") String identificador,
+                                          @Param("etapa") String etapa);
+
+    @Query("SELECT o FROM Obra o WHERE o.identificadorUnico = :identificador AND o.anular = false")
+    List<Obra> findActiveByIdentificadorUnico(@Param("identificador") String identificador);
+
+    @Query("SELECT o FROM Obra o WHERE o.proyecto.idProyecto = :idProyecto AND o.etapa = :etapa")
+    Obra findByProyectoIdAndEtapa(@Param("idProyecto") Long idProyecto,
+                                  @Param("etapa") String etapa);
+
+    @Query("SELECT o FROM Obra o WHERE o.identificadorUnico = :identificador ORDER BY o.idObra ASC")
+    List<Obra> findByIdentificadorUnicoOrdered(@Param("identificador") String identificador);
+
+    List<Obra> findByIdUsuario(Usuario usuario);
+
+
+    List<Obra> findByProyecto(Proyecto proyecto);
+    List<Obra> findByProyectoIn(List<Proyecto> proyectos);
 
 }

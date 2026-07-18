@@ -385,3 +385,34 @@ body, html {
 html {
     scroll-behavior: smooth;
 }
+
+/* Estilos para el botón de Microsoft */
+.microsoft-login-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.microsoft-login-button:hover {
+    border-color: #00a4ef;
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 164, 239, 0.2);
+}
+
+.microsoft-login-button i {
+    color: #00a4ef;
+    font-size: 20px;
+}
