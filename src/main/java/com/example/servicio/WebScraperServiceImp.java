@@ -289,10 +289,7 @@ public class WebScraperServiceImp implements WebScraperService {
             }
 
             // 3. Crear NUEVO precio (manteniendo historial)
-            PrecioMaterial nuevoPrecio = new PrecioMaterial();
-            nuevoPrecio.setMaterial(material);
-            nuevoPrecio.setProveedor(proveedor);
-            nuevoPrecio.setPrecioUnitario(dto.getPrecio());
+            PrecioMaterial nuevoPrecio = new PrecioMaterial(material, proveedor, dto.getPrecio());
             nuevoPrecio.setFechaVigenciaDesde(LocalDateTime.now());
             nuevoPrecio.setActivo(true);
 

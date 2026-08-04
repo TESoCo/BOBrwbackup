@@ -61,7 +61,7 @@ public class ControladorAvance
 
         //Necesito cargar obras para mostrar nombres
         List<Obra> obras = obraServicio.listaObra();
-        model.addAttribute("presupuestos", obras);
+        model.addAttribute("obras", obras);
 
 
         // Start with all avances
@@ -554,18 +554,28 @@ public class ControladorAvance
     // Métod0 para obtener APUs por obra (para el dropdown dinámico)
     @GetMapping("/obtenerAPUsPorObra/{idObra}")
     @ResponseBody
-    public List<Apu> obtenerAPUsPorObra(@PathVariable Long idObra) {
+    public List<Map<String, Object>> obtenerAPUsPorObra(@PathVariable Long idObra) {
 
         try {
             Obra obra = obraServicio.localizarObra(idObra);
             System.out.println("Obra encontrada: " + (obra != null ? obra.getNombreObra() : "null"));
 
             if (obra != null && obra.getApusObraList() != null) {
-                List<Apu> apus = obra.getApusObraList().stream()
-                        .map(ApusObra::getApu)
+                List<Map<String, Object>> apusData = obra.getApusObraList().stream()
+                        .map(apusObra -> {
+                            Apu apu = apusObra.getApu();
+                            // Crear un Map con solo los datos que necesitas
+                            Map<String, Object> apuMap = new HashMap<>();
+                            apuMap.put("idAPU", apu.getIdAPU());
+                            apuMap.put("nombreAPU", apu.getNombreAPU());
+                            apuMap.put("unidadAPU", apu.getUnidadesAPU());
+                            apuMap.put("descripcionAPU", apu.getDescAPU());
+                            apuMap.put("vTotalAPU", apu.getVTotalApu());
+                            return apuMap;
+                        })
                         .collect(Collectors.toList());
-                System.out.println("Número de APUs encontrados: " + apus.size());
-                return apus;
+                System.out.println("Número de APUs encontrados: " + apusData.size());
+                return apusData;
             }
 
             System.out.println("No se encontraron APUs para la obra");

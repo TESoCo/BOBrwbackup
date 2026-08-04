@@ -40,7 +40,7 @@ public class ApusObra implements Serializable {
     private Obra obra;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("idApu")
+    @MapsId("idAPU")
     @JoinColumn(name = "id_apu", nullable = false)
     @JsonIgnore
     @ToString.Exclude
@@ -61,7 +61,9 @@ public class ApusObra implements Serializable {
     private LocalDateTime fechaAsignacion;
 
     // ---------- CONSTRUCTORES ----------
-    public ApusObra() {}
+    public ApusObra() {
+        this.id = new ApusObraId();
+    }
 
     public ApusObra(Obra obra, Apu apu, Double cantidad) {
         this.obra = obra;

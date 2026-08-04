@@ -2,9 +2,20 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Detalle Inventario</title>
+    <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/CSS/INVENTARIO/detalleInv.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 <div class="container">
+
+    <!-- Botón de regreso -->
+    <div class="back-button">
+        <a th:href="@{/inventarios}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Listado
+        </a>
+    </div>
+
     <h1>Detalle de Inventario #<span th:text="${inventario.idInventario}"></span></h1>
 
     <div class="card">
@@ -19,12 +30,24 @@
                   th:text="${inventario.aprobacion.displayName}"></span>
         </div>
         <div class="card-body">
-            <p><strong>Gestor:</strong> <span th:text="${inventario.idUsuario?.nombreUsuario}">N/A</span></p>
-            <p><strong>Obra:</strong> <span th:text="${inventario.idObra?.nombreObra}">N/A</span></p>
-            <p><strong>Proveedor:</strong> <span th:text="${inventario.proveedorInv?.nombreProveedor}">N/A</span></p>
-            <p><strong>Fecha Solicitud:</strong> <span th:text="${#temporals.format(inventario.fechaIngreso, 'dd/MM/yyyy')}"></span></p>
-            <p th:if="${inventario.fechaEntrega}"><strong>Fecha Entrega:</strong> <span th:text="${#temporals.format(inventario.fechaEntrega, 'dd/MM/yyyy')}"></span></p>
-            <p><strong>Comentarios:</strong> <span th:text="${inventario.comentarioInv}"></span></p>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>ID:</strong> <span th:text="${inventario.idInventario}"></span></p>
+                    <p><strong>Número Solicitud:</strong> <span th:text="${inventario.numeroSolicitud}"></span></p>
+                    <p><strong>Gestor:</strong> <span th:text="${inventario.idUsuario?.nombreUsuario}">N/A</span></p>
+                    <p><strong>Obra:</strong> <span th:text="${inventario.idObra?.nombreObra}">N/A</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Fecha Solicitud:</strong> <span th:text="${#temporals.format(inventario.fechaIngreso, 'dd/MM/yyyy')}"></span></p>
+                    <p th:if="${inventario.fechaEntrega}"><strong>Fecha Entrega:</strong> <span th:text="${#temporals.format(inventario.fechaEntrega, 'dd/MM/yyyy')}"></span></p>
+                    <p><strong>Aprobador:</strong> <span th:text="${inventario.usuarioAprobador?.nombreUsuario}">N/A</span></p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <p><strong>Comentarios:</strong> <span th:text="${inventario.comentarioInv}"></span></p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -38,6 +61,8 @@
                 <th>Material</th>
                 <th>Cantidad</th>
                 <th>Unidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
             </tr>
             </thead>
             <tbody>
@@ -45,13 +70,15 @@
                 <td th:text="${mat.material?.nombreMaterial}">N/A</td>
                 <td th:text="${mat.cantidad}">0</td>
                 <td th:text="${mat.material?.unidadMaterial}">N/A</td>
+                <td th:text="${mat.precioUnitario}">0</td>
+                <td th:text="${mat.subtotal}">0</td>
             </tr>
             </tbody>
         </table>
     </div>
 
-    <!-- Gestión de Estados -->
-    <div class="card" th:if="${!inventario.estadoFinal}">
+    <!-- Gestión de Estados (solo visible para usuarios con permisos) -->
+    <div class="card" th:if="${!inventario.estadoFinal and !estadosPermitidos.empty}">
         <div class="card-header">
             <h4>Cambiar Estado</h4>
         </div>
@@ -67,9 +94,11 @@
                 </div>
                 <div class="form-group">
                     <label>Comentario:</label>
-                    <textarea name="comentario" class="form-control" rows="2"></textarea>
+                    <textarea name="comentario" class="form-control" rows="2" placeholder="Opcional"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Cambiar Estado</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Cambiar Estado
+                </button>
             </form>
         </div>
     </div>
@@ -92,10 +121,13 @@
             <tbody>
             <tr th:each="aud : ${auditoria}">
                 <td th:text="${#temporals.format(aud.fechaCambio, 'dd/MM/yyyy HH:mm')}"></td>
-                <td th:text="${aud.estadoAnterior}"></td>
-                <td th:text="${aud.estadoNuevo}"></td>
+                <td th:text="${aud.valorAnterior}"></td>
+                <td th:text="${aud.valorNuevo}"></td>
                 <td th:text="${aud.usuario?.nombreUsuario}">N/A</td>
                 <td th:text="${aud.comentario}"></td>
+            </tr>
+            <tr th:if="${auditoria.empty}">
+                <td colspan="5" style="text-align: center;">No hay registros de auditoría</td>
             </tr>
             </tbody>
         </table>

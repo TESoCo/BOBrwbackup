@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ObraDao extends JpaRepository<Obra, Long> {
 
@@ -88,7 +89,7 @@ public interface ObraDao extends JpaRepository<Obra, Long> {
 
     @Query("SELECT o FROM Obra o WHERE o.identificadorUnico = :identificador AND o.etapa = :etapa")
     Obra findByIdentificadorUnicoAndEtapa(@Param("identificador") String identificador,
-                                          @Param("etapa") String etapa);
+                                          @Param("etapa") Obra.EtapaObra etapa);
 
     @Query("SELECT o FROM Obra o WHERE o.identificadorUnico = :identificador AND o.anular = false")
     List<Obra> findActiveByIdentificadorUnico(@Param("identificador") String identificador);
@@ -100,10 +101,19 @@ public interface ObraDao extends JpaRepository<Obra, Long> {
     @Query("SELECT o FROM Obra o WHERE o.identificadorUnico = :identificador ORDER BY o.idObra ASC")
     List<Obra> findByIdentificadorUnicoOrdered(@Param("identificador") String identificador);
 
+
     List<Obra> findByIdUsuario(Usuario usuario);
 
 
     List<Obra> findByProyecto(Proyecto proyecto);
     List<Obra> findByProyectoIn(List<Proyecto> proyectos);
+
+    //Cargar obra con APUs en una sola consulta
+    @Query("SELECT o FROM Obra o LEFT JOIN FETCH o.apusObraList ao LEFT JOIN FETCH ao.apu WHERE o.idObra = :id")
+    Optional<Obra> findByIdWithApus(@Param("id") Long id);
+
+    //Cargar obra con APUs y proyecto en una sola consulta
+    @Query("SELECT o FROM Obra o LEFT JOIN FETCH o.apusObraList ao LEFT JOIN FETCH ao.apu LEFT JOIN FETCH o.proyecto WHERE o.idObra = :id")
+    Optional<Obra> findByIdWithApusAndProyecto(@Param("id") Long id);
 
 }

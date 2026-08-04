@@ -1,9 +1,6 @@
 package com.example.servicio;
 
-import com.example.dao.AuditoriaInventarioDao;
-import com.example.dao.InventarioDao;
-import com.example.dao.ObraDao;
-import com.example.dao.UsuarioDao;
+import com.example.dao.*;
 import com.example.domain.*;
 import com.example.domain.enums.EstadoInventario;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,7 +30,7 @@ public class InventarioServicioImp implements InventarioServicio {
     @Autowired
     private MaterialServicio materialServicio;
     @Autowired
-    private AuditoriaInventarioDao auditoriaInventarioDao;
+    private AuditoriaDao auditoriaDao;
 
     @Autowired
     private HttpServletRequest request;
@@ -165,13 +162,12 @@ public class InventarioServicioImp implements InventarioServicio {
 
         // 10. Si se proporcionaron IP y UserAgent, actualizar la auditoría
         if (ipOrigen != null || userAgent != null) {
-            List<AuditoriaInventario> auditorias = auditoriaInventarioDao
-                    .findByInventarioOrderByFechaCambioDesc(inventario);
+            List<Auditoria> auditorias = auditoriaDao.findByEntidadAndIdEntidadOrderByFechaCambioDesc("INVENTARIO", inventario.getIdInventario());
             if (!auditorias.isEmpty()) {
-                AuditoriaInventario ultima = auditorias.get(0);
+                Auditoria ultima = auditorias.get(0);
                 if (ipOrigen != null) ultima.setIpOrigen(ipOrigen);
                 if (userAgent != null) ultima.setUserAgent(userAgent);
-                auditoriaInventarioDao.save(ultima);
+                auditoriaDao.save(ultima);
             }
         }
 
@@ -249,7 +245,10 @@ public class InventarioServicioImp implements InventarioServicio {
         switch (nuevoEstado) {
             case APROBADO:
                 // Al aprobar, reservar stock
-                reservarStock(inventario);
+                // Solo reservar stock para OBRA
+                if (inventario.getTipoDestino() == Inventario.TipoDestino.OBRA) {
+                    reservarStock(inventario);
+                }
                 break;
 
             case ENTREGADO:
@@ -279,6 +278,12 @@ public class InventarioServicioImp implements InventarioServicio {
     @Override
     @Transactional
     public void reservarStock(Inventario inventario) {
+
+        // Solo reservar stock si es tipo OBRA
+        if (inventario.getTipoDestino() != Inventario.TipoDestino.OBRA) {
+            return; // No reservar para STOCK
+        }
+
         // Obtener todos los materiales del inventario
         List<MaterialesInventario> materiales = inventario.getMaterialesInventarios();
 
@@ -309,21 +314,63 @@ public class InventarioServicioImp implements InventarioServicio {
         // Obtener todos los materiales del inventario
         List<MaterialesInventario> materiales = inventario.getMaterialesInventarios();
 
+        // Determinar el tipo de operación según el tipo de destino
+        boolean esStock = inventario.getTipoDestino() == Inventario.TipoDestino.STOCK;
+
         for (MaterialesInventario mi : materiales) {
             Material material = mi.getMaterial();
             Double cantidad = mi.getCantidad();
 
-            // Convertir reserva a consumo
-            material.setStockReservado(Math.max(0, material.getStockReservado() - cantidad));
+            if (esStock) {
+                // ========== TIPO STOCK: AUMENTAR stock ==========
+                // Aumentar el stock disponible
+                material.setStockDisponible(material.getStockDisponible() + cantidad);
 
-            // Si la obra tiene tracking de materiales, sumar al stock de obra
-            if (inventario.getIdObra() != null) {
-                Obra obra = inventario.getIdObra();
-                // Sumar al stock de la obra (si tienes un campo para esto en Obra)
-                // obra.setStockEnObra(obra.getStockEnObra() + cantidad);
-                // obraServicio.actualizar(obra);
+                // Si hay stock reservado, reducirlo (por si se había reservado)
+                if (material.getStockReservado() >= cantidad) {
+                    material.setStockReservado(material.getStockReservado() - cantidad);
+                } else {
+                    material.setStockReservado(0.0);
+                }
+
+            } else {
+                // ========== TIPO OBRA: DISMINUIR stock ==========
+                // Validar que hay suficiente stock TOTAL (disponible + reservado)
+                double stockTotal = material.getStockDisponible() + material.getStockReservado();
+
+                if (stockTotal < cantidad) {
+                    throw new IllegalStateException(
+                            String.format("Stock insuficiente para el material %s. " +
+                                            "Disponible: %.2f, Reservado: %.2f, " +
+                                            "Solicitado: %.2f",
+                                    material.getNombreMaterial(),
+                                    material.getStockDisponible(),
+                                    material.getStockReservado(),
+                                    cantidad)
+                    );
+                }
+
+                // Reducir el stock disponible (priorizando usar el reservado primero)
+                if (material.getStockReservado() >= cantidad) {
+                    // Si hay suficiente reservado, usar solo reservado
+                    material.setStockReservado(material.getStockReservado() - cantidad);
+                } else {
+                    // Si no alcanza el reservado, usar primero el reservado y luego el disponible
+                    double cantidadRestante = cantidad - material.getStockReservado();
+                    material.setStockReservado(0.0);
+                    material.setStockDisponible(material.getStockDisponible() - cantidadRestante);
+
+                    // Validación extra por si queda negativo
+                    if (material.getStockDisponible() < 0) {
+                        throw new IllegalStateException(
+                                String.format("El stock disponible quedaría negativo para el material %s",
+                                        material.getNombreMaterial())
+                        );
+                    }
+                }
             }
 
+            // Guardar los cambios en el material
             materialServicio.guardar(material);
         }
     }
@@ -331,6 +378,12 @@ public class InventarioServicioImp implements InventarioServicio {
     @Override
     @Transactional
     public void liberarReservaStock(Inventario inventario) {
+
+        // Solo liberar reserva si es tipo OBRA
+        if (inventario.getTipoDestino() != Inventario.TipoDestino.OBRA) {
+            return; // No hay reserva que liberar para STOCK
+        }
+
         List<MaterialesInventario> materiales = inventario.getMaterialesInventarios();
 
         for (MaterialesInventario mi : materiales) {
@@ -348,13 +401,17 @@ public class InventarioServicioImp implements InventarioServicio {
     @Transactional
     public void registrarAuditoria(Inventario inventario, String estadoAnterior, String estadoNuevo, Usuario usuario, String comentario) {
 
-        AuditoriaInventario auditoria = AuditoriaInventario.crear(
-                inventario,
-                estadoAnterior,
-                estadoNuevo,
-                usuario,
-                comentario
+        Auditoria auditoria = Auditoria.crear(
+                "INVENTARIO",
+                inventario.getIdInventario(),
+                Auditoria.AccionAuditoria.STATUS_CHANGE,
+                usuario
         );
+
+        auditoria.setCampo("estado");
+        auditoria.setValorAnterior(estadoAnterior);
+        auditoria.setValorNuevo(estadoNuevo);
+        auditoria.setComentario(comentario);
 
         // Capturar información de la solicitud
         if (request != null) {
@@ -362,14 +419,14 @@ public class InventarioServicioImp implements InventarioServicio {
             auditoria.setUserAgent(request.getHeader("User-Agent"));
         }
 
-        auditoriaInventarioDao.save(auditoria);
+        auditoriaDao.save(auditoria);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<AuditoriaInventario> obtenerAuditoriaPorInventario(Long idInventario) {
+    public List<Auditoria> obtenerAuditoriaPorInventario(Long idInventario) {
         Inventario inventario = localizarInventarioPorId(idInventario);
-        return auditoriaInventarioDao.findByInventarioOrderByFechaCambioDesc(inventario);
+        return auditoriaDao.findByEntidadAndIdEntidadOrderByFechaCambioDesc("INVENTARIO", inventario.getIdInventario());
     }
 
     // Métod para obtener los estados permitidos para un usuario

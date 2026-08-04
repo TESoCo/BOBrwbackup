@@ -3,9 +3,11 @@ package com.example.controller.web;
 import com.example.domain.*;
 import com.example.servicio.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -181,6 +183,18 @@ public class ControladorObras
             RedirectAttributes redirectAttributes,
             Authentication authentication) {
 
+        // Validar input
+        System.out.println("=== SALVAR PRESUPUESTO CALLED ===");
+        System.out.println("nombreObra: " + nombreObra);
+        System.out.println("etapa: " + etapa);
+        System.out.println("fechaIni: " + fechaIni);
+        System.out.println("fechaFin: " + fechaFin);
+        System.out.println("cooNObra: " + cooNObra);
+        System.out.println("cooEObra: " + cooEObra);
+        System.out.println("apuIds: " + apuIds);
+        System.out.println("cantidades: " + cantidades);
+        System.out.println("idProyecto: " + idProyecto);
+
         try {
 
 
@@ -192,7 +206,7 @@ public class ControladorObras
             }
 
             // Validar que la etapa sea PRESUPUESTO
-            if (!Obra.EtapaObra.PRESUPUESTO.equals(etapa)) {
+            if (!Obra.EtapaObra.PRESUPUESTO.name().equals(etapa)) {
                 redirectAttributes.addFlashAttribute("error",
                         "Para crear una obra en PRESUPUESTO use el formulario de presupuesto");
                 return "redirect:/obras/agregarObra";
@@ -215,22 +229,39 @@ public class ControladorObras
             String username = authentication.getName();
             Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
 
+            System.out.println("=== VERIFICANDO PROYECTO ===");
+            System.out.println("idProyecto: " + idProyecto);
+            Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
+            System.out.println("proyecto encontrado: " + (proyecto != null ? proyecto.getNombreProyecto() : "NULL"));
+            System.out.println("proyecto id: " + (proyecto != null ? proyecto.getIdProyecto() : "null"));
+
+            System.out.println("usuario: " + usuario);
+            System.out.println("usuario.getIdUsuario(): " + (usuario != null ? usuario.getIdUsuario() : "null"));
+            System.out.println("usuario.getEquipo(): " + (usuario != null && usuario.getEquipo() != null ? usuario.getEquipo().getIdEquipo() : "null"));
+
             // Crear obra en PRESUPUESTO usando el nuevo métod0 de servicio
             Obra obraPresupuesto = obraServicio.crearObraPresupuesto(
                     nombreObra, fechaIni, fechaFin, cooNObra, cooEObra,
                     actividadesCantidades, idProyecto, usuario);
 
-            // Asignar usuario
-            obraPresupuesto.setIdUsuario(usuario);
-            obraServicio.actualizar(obraPresupuesto);
+            // Asignar
+            //obraServicio.actualizar(obraPresupuesto);
 
             redirectAttributes.addFlashAttribute("success",
                     "Presupuesto creado exitosamente. ID: " + obraPresupuesto.getIdObra());
 
             return "redirect:/obras/detalle/" + obraPresupuesto.getIdObra();
 
+        } catch (DataIntegrityViolationException e) {
+            System.err.println("=== ERROR DE INTEGRIDAD ===");
+            System.err.println("Causa: " + e.getRootCause() != null ? e.getRootCause().getMessage() : e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Ya existe una obra con ese nombre: " + nombreObra);
+            return "redirect:/obras/agregarObra";
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al crear presupuesto: " + e.getMessage());
+            e.printStackTrace();
             return "redirect:/obras/agregarObra";
         }
     }
@@ -239,18 +270,46 @@ public class ControladorObras
     @PostMapping("/avanzarAEjecucion/{idObra}")
     public String avanzarAEjecucion(
             @PathVariable Long idObra,
-
+            @RequestParam(required = false) LocalDate fechaInicioReal,
+            Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
+        // Obtener usuario actual
+        String username = authentication.getName();
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
         try {
+            System.out.println("=== AVANZANDO A EJECUCIÓN ===");
+            System.out.println("ID Obra: " + idObra);
+            System.out.println("Fecha inicio real: " + fechaInicioReal);
+
+            // Si no se proporciona fecha, usar la fecha actual
+            if (fechaInicioReal == null) {
+                fechaInicioReal = LocalDate.now();
+            }
+
+            // CARGAR CON APUS
+            Obra obra = obraServicio.localizarObraConApus(idObra);
+
+            // Verificar si tiene APUs (log para debugging)
+            System.out.println("=== APUs EN LA OBRA ===");
+            System.out.println("Cantidad de APUs: " + (obra.getApusObraList() != null ? obra.getApusObraList().size() : 0));
+            if (obra.getApusObraList() != null) {
+                for (ApusObra ao : obra.getApusObraList()) {
+                    System.out.println("APU ID: " + (ao.getApu() != null ? ao.getApu().getIdAPU() : "null") +
+                            ", Cantidad: " + ao.getCantidad());
+                }
+            }
+
             if (!obraServicio.puedeAvanzarAEjecucion(idObra)) {
                 redirectAttributes.addFlashAttribute("error",
                         "No se puede avanzar a EJECUCIÓN. Verifique que el presupuesto esté completo.");
                 return "redirect:/obras/detalle/" + idObra;
             }
 
-            LocalDate fechaInicioReal = LocalDate.now();
-            Obra obraEjecucion = obraServicio.avanzarAEjecucion(idObra, fechaInicioReal);
+
+            Obra obraEjecucion = obraServicio.avanzarAEjecucion(idObra, fechaInicioReal, usuario);
+            System.out.println("Obra de ejecución creada con ID: " + obraEjecucion.getIdObra());
 
             redirectAttributes.addFlashAttribute("success",
                     "Obra avanzada a EJECUCIÓN. ID de ejecución: " + obraEjecucion.getIdObra());
@@ -258,6 +317,8 @@ public class ControladorObras
             return "redirect:/obras/detalle/" + obraEjecucion.getIdObra();
 
         } catch (Exception e) {
+            System.err.println("=== ERROR EN AVANZAR A EJECUCIÓN ===");
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error",
                     "Error al avanzar a EJECUCIÓN: " + e.getMessage());
             return "redirect:/obras/detalle/" + idObra;
@@ -268,17 +329,33 @@ public class ControladorObras
     @PostMapping("/avanzarACierre/{idObra}")
     public String avanzarACierre(
             @PathVariable Long idObra,
-            @RequestParam LocalDate fechaCierreReal,
+            @RequestParam(required = false) LocalDate fechaCierreReal,
+            Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
+        // Obtener usuario actual
+        String username = authentication.getName();
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
         try {
+
+            System.out.println("=== AVANZANDO A CIERRE ===");
+            System.out.println("ID Obra: " + idObra);
+            System.out.println("Fecha cierre real: " + fechaCierreReal);
+
+            // Si no se proporciona fecha, usar la fecha actual
+            if (fechaCierreReal == null) {
+                fechaCierreReal = LocalDate.now();
+            }
+
             if (!obraServicio.puedeAvanzarACierre(idObra)) {
                 redirectAttributes.addFlashAttribute("error",
                         "No se puede avanzar a CIERRE. Verifique que todas las actividades estén al 100%.");
                 return "redirect:/obras/detalle/" + idObra;
             }
 
-            Obra obraCierre = obraServicio.avanzarACierre(idObra, fechaCierreReal);
+            Obra obraCierre = obraServicio.avanzarACierre(idObra, fechaCierreReal, usuario);
+            System.out.println("Obra de cierre creada con ID: " + obraCierre.getIdObra());
 
             redirectAttributes.addFlashAttribute("success",
                     "Obra avanzada a CIERRE. ID de cierre: " + obraCierre.getIdObra());
@@ -286,6 +363,8 @@ public class ControladorObras
             return "redirect:/obras/detalle/" + obraCierre.getIdObra();
 
         } catch (Exception e) {
+            System.err.println("=== ERROR EN AVANZAR A CIERRE ===");
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error",
                     "Error al avanzar a CIERRE: " + e.getMessage());
             return "redirect:/obras/detalle/" + idObra;

@@ -61,8 +61,7 @@ public class MaterialesInventario implements Serializable {
         this.inventario = inventario;
         this.material = material;
         this.cantidad = cantidad;
-        this.id = new MaterialesInventarioId(inventario.getIdInventario(),
-                material.getIdMaterial());
+        this.id = new MaterialesInventarioId(inventario.getIdInventario(), material.getIdMaterial());
         recalcularSubtotal();
     }
 

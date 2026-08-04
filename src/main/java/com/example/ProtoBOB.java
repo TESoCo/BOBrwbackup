@@ -85,7 +85,8 @@ public class ProtoBOB {
                                             "/usuarios/registrar-google/**",
                                             "/usuarios/registrar-microsoft",
                                             "/usuarios/registrar-microsoft/**",
-                                            "/oauth2/authorization/microsoft" // Ruta de autorización de Microsoft
+                                            "/oauth2/authorization/microsoft", // Ruta de autorización de Microsoft
+                                            "/fotodatos/imagen/**"
                                     ).permitAll()
 
 

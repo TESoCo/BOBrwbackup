@@ -31,14 +31,14 @@ public class PrecioMaterial implements Serializable {
     private PrecioMaterialId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("material")
+    @MapsId("idMaterial")
     @JoinColumn(name = "id_material", nullable = false)
     @JsonIgnore
     @ToString.Exclude
     private Material material;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("proveedor")
+    @MapsId("idProveedor")
     @JoinColumn(name = "id_proveedor", nullable = false)
     @JsonIgnore
     @ToString.Exclude

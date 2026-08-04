@@ -260,10 +260,18 @@
                                     <div th:if="${inv.materialesInventarios.empty}" style="color: #999;">-</div>
                                 </td>
 
+                                <!-- En inventario.html, en la columna de Acciones -->
                                 <td>
-                                    <a th:href="@{/inventarios/cambiarInv/} + ${inv.idInventario}"
+                                    <a th:href="@{/inventarios/detalle/{id}(id=${inv.idInventario})}"
+                                       class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Ver Detalle
+                                    </a>
+
+                                    <!-- Solo mostrar Editar si no está en estado final -->
+                                    <a th:if="${!inv.estadoFinal}"
+                                       th:href="@{/inventarios/cambiarInv/{id}(id=${inv.idInventario})}"
                                        class="btn btn-warning btn-sm"
-                                       sec:authorize="hasAuthority('EDITAR_MATERIAL')">
+                                       sec:authorize="hasAuthority('EDITAR_INVENTARIO')">
                                         <i class="fas fa-edit"></i> Editar
                                     </a>
                                 </td>

@@ -49,7 +49,7 @@ public class Inventario implements Serializable {
     private Usuario idUsuario;
 
     @ManyToOne(fetch = FetchType.LAZY)//una obra puede crear muchos
-    @JoinColumn(name = "id_obra", nullable = false)
+    @JoinColumn(name = "id_obra")
     @JsonIgnore
     @ToString.Exclude
     private Obra idObra;
@@ -72,6 +72,16 @@ public class Inventario implements Serializable {
     @Column(name = "estado", nullable = false, length = 20)
     @Enumerated(EnumType.STRING) // Esto guarda "SOLICITADO", "APROBADO", etc.
     private EstadoInventario aprobacion = EstadoInventario.SOLICITADO;
+
+    @NotNull(message = "El tipo de destino es obligatorio")
+    @Column(name = "tipo_destino", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private TipoDestino tipoDestino = TipoDestino.STOCK;
+
+    // Enum para el tipo de destino
+    public enum TipoDestino {
+        STOCK, OBRA
+    }
 
 
     // From FECHA_INVENTARIO
@@ -111,10 +121,8 @@ public class Inventario implements Serializable {
 
     // ---------- MÉTODOS DE AYUDA ----------
     public void agregarMaterial(Material material, Double cantidad) {
-        MaterialesInventario mi = new MaterialesInventario();
-        mi.setInventario(this);
-        mi.setMaterial(material);
-        mi.setCantidad(cantidad);
+        // Usar el constructor que establece el ID
+        MaterialesInventario mi = new MaterialesInventario(this, material, cantidad);
         this.materialesInventarios.add(mi);
     }
 

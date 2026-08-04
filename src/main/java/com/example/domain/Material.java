@@ -91,7 +91,7 @@ public class Material implements Serializable {
     @ToString.Exclude
     private List<MaterialesApu> materialesApus = new ArrayList<>();
 
-    // Material needs the reverse relationship, para agregar material a los apus
+    // Material needs the reverse relationship, para agregar material a los inventarios
     @OneToMany(mappedBy = "material", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     @ToString.Exclude

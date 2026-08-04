@@ -19,7 +19,10 @@ public interface ObraServicio {
 
     public void borrar(Obra obraBorrar);
 
+    // Localizar obra
     Obra localizarObra(Long entryId);
+
+    Obra localizarObraConApus(Long idObra);
 
     // Métodos de búsqueda
     List<Obra> findByObraName(String obraName);
@@ -60,10 +63,10 @@ public interface ObraServicio {
                               Long idProyecto, Usuario usuarioCreador) ;
 
     // 2. Avanzar de PRESUPUESTO a EJECUCIÓN
-    Obra avanzarAEjecucion(Long idObraPresupuesto, LocalDate fechaInicioReal);
+    Obra avanzarAEjecucion(Long idObraPresupuesto, LocalDate fechaInicioReal, Usuario usuario);
 
     // 3. Avanzar de EJECUCIÓN a CIERRE
-    Obra avanzarACierre(Long idObraEjecucion, LocalDate fechaCierreReal);
+    Obra avanzarACierre(Long idObraEjecucion, LocalDate fechaCierreReal, Usuario usuario);
 
     // 4. Obtener presupuesto de una obra
     Obra obtenerPresupuestoDeObra(Long idObra);
@@ -84,7 +87,7 @@ public interface ObraServicio {
 
     // 9. Buscar obras por identificador
     List<Obra> findObrasByIdentificador(String identificadorUnico);
-    Obra findObraByIdentificadorAndEtapa(String identificadorUnico, String etapa);
+
 
 
     //ACCESO POR EQUIPOS

@@ -190,7 +190,7 @@
                     <select id="obraDropdown" name="idObra" class="form-control" required>
                         <option value="">Seleccione una obra en EJECUCIÓN...</option>
                         <option th:each="obra : ${obras}"
-                                th:if="${obra.etapa == 'EJECUCION' and !obra.anular}"
+                                th:if="${obra.etapa.name() == 'EJECUCION' and not obra.anular}"
                                 th:value="${obra.idObra}"
                                 th:text="${obra.nombreObra}"
                                 th:attr="data-coon=${obra.cooNObra}, data-cooe=${obra.cooEObra}">
@@ -202,7 +202,7 @@
                 <div style="background: #f0f9ff; padding: 10px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #2563eb;">
                     <i class="fas fa-info-circle" style="color: #2563eb;"></i>
                     <span style="margin-left: 8px;">Solo se muestran obras en etapa <strong>EJECUCIÓN</strong>.
-    Si no ves tu obra, asegúrate de haberla avanzado desde PRESUPUESTO.</span>
+                        Si no ves tu obra, asegúrate de haberla avanzado desde PRESUPUESTO.</span>
                 </div>
 
                 <div class="form-group">
@@ -580,22 +580,22 @@
                     }
                     return response.json();
                 })
-                .then(apus => {
-                    console.log('APUs recibidos:', apus);
+                .then(apusData => {
+                    console.log('APUs recibidos:', apusData);
 
                     activityDropdown.innerHTML = '<option value="">Seleccione una actividad...</option>';
 
-                    if (apus && apus.length > 0) {
-                        apus.forEach(apu => {
+                    if (apusData && apusData.length > 0) {
+                        apusData.forEach(apuData => {
                             const option = document.createElement('option');
-                            option.value = apu.idAPU;
-                            const nombre = apu.nombreAPU || 'Sin nombre';
-                            const unidades = apu.unidadesAPU || 'Sin unidades';
+                            option.value = apuData.idAPU;
+                            const nombre = apuData.nombreAPU || 'Sin nombre';
+                            const unidades = apuData.unidadAPU || 'Sin unidades';
                             option.textContent = `${nombre} (${unidades})`;
                             activityDropdown.appendChild(option);
                         });
                         activityDropdown.disabled = false;
-                        console.log(`Se cargaron ${apus.length} actividades`);
+                        console.log(`Se cargaron ${apusData.length} actividades`);
                     } else {
                         activityDropdown.innerHTML = '<option value="">No hay actividades disponibles para esta obra</option>';
                         console.warn('No se encontraron actividades para esta obra');
