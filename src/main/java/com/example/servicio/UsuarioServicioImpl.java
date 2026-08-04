@@ -3,7 +3,6 @@ package com.example.servicio;
 import com.example.dao.UsuarioDao;
 import com.example.domain.Usuario;
 import com.example.servicioWeb.EmailResult;
-import com.example.servicioWeb.EmailService;
 import com.example.servicioWeb.EncryptionService;
 import com.example.servicioWeb.GoogleOAuthService;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -6,7 +6,6 @@ import com.example.controller.web.ControladorProveedores;
 import com.example.domain.Usuario;
 import com.example.dto.EmailRequest;
 import com.example.servicio.UsuarioServicio;
-import com.example.servicioWeb.EmailService;
 import com.example.servicioWeb.OAuth2EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
