@@ -68,6 +68,8 @@ public class APUServicioImp implements APUServicio {
         return APUDao.findByNombreAPUContainingIgnoreCase(nombre);
     }
 
+
+
     // Calcular costo de materiales de un APU con proveedor específico
     @Transactional(readOnly = true)
     public BigDecimal calcularCostoMaterialesConProveedor(Long apuId, Long proveedorId) {

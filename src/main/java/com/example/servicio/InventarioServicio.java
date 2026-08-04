@@ -1,6 +1,6 @@
 package com.example.servicio;
 
-import com.example.domain.AuditoriaInventario;
+import com.example.domain.Auditoria;
 import com.example.domain.Inventario;
 import com.example.domain.Material;
 import com.example.domain.Usuario;
@@ -40,7 +40,7 @@ public interface InventarioServicio {
 
     public void registrarAuditoria(Inventario inventario, String estadoAnterior, String estadoNuevo, Usuario usuario, String comentario);
 
-    public List<AuditoriaInventario> obtenerAuditoriaPorInventario(Long idInventario);
+    public List<Auditoria> obtenerAuditoriaPorInventario(Long idInventario);
 
     public List<EstadoInventario> obtenerEstadosPermitidos(Long idInventario, Usuario usuario);
 

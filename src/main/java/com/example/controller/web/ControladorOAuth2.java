@@ -204,7 +204,15 @@ public class ControladorOAuth2 {
             }
 
             // 3. Verificar si el usuario ya existe
-            Usuario usuarioExistente = usuarioServicio.encontrarPorNombreUsuario(email);
+            // Buscar por email en la tabla usuario o en persona
+            List<Usuario> usuarios = usuarioServicio.encontrarPorCorreo(email);
+            Usuario usuarioExistente = usuarios.isEmpty() ? null : usuarios.get(0);
+
+            // Si no se encuentra por email, intentar por nombre de usuario como fallback
+            if (usuarioExistente == null) {
+                String possibleUsername = email.split("@")[0];
+                usuarioExistente = usuarioServicio.encontrarPorNombreUsuario(possibleUsername);
+            }
 
             if (usuarioExistente != null) {
                 // USUARIO EXISTENTE: actulizar refresh token
@@ -220,18 +228,19 @@ public class ControladorOAuth2 {
                 }
 
                 // Verificar el estado del usuario
-                String status = usuarioExistente.getStatus().name();
+                // Obtener el enum directamente
+                Usuario.StatusUsuario status = usuarioExistente.getStatus();
                 System.out.println("Estado del usuario: " + status);
 
-                if (Usuario.StatusUsuario.PENDING.equals(status)) {
+                if (status == Usuario.StatusUsuario.PENDING) {
                     redirectAttributes.addFlashAttribute("error",
                             "Tu cuenta está pendiente de aprobación por un administrador");
                     return "redirect:/login?pending=true";
-                } else if (Usuario.StatusUsuario.REJECTED.equals(status)) {
+                } else if (status == Usuario.StatusUsuario.REJECTED) {
                     redirectAttributes.addFlashAttribute("error",
                             "Tu cuenta ha sido rechazada. Contacta al administrador.");
                     return "redirect:/login?rejected=true";
-                } else if (!Usuario.StatusUsuario.APPROVED.equals(status)) {
+                } else if (status != Usuario.StatusUsuario.APPROVED) {
                     redirectAttributes.addFlashAttribute("error",
                             "Estado de cuenta no válido. Contacta al administrador.");
                     return "redirect:/login";
@@ -406,7 +415,7 @@ public class ControladorOAuth2 {
                 }
 
                 // Verificar el estado del usuario
-                String status = usuarioExistente.getStatus().name();
+                Usuario.StatusUsuario status = usuarioExistente.getStatus();
                 System.out.println("Estado del usuario: " + status);
 
                 if (Usuario.StatusUsuario.PENDING.equals(status)) {
@@ -607,7 +616,9 @@ public class ControladorOAuth2 {
      */
     private void authenticateUser(Usuario usuario, HttpServletRequest request) {
 
-        System.out.println("Autenticación");
+        System.out.println("Autenticación para usuario: " + usuario.getNombreUsuario());
+        System.out.println("Rol del usuario: " + (usuario.getRol() != null ? usuario.getRol().getNombreRol() : "NULL"));
+
         // 1. Construir autoridades correctamente
         List<GrantedAuthority> authorities = new ArrayList<>();
 
@@ -622,6 +633,7 @@ public class ControladorOAuth2 {
                 }
             }
         } else {
+            System.err.println("ERROR: Usuario sin rol asignado: " + usuario.getNombreUsuario());
             authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
             System.out.println(" Alerta!:  Rol por defecto: ROLE_USER");
         }

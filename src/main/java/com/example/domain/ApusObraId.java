@@ -19,7 +19,7 @@ public class ApusObraId implements Serializable {
     private Long idObra;
 
     @Column(name = "id_apu")
-    private Long idApu;
+    private Long idAPU;
 
     @Override
     public boolean equals(Object o) {
@@ -27,11 +27,11 @@ public class ApusObraId implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         ApusObraId that = (ApusObraId) o;
         return Objects.equals(idObra, that.idObra) &&
-                Objects.equals(idApu, that.idApu);
+                Objects.equals(idAPU, that.idAPU);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(idObra, idApu);
+        return Objects.hash(idObra, idAPU);
     }
 }

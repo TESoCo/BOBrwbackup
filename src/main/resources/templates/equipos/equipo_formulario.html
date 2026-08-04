@@ -277,33 +277,7 @@
                                th:value="${modo == 'editar' ? idsUsuariosAsignados : ''}"/>
                     </div>
 
-                    <!-- Selección de Proyectos -->
-                    <div class="selection-box">
-                        <h3>
-                            <i class="fas fa-project-diagram"></i> Proyectos Disponibles
-                            <span class="badge" th:text="${todosProyectos?.size()}">0</span>
-                        </h3>
-                        <div class="selected-count" id="selectedProjectsCount">
-                            Proyectos seleccionados: <span th:text="${modo == 'editar' ? idsProyectosAsignados?.size() : 0}">0</span>
-                        </div>
-                        <div class="selection-list" id="proyectosList">
-                            <div th:each="proyecto : ${todosProyectos}"
-                                 class="selection-item"
-                                 th:attr="data-id=${proyecto.idProyecto}"
-                                 th:classappend="${modo == 'editar' and idsProyectosAsignados?.contains(proyecto.idProyecto)} ? 'selected' : ''"
-                                 onclick="toggleProyecto(this)">
-                                <strong th:text="${proyecto.descProyecto}">Proyecto</strong><br>
-                                <small th:if="${proyecto.equipo != null}" class="text-muted">
-                                    ⚠️ Equipo actual: <span th:text="${proyecto.equipo.descEquipo}"></span>
-                                </small>
-                                <small th:if="${proyecto.equipo == null}" class="text-muted">
-                                    Sin equipo asignado
-                                </small>
-                            </div>
-                        </div>
-                        <input type="hidden" name="proyectosSeleccionados" id="proyectosSeleccionados"
-                               th:value="${modo == 'editar' ? idsProyectosAsignados : ''}"/>
-                    </div>
+
                 </div>
 
                 <!-- Botones -->

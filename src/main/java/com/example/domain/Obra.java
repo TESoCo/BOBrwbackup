@@ -41,13 +41,13 @@ public class Obra implements Serializable {
     @Column(name = "id_Obra")
     private Long idObra;
 
-    @Column(name = "identificador_unico", nullable = false, length = 36, unique = true)
+    @Column(name = "identificador_unico", nullable = false, length = 36)
     private String identificadorUnico; // UUID que agrupa las 3 etapas
 
 
     // ---------- DATOS DE LA OBRA ----------
     @NotEmpty(message = "El nombre de la obra es obligatorio")
-    @Column(name = "nombre_obra", nullable = false, length = 255, unique = true)
+    @Column(name = "nombre_obra", nullable = false, length = 255)
     private String nombreObra;
 
     @Column(name = "descripcion", columnDefinition = "TEXT")

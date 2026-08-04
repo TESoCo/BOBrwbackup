@@ -13,24 +13,25 @@ import java.util.Objects;
 @AllArgsConstructor
 @Embeddable
 public class PrecioMaterialId implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @Column(name = "id_material")
-    private Long material;
+    private Long idMaterial;
 
     @Column(name = "id_proveedor")
-    private Long proveedor;
+    private Long idProveedor;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PrecioMaterialId that = (PrecioMaterialId) o;
-        return Objects.equals(material, that.material) &&
-                Objects.equals(proveedor, that.proveedor);
+        return Objects.equals(idMaterial, that.idMaterial) &&
+                Objects.equals(idProveedor, that.idProveedor);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(material, proveedor);
+        return Objects.hash(idMaterial, idProveedor);
     }
 }

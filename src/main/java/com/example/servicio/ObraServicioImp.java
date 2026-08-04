@@ -104,16 +104,43 @@ public class ObraServicioImp implements ObraServicio {
         return obraDao.findById(entryId).orElse(null);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Obra localizarObraConApus(Long idObra) {
+        Optional<Obra> obraOpt = obraDao.findByIdWithApus(idObra);
+        if (obraOpt.isEmpty()) {
+            throw new RuntimeException("Obra no encontrada con ID: " + idObra);
+        }
+        Obra obra = obraOpt.get();
+
+        // Log para debugging
+        System.out.println("=== OBRA CARGADA CON APUS ===");
+        System.out.println("ID: " + obra.getIdObra());
+        System.out.println("Nombre: " + obra.getNombreObra());
+        System.out.println("Etapa: " + obra.getEtapa());
+        System.out.println("Cantidad de APUs: " + (obra.getApusObraList() != null ? obra.getApusObraList().size() : 0));
+        if (obra.getApusObraList() != null) {
+            for (ApusObra ao : obra.getApusObraList()) {
+                System.out.println("  - APU ID: " + ao.getApu().getIdAPU() +
+                        ", Nombre: " + ao.getApu().getNombreAPU() +
+                        ", Cantidad: " + ao.getCantidad());
+            }
+        }
+
+        return obra;
+    }
+
     public List<Obra>  findByObraName(String obraName) {
         return obraDao.findByNombreObra(obraName);
     }
+
     public List<Obra> findByObraNameContaining(String obraName) {
         return obraDao.findByNombreObraContaining(obraName);
     }
+
     public List<Obra> findByObraNameIgnoreCase(String obraName) {
         return obraDao.findByNombreObraIgnoreCase(obraName);
     }
-
 
     public List<Apu> listarApus() {
         return (List<Apu>) apuDao.findAll();
@@ -163,15 +190,24 @@ public class ObraServicioImp implements ObraServicio {
     @Override
     @Transactional
     public void calcularDuracionLinealObra(Obra obra) {
-        List<ApusObra> apusObraList = obra.getApusObraList();
-        BigDecimal duracionTotalObra = BigDecimal.ZERO;
-        for(ApusObra apusObra : apusObraList) {
-            duracionTotalObra = duracionTotalObra.add(apusObra.getApu().getDuracionAPU());
-        };
-        if(obra.getFechaIni()!=null){
-            obra.setFechaFinCalculada(obra.getFechaIni().plusDays(duracionTotalObra.longValue()));
-        };
-        obraDao.save(obra);
+        try {
+            System.out.println("=== CALCULANDO DURACIÓN ===");
+            List<ApusObra> apusObraList = obra.getApusObraList();
+            System.out.println("APUs en obra: " + (apusObraList != null ? apusObraList.size() : 0));
+            BigDecimal duracionTotalObra = BigDecimal.ZERO;
+            for(ApusObra apusObra : apusObraList) {
+                System.out.println("APU: " + apusObra.getApu().getNombreAPU() + ", Duración: " + apusObra.getApu().getDuracionAPU());
+                duracionTotalObra = duracionTotalObra.add(apusObra.getApu().getDuracionAPU());
+            };
+            System.out.println("Duración total: " + duracionTotalObra);
+            if(obra.getFechaIni()!=null){
+                obra.setFechaFinCalculada(obra.getFechaIni().plusDays(duracionTotalObra.longValue()));
+            };
+        } catch (Exception e) {
+            System.err.println("=== ERROR EN calcularDuracionLinealObra ===");
+            e.printStackTrace();
+            throw e;  // ← Re-lanza la excepción para que se vea
+        }
     }
 
     @Override
@@ -281,6 +317,13 @@ public class ObraServicioImp implements ObraServicio {
                                      Map<Long, Double> actividadesCantidades,
                                      Long idProyecto, Usuario usuarioCreador) {
 
+        //Háblame cariño
+        System.out.println("=== CREATING OBRA PRESUPUESTO ===");
+        System.out.println("Nombre: " + nombreObra);
+        System.out.println("Proyecto ID: " + idProyecto);
+        System.out.println("Usuario: " + (usuarioCreador != null ? usuarioCreador.getNombreUsuario() : "null"));
+        System.out.println("Actividades: " + actividadesCantidades.size());
+
         // 1. Validar que el usuario puede crear obras
         if (!puedeCrearObra(usuarioCreador)) {
             throw new RuntimeException("El usuario no tiene un equipo asignado. No puede crear obras.");
@@ -311,13 +354,13 @@ public class ObraServicioImp implements ObraServicio {
         }
 
         // Generar identificador único
-        String identificadorUnico = UUID.randomUUID().toString();
+        //String identificadorUnico = UUID.randomUUID().toString();
 
         // Crear obra en PRESUPUESTO
         Obra obraPresupuesto = new Obra();
         obraPresupuesto.setNombreObra(nombreObra + " (PRESUPUESTO)");
         obraPresupuesto.setEtapa(Obra.EtapaObra.PRESUPUESTO);
-        obraPresupuesto.setIdentificadorUnico(identificadorUnico);
+        //obraPresupuesto.setIdentificadorUnico(identificadorUnico);
         obraPresupuesto.setFechaIni(fechaIni);
         obraPresupuesto.setFechaFinManual(fechaFin);
         obraPresupuesto.setCooNObra(cooNObra);
@@ -329,7 +372,10 @@ public class ObraServicioImp implements ObraServicio {
 
 
         // Guardar obra
-        obraDao.save(obraPresupuesto);
+        obraDao.saveAndFlush(obraPresupuesto);
+        System.out.println("=== AFTER SAVE ===");
+        System.out.println("ID: " + obraPresupuesto.getIdObra());
+        System.out.println("Is present in DB? " + obraDao.findById(obraPresupuesto.getIdObra()).isPresent());
 
         // Agregar APUs con cantidades
         for (Map.Entry<Long, Double> entry : actividadesCantidades.entrySet()) {
@@ -347,8 +393,13 @@ public class ObraServicioImp implements ObraServicio {
 
     @Override
     @Transactional
-    public Obra avanzarAEjecucion(Long idObraPresupuesto, LocalDate fechaInicioReal) {
-        Obra obraPresupuesto = localizarObra(idObraPresupuesto);
+    public Obra avanzarAEjecucion(Long idObraPresupuesto, LocalDate fechaInicioReal, Usuario usuario) {
+        Obra obraPresupuesto = localizarObraConApus(idObraPresupuesto);
+
+        System.out.println("=== AVANZANDO A EJECUCIÓN ===");
+        System.out.println("Obra encontrada: " + obraPresupuesto.getNombreObra());
+        System.out.println("APUs en presupuesto: " + obraPresupuesto.getApusObraList().size());
+
         if (obraPresupuesto == null) {
             throw new RuntimeException("Obra de presupuesto no encontrada");
         }
@@ -361,14 +412,21 @@ public class ObraServicioImp implements ObraServicio {
             throw new RuntimeException("El presupuesto no tiene actividades asociadas");
         }
 
-        // Verificar si ya existe ejecución para este proyecto
-        Proyecto proyecto = obraPresupuesto.getProyecto();
-        if (proyecto != null) {
-            Obra ejecucionExistente = getObraEjecucion(proyecto.getIdProyecto());
+        // Verificar si ya existe ejecución para esta obra
+        String identificador = obraPresupuesto.getIdentificadorUnico();
+        if (identificador != null && !identificador.isEmpty()) {
+            Obra ejecucionExistente = obraDao.findByIdentificadorUnicoAndEtapa(
+                    identificador,
+                    Obra.EtapaObra.EJECUCION
+            );
+
             if (ejecucionExistente != null && !ejecucionExistente.isAnular()) {
-                throw new RuntimeException("Ya existe una obra en etapa EJECUCIÓN para este proyecto");
+                throw new RuntimeException("Ya existe una obra en EJECUCIÓN para este identificador: " + identificador);
             }
         }
+
+        //Obtener proyecto del presupuesto
+        Proyecto proyecto = obraPresupuesto.getProyecto();
 
         // Crear obra en EJECUCIÓN
         Obra obraEjecucion = new Obra();
@@ -381,26 +439,32 @@ public class ObraServicioImp implements ObraServicio {
         obraEjecucion.setCooEObra(obraPresupuesto.getCooEObra());
         obraEjecucion.setAnular(false);
         obraEjecucion.setProyecto(proyecto);
+        obraEjecucion.setIdUsuario(usuario);
 
         // Guardar obra de ejecución
         obraDao.save(obraEjecucion);
+        System.out.println("Obra de ejecución guardada con ID: " + obraEjecucion.getIdObra());
 
         // Clonar estructura de APUs con cantidades en 0
         for (ApusObra apusPresupuesto : obraPresupuesto.getApusObraList()) {
             Apu apu = apusPresupuesto.getApu();
-            agregarApuAObraConCantidad(obraEjecucion, apu, 0.0);
+            obraEjecucion.agregarApu(apu, 0.0);
+            System.out.println("APU agregado: " + apu.getNombreAPU() + " con cantidad 0");
         }
+
+        // Guardar la obra con los APUs agregados
+        obraEjecucion = obraDao.save(obraEjecucion);
 
         // Cerrar presupuesto
         obraPresupuesto.setAnular(true);
         obraDao.save(obraPresupuesto);
 
-        return localizarObra(obraEjecucion.getIdObra());
+        return localizarObraConApus(obraEjecucion.getIdObra());
     }
 
     @Override
     @Transactional
-    public Obra avanzarACierre(Long idObraEjecucion, LocalDate fechaCierreReal) {
+    public Obra avanzarACierre(Long idObraEjecucion, LocalDate fechaCierreReal, Usuario usuario) {
         Obra obraEjecucion = localizarObra(idObraEjecucion);
         if (obraEjecucion == null) {
             throw new RuntimeException("Obra de ejecución no encontrada");
@@ -414,41 +478,59 @@ public class ObraServicioImp implements ObraServicio {
             throw new RuntimeException("La obra en ejecución no tiene actividades");
         }
 
-        // Validar que todas las actividades estén al 100%
+        // Validar el presupuesto
         Obra presupuesto = obtenerPresupuestoDeObra(idObraEjecucion);
         if (presupuesto == null) {
             throw new RuntimeException("No se encontró el presupuesto asociado");
         }
 
 
-        for (ApusObra apusEjecucion : obraEjecucion.getApusObraList()) {
-            ApusObra apusPresupuesto = presupuesto.getApusObraList().stream()
-                    .filter(ap -> ap.getApu().getIdAPU().equals(apusEjecucion.getApu().getIdAPU()))
-                    .findFirst()
-                    .orElse(null);
 
-            if (apusPresupuesto == null || apusEjecucion.getCantidad() < apusPresupuesto.getCantidad()) {
-                throw new RuntimeException("No todas las actividades han sido ejecutadas al 100%");
+        //Validar que no haya duplicados
+        String identificador = obraEjecucion.getIdentificadorUnico();
+        if (identificador != null && !identificador.isEmpty()) {
+            Obra cierreExistente = obraDao.findByIdentificadorUnicoAndEtapa(
+                    identificador,
+                    Obra.EtapaObra.CIERRE
+            );
+
+            if (cierreExistente != null && !cierreExistente.isAnular()) {
+                System.out.println("❌ Ya existe un CIERRE para el identificador: " + identificador);
+                throw new RuntimeException("Ya existe un CIERRE para el identificador");
             }
         }
 
-        // En avanzarACierre, después de validar
+        // Verificar que todas las actividades estén al 100%
+        // Crear un mapa de APU ID -> Cantidad presupuestada para fácil acceso
+        Map<Long, Double> cantidadesPresupuestadas = new HashMap<>();
+        for (ApusObra apusPresupuesto : presupuesto.getApusObraList()) {
+            cantidadesPresupuestadas.put(apusPresupuesto.getApu().getIdAPU(), apusPresupuesto.getCantidad());
+        }
+
+        // Verificar cada APU en ejecución
         Map<String, Double> faltantes = new HashMap<>();
         for (ApusObra apusEjecucion : obraEjecucion.getApusObraList()) {
-            ApusObra apusPresupuesto = presupuesto.getApusObraList().stream()
-                    .filter(ap -> ap.getApu().getIdAPU().equals(apusEjecucion.getApu().getIdAPU()))
-                    .findFirst()
-                    .orElse(null);
+            Long apuId = apusEjecucion.getApu().getIdAPU();
+            Double cantidadPresupuestada = cantidadesPresupuestadas.get(apuId);
 
-            if (apusPresupuesto != null && apusEjecucion.getCantidad() < apusPresupuesto.getCantidad()) {
+            if (cantidadPresupuestada == null) {
+                throw new RuntimeException("El APU " + apusEjecucion.getApu().getNombreAPU() +
+                        " no existe en el presupuesto");
+            }
+
+            Double cantidadEjecutada = apusEjecucion.getCantidad() != null ? apusEjecucion.getCantidad() : 0.0;
+
+            if (cantidadEjecutada < cantidadPresupuestada) {
                 faltantes.put(apusEjecucion.getApu().getNombreAPU(),
-                        apusPresupuesto.getCantidad() - apusEjecucion.getCantidad());
+                        cantidadPresupuestada - cantidadEjecutada);
             }
         }
 
         if (!faltantes.isEmpty()) {
             throw new RuntimeException("Actividades con cantidades faltantes: " + faltantes);
         }
+
+
 
         // Crear obra en CIERRE
         Obra obraCierre = new Obra();
@@ -461,14 +543,21 @@ public class ObraServicioImp implements ObraServicio {
         obraCierre.setCooEObra(obraEjecucion.getCooEObra());
         obraCierre.setAnular(false);
         obraCierre.setProyecto(obraEjecucion.getProyecto());
+        obraCierre.setIdUsuario(usuario);
 
         obraDao.save(obraCierre);
+        System.out.println("Obra de cierre guardada con ID: " + obraCierre.getIdObra());
 
         // Copiar cantidades ejecutadas al cierre
         for (ApusObra apusEjecucion : obraEjecucion.getApusObraList()) {
             Apu apu = apusEjecucion.getApu();
-            agregarApuAObraConCantidad(obraCierre, apu, apusEjecucion.getCantidad());
+            Double cantidad = apusEjecucion.getCantidad() != null ? apusEjecucion.getCantidad() : 0.0;
+            obraCierre.agregarApu(apu, cantidad);
+            System.out.println("APU agregado al cierre: " + apu.getNombreAPU() + " con cantidad " + cantidad);
         }
+
+        // Guardar obra de cierre con APUs
+        obraCierre = obraDao.save(obraCierre);
 
         // Cerrar ejecución
         obraEjecucion.setAnular(true);
@@ -480,27 +569,68 @@ public class ObraServicioImp implements ObraServicio {
     @Override
     @Transactional(readOnly = true)
     public Obra obtenerPresupuestoDeObra(Long idObra) {
-        Obra obra = localizarObra(idObra);
-        if (obra == null || obra.getIdentificadorUnico() == null) return null;
+        try {
+            // Obtener la obra actual
+            Obra obraActual = localizarObra(idObra);
+            if (obraActual == null) {
+                System.out.println("No se encontró la obra con ID: " + idObra);
+                return null;
+            }
 
-        return obraDao.findByIdentificadorUnicoAndEtapa(
-                obra.getIdentificadorUnico(), Obra.EtapaObra.PRESUPUESTO.name());
+            // Buscar la obra PRESUPUESTO asociada por identificadorUnico
+            String identificador = obraActual.getIdentificadorUnico();
+            System.out.println("Buscando presupuesto con identificador: " + identificador);
+
+            // CORREGIR: Usar el enum directamente, no un String
+            return obraDao.findByIdentificadorUnicoAndEtapa(
+                    identificador,
+                    Obra.EtapaObra.PRESUPUESTO  // <- Esto es un enum, no un String
+            );
+        } catch (Exception e) {
+            System.err.println("Error al obtener presupuesto para obra " + idObra + ": " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
+
+    //Validaciones antes de avanzar etapa
     @Override
     @Transactional(readOnly = true)
     public boolean puedeAvanzarAEjecucion(Long idObra) {
-        Obra obra = localizarObra(idObra);
-        if (obra == null) return false;
+        Obra obra = localizarObraConApus(idObra);
 
-        if (!Obra.EtapaObra.PRESUPUESTO.equals(obra.getEtapa())) return false;
-        if (obra.isAnular()) return false;
-        if (obra.getApusObraList() == null || obra.getApusObraList().isEmpty()) return false;
+        System.out.println("=== VALIDANDO AVANCE A EJECUCIÓN ===");
+        System.out.println("ID Obra: " + obra.getIdObra());
+        System.out.println("Etapa: " + obra.getEtapa());
+        System.out.println("APUs en obra: " + (obra.getApusObraList() != null ? obra.getApusObraList().size() : 0));
 
-        Proyecto proyecto = obra.getProyecto();
-        if (proyecto != null) {
-            return getObraEjecucion(proyecto.getIdProyecto()) == null;
+        if (!Obra.EtapaObra.PRESUPUESTO.equals(obra.getEtapa())) {
+            System.out.println("❌ No está en PRESUPUESTO");
+            return false;
         }
+
+        if (obra.isAnular()) {
+            System.out.println("❌ Está anulada");
+            return false;
+        }
+
+        if (obra.getApusObraList() == null || obra.getApusObraList().isEmpty()) {
+            System.out.println("❌ No tiene APUs asignados");
+            return false;
+        }
+
+        String identificador = obra.getIdentificadorUnico();
+        if (identificador != null && !identificador.isEmpty()) {
+            Obra ejecucionExistente = obraDao.findByIdentificadorUnicoAndEtapa(identificador, Obra.EtapaObra.EJECUCION);
+            if (ejecucionExistente != null && !ejecucionExistente.isAnular()) {
+                System.out.println("❌ Ya existe una EJECUCIÓN para el identificador: " + identificador);
+                System.out.println("   ID de ejecución existente: " + ejecucionExistente.getIdObra());
+                return false;
+            }
+        }
+
+        System.out.println("✅ Puede avanzar a EJECUCIÓN");
         return true;
     }
 
@@ -642,12 +772,6 @@ public class ObraServicioImp implements ObraServicio {
     @Transactional(readOnly = true)
     public List<Obra> findObrasByIdentificador(String identificadorUnico) {
         return obraDao.findByIdentificadorUnico(identificadorUnico);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Obra findObraByIdentificadorAndEtapa(String identificadorUnico, String etapa) {
-        return obraDao.findByIdentificadorUnicoAndEtapa(identificadorUnico, etapa);
     }
 
 

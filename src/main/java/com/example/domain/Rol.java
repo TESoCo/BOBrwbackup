@@ -43,7 +43,7 @@ public class Rol implements Serializable {
     // ---------- RELACIONES ----------
     //Tabla "rol_permiso"
     // LADO PROPIETARIO - mantener JoinTable
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "rol_permiso",
             joinColumns = @JoinColumn(name = "id_rol"),

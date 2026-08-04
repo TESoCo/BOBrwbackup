@@ -241,8 +241,9 @@ public class ControladorInv {
         // Configurar el inventario
         inventario.setIdUsuario(usuarioLogeado);
         inventario.setAprobacion(EstadoInventario.SOLICITADO);
+        inventario.setTipoDestino(esParaStock ? Inventario.TipoDestino.STOCK : Inventario.TipoDestino.OBRA);
 
-        // ========== PROCESAR MATERIALES Y STOCK ==========
+        // ========== PROCESAR MATERIALES ==========
         if (inventario.getMaterialesInventarios() == null) {
             inventario.setMaterialesInventarios(new ArrayList<>());
         }
@@ -255,46 +256,15 @@ public class ControladorInv {
                 Material material = materialServicio.obtenerPorId(materialId);
                 if (material == null) continue;
 
-                // ========== ACTUALIZAR STOCK ==========
-                Double stockActual = material.getStockDisponible() != null ?
-                        material.getStockDisponible() : 0.0;
 
-                if (esParaStock) {
-                    // AGREGAR al stock
-                    material.setStockDisponible(stockActual + cantidad);
-                    System.out.println("Material: " + material.getNombreMaterial() +
-                            " - Stock anterior: " + stockActual +
-                            " + " + cantidad +
-                            " = " + material.getStockDisponible());
-                } else {
-                    // CONSUMIR del stock
-                    if (stockActual < cantidad) {
-                        model.addAttribute("error",
-                                String.format("Stock insuficiente para %s. Disponible: %.2f, Solicitado: %.2f",
-                                        material.getNombreMaterial(),
-                                        stockActual,
-                                        cantidad));
-                        model.addAttribute("usuario", usuarioLogeado);
-                        model.addAttribute("obras", obtenerObrasDisponibles(usuarioLogeado));
-                        model.addAttribute("materiales", materialServicio.listarTodosConPrecios());
-                        return "inventarios/crearInv";
-                    }
-                    material.setStockDisponible(stockActual - cantidad);
-                    System.out.println("Material: " + material.getNombreMaterial() +
-                            " - Stock anterior: " + stockActual +
-                            " - " + cantidad +
-                            " = " + material.getStockDisponible());
-                }
-
-                // Guardar el material actualizado
-                materialServicio.guardar(material);
 
                 // Crear la relación MaterialesInventario
-                MaterialesInventario materialInventario = new MaterialesInventario();
-                materialInventario.setInventario(inventario);
-                materialInventario.setMaterial(material);
-                materialInventario.setCantidad(cantidad);
-                inventario.getMaterialesInventarios().add(materialInventario);
+                inventario.agregarMaterial(material, cantidad);
+
+                System.out.println("Material agregado al inventario: " + material.getNombreMaterial() +
+                        " - Cantidad: " + cantidad +
+                        " (Stock NO modificado)");
+
             }
         }
 
@@ -307,6 +277,8 @@ public class ControladorInv {
                 model.addAttribute("materiales", materialServicio.listarTodosConPrecios());
                 return "inventarios/crearInv";
             }
+
+
 
             // Asignar obra si se seleccionó
             if (obra != null) {
@@ -344,11 +316,7 @@ public class ControladorInv {
                     if (materialIds.get(i) != null) {
                         Material material = materialServicio.obtenerPorId(materialIds.get(i));
                         if (material != null) {
-                            MaterialesInventario materialInventario = new MaterialesInventario();
-                            materialInventario.setInventario(inventario);
-                            materialInventario.setMaterial(material);
-                            materialInventario.setCantidad(materialCantidades.get(i));
-                            inventario.getMaterialesInventarios().add(materialInventario);
+                            inventario.agregarMaterial(material, materialCantidades.get(i));
                         }
                     }
                 }
@@ -359,11 +327,11 @@ public class ControladorInv {
 
 
             System.out.println("=== ANTES DE GUARDAR OTRA VEZ ===");
-
+            System.out.println("=== GUARDANDO INVENTARIO ===");
             // The inventario object already has the usuario set from the form
             // Guardar inventario
             inventarioServicio.guardarInv(inventario);
-
+            System.out.println("=== INVENTARIO GUARDADO CON ID: " + inventario.getIdInventario());
             System.out.println("=== DESPUÉS DE GUARDAR ===");
 
             // Registrar auditoría de creación
@@ -382,7 +350,6 @@ public class ControladorInv {
                             esParaStock ? "Ingreso al stock" : "Solicitud de inventario",
                             inventario.getIdInventario(),
                             inventario.getAprobacion().getDisplayName()));
-
 
 
         } catch (Exception e) {
@@ -490,7 +457,7 @@ public class ControladorInv {
         List<Material> materiales = materialServicio.listarTodosConPrecios();
 
         // Preparar datos para el detalle
-        Map<Long, List<AuditoriaInventario>> auditoriasMap = new HashMap<>();
+        Map<Long, List<Auditoria>> auditoriasMap = new HashMap<>();
         for (Inventario inv : inventarios) {
             auditoriasMap.put(inv.getIdInventario(),
                     inventarioServicio.obtenerAuditoriaPorInventario(inv.getIdInventario()));
@@ -534,7 +501,7 @@ public class ControladorInv {
         }
 
         // Obtener auditoría
-        List<AuditoriaInventario> auditoria = inventarioServicio.obtenerAuditoriaPorInventario(id);
+        List<Auditoria> auditoria = inventarioServicio.obtenerAuditoriaPorInventario(id);
 
         // Obtener estados permitidos para este usuario
         List<EstadoInventario> estadosPermitidos = inventarioServicio.obtenerEstadosPermitidos(id, usuarioLogeado);

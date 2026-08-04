@@ -61,7 +61,7 @@ public class ControladorAvance
 
         //Necesito cargar obras para mostrar nombres
         List<Obra> obras = obraServicio.listaObra();
-        model.addAttribute("presupuestos", obras);
+        model.addAttribute("obras", obras);
 
 
         // Start with all avances
@@ -111,10 +111,12 @@ public class ControladorAvance
     public String formAnexarAvance(Model model, org.springframework.security.core.Authentication authentication){
         List<Obra> obras = obraServicio.listaObra();
         List<Apu> apus = apuServicio.listarElementos();
+        List<Contratista> contratistas = contratistaServicio.listarContratistas();
 
         model.addAttribute("avance", new Avance());
         model.addAttribute("obras",obras);
         model.addAttribute("apus",apus);
+        model.addAttribute("contratistas", contratistas);
 
         return "avances/agregarAvance";
     }
@@ -127,6 +129,7 @@ public class ControladorAvance
             @RequestParam String fecha,
             @RequestParam Long idApu,
             @RequestParam Double cantidad,
+            @RequestParam(required = false) Long idContratista,
             @RequestParam(value = "photoBase64", required = false) String photoBase64,
             @RequestParam(value = "photoCooN", required = false) Double photoCooN,
             @RequestParam(value = "photoCooE", required = false) Double photoCooE,
@@ -216,6 +219,20 @@ public class ControladorAvance
             avance.setIdApu(apuServicio.obtenerPorId(idApu));
             avance.setCantEjec(cantidad);
             avance.setAnular(false);
+
+            // ASIGNAR CONTRATISTA SI SE PROPORCIONÓ
+            if (idContratista != null && idContratista > 0) {
+                Contratista contratista = contratistaServicio.encontrarPorId(idContratista);
+                if (contratista != null) {
+                    avance.setIdContratista(contratista);
+                    System.out.println("Contratista asignado: " + contratista.getNombreContratista());
+                } else {
+                    System.out.println("⚠Contratista no encontrado con ID: " + idContratista);
+                }
+            } else {
+                System.out.println("ℹNo se asignó contratista");
+            }
+
             avanceServicio.salvar(avance);
 
 
@@ -554,18 +571,28 @@ public class ControladorAvance
     // Métod0 para obtener APUs por obra (para el dropdown dinámico)
     @GetMapping("/obtenerAPUsPorObra/{idObra}")
     @ResponseBody
-    public List<Apu> obtenerAPUsPorObra(@PathVariable Long idObra) {
+    public List<Map<String, Object>> obtenerAPUsPorObra(@PathVariable Long idObra) {
 
         try {
             Obra obra = obraServicio.localizarObra(idObra);
             System.out.println("Obra encontrada: " + (obra != null ? obra.getNombreObra() : "null"));
 
             if (obra != null && obra.getApusObraList() != null) {
-                List<Apu> apus = obra.getApusObraList().stream()
-                        .map(ApusObra::getApu)
+                List<Map<String, Object>> apusData = obra.getApusObraList().stream()
+                        .map(apusObra -> {
+                            Apu apu = apusObra.getApu();
+                            // Crear un Map con solo los datos que necesitas
+                            Map<String, Object> apuMap = new HashMap<>();
+                            apuMap.put("idAPU", apu.getIdAPU());
+                            apuMap.put("nombreAPU", apu.getNombreAPU());
+                            apuMap.put("unidadAPU", apu.getUnidadesAPU());
+                            apuMap.put("descripcionAPU", apu.getDescAPU());
+                            apuMap.put("vTotalAPU", apu.getVTotalApu());
+                            return apuMap;
+                        })
                         .collect(Collectors.toList());
-                System.out.println("Número de APUs encontrados: " + apus.size());
-                return apus;
+                System.out.println("Número de APUs encontrados: " + apusData.size());
+                return apusData;
             }
 
             System.out.println("No se encontraron APUs para la obra");
