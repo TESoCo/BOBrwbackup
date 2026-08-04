@@ -33,7 +33,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /
 
 # Copy the built JAR
-COPY --from=builder /app/target/protoCOB-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /app/target/protoCOB-*.jar app.jar
 
 # Verify the JAR was copied successfully
 RUN echo "=== Verifying JAR in runtime image ===" && \
