@@ -5,6 +5,7 @@ import com.example.domain.Usuario;
 import com.example.servicioWeb.EmailResult;
 import com.example.servicioWeb.EncryptionService;
 import com.example.servicioWeb.GoogleOAuthService;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +22,7 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     private UsuarioDao usuarioDao;
 
     @Autowired
+    @Lazy
     private GoogleOAuthService googleOAuthService;
 
     @Autowired
