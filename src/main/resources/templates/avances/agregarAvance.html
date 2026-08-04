@@ -228,6 +228,19 @@
                     </div>
                 </div>
 
+                <!-- Contratista -->
+                <div class="form-group">
+                    <label for="contratistaDropdown"><b>Contratista:</b></label>
+                    <select id="contratistaDropdown" name="idContratista" class="form-control">
+                        <option value="">Seleccione un contratista (opcional)...</option>
+                        <option th:each="contratista : ${contratistas}"
+                                th:value="${contratista.idContratista}"
+                                th:text="${contratista.nombreContratista}">
+                        </option>
+                    </select>
+                    <small class="text-muted">Opcional - Asigna el contratista responsable de este avance</small>
+                </div>
+
                 <!-- Sección de Foto (Opcional) -->
                 <div class="form-group">
                     <h3>📸 Foto del Avance (Opcional)</h3>

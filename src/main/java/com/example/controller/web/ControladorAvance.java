@@ -111,10 +111,12 @@ public class ControladorAvance
     public String formAnexarAvance(Model model, org.springframework.security.core.Authentication authentication){
         List<Obra> obras = obraServicio.listaObra();
         List<Apu> apus = apuServicio.listarElementos();
+        List<Contratista> contratistas = contratistaServicio.listarContratistas();
 
         model.addAttribute("avance", new Avance());
         model.addAttribute("obras",obras);
         model.addAttribute("apus",apus);
+        model.addAttribute("contratistas", contratistas);
 
         return "avances/agregarAvance";
     }
@@ -127,6 +129,7 @@ public class ControladorAvance
             @RequestParam String fecha,
             @RequestParam Long idApu,
             @RequestParam Double cantidad,
+            @RequestParam(required = false) Long idContratista,
             @RequestParam(value = "photoBase64", required = false) String photoBase64,
             @RequestParam(value = "photoCooN", required = false) Double photoCooN,
             @RequestParam(value = "photoCooE", required = false) Double photoCooE,
@@ -216,6 +219,20 @@ public class ControladorAvance
             avance.setIdApu(apuServicio.obtenerPorId(idApu));
             avance.setCantEjec(cantidad);
             avance.setAnular(false);
+
+            // ASIGNAR CONTRATISTA SI SE PROPORCIONÓ
+            if (idContratista != null && idContratista > 0) {
+                Contratista contratista = contratistaServicio.encontrarPorId(idContratista);
+                if (contratista != null) {
+                    avance.setIdContratista(contratista);
+                    System.out.println("Contratista asignado: " + contratista.getNombreContratista());
+                } else {
+                    System.out.println("⚠Contratista no encontrado con ID: " + idContratista);
+                }
+            } else {
+                System.out.println("ℹNo se asignó contratista");
+            }
+
             avanceServicio.salvar(avance);
 
 
