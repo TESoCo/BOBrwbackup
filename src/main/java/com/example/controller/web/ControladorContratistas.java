@@ -8,6 +8,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -53,6 +54,7 @@ public class ControladorContratistas {
     private InfoComServicio infoComServicio;
 
     @Autowired
+    @Lazy
     private OAuth2EmailService oauth2EmailService;  // ← NUEVO: Para envío desde cuentas OAuth2
 
 

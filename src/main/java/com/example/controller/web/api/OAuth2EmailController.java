@@ -7,6 +7,7 @@ import com.example.domain.Usuario;
 import com.example.dto.EmailRequest;
 import com.example.servicio.UsuarioServicio;
 import com.example.servicioWeb.OAuth2EmailService;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -32,6 +33,7 @@ public class OAuth2EmailController {
     private ControladorAvance controladorAvance;
 
     @Autowired
+    @Lazy
     private OAuth2EmailService oauth2EmailService;  // Para usuarios con Google
 
     @Autowired
