@@ -196,10 +196,28 @@
                             <i class="fas fa-times"></i> Limpiar filtros
                         </a>
                     </div>
-                    <div class="form-col" style="text-align: right;">
-                        <button type="button" class="btn btn-primary" id="sendReportBtn">
-                            <i class="fas fa-envelope"></i> Enviar Reporte por Correo
-                        </button>
+                    <!-- Mostrar solo si el usuario NO es LOCAL -->
+                    <div sec:authorize="isAuthenticated()"
+                         th:if="${#authentication.principal != null and #authentication.principal.authorities != null}">
+
+                        <!-- Botón de envío de reporte - Solo para usuarios OAuth2 -->
+                        <div th:if="${#authentication.principal != null and
+                            #authentication.principal.authProvider != null and
+                            #authentication.principal.authProvider.name() != 'LOCAL'}">
+                            <button type="button" class="btn btn-primary" id="sendReportBtn">
+                                <i class="fas fa-envelope"></i> Enviar Reporte por Correo
+                            </button>
+                        </div>
+
+                        <!-- Mensaje informativo para usuarios LOCALES -->
+                        <div th:if="${#authentication.principal != null and
+                            #authentication.principal.authProvider != null and
+                            #authentication.principal.authProvider.name() == 'LOCAL'}">
+                            <div class="alert alert-info" style="background: #e3f2fd; padding: 12px; border-radius: 5px; border-left: 4px solid #2196F3;">
+                                <i class="fas fa-info-circle"></i>
+                                Para enviar reportes por correo, inicia sesión con tu cuenta de Google o Microsoft.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </form>
