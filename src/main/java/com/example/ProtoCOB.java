@@ -1,13 +1,6 @@
 package com.example;
 
-import com.example.domain.Persona;
-import com.example.domain.Rol;
-import com.example.domain.Usuario;
-import com.example.servicio.PersonaServicio;
-import com.example.servicio.RolServicio;
 import com.example.servicio.UsuarioDetailsServices;
-import com.example.servicio.UsuarioServicio;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -21,10 +14,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @SpringBootApplication
-public class ProtoBOB {
+public class ProtoCOB {
 
 	public static void main(String[] args) {
-		SpringApplication.run(ProtoBOB.class, args);
+		SpringApplication.run(ProtoCOB.class, args);
 	}
 
 
