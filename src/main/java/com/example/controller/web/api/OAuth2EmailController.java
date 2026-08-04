@@ -166,22 +166,5 @@ public class OAuth2EmailController {
         }
     }
 
-    /**
-     * Convierte OAuth2EmailService.EmailResult a EmailService.EmailResult
-     */
-    private EmailService.EmailResult convertToEmailResult(OAuth2EmailService.EmailResult oauth2Result) {
-        EmailService.EmailResult result = new EmailService.EmailResult();
-        // Nota: EmailResult tiene los mismos campos, pero son clases diferentes
-        // Tendrás que crear un método que extraiga los valores
-        for (int i = 0; i < oauth2Result.getSuccessCount(); i++) {
-            result.incrementSuccess();
-        }
-        for (int i = 0; i < oauth2Result.getFailedCount(); i++) {
-            result.incrementFailed();
-        }
-        for (String email : oauth2Result.getFailedEmails()) {
-            result.addFailedEmail(email);
-        }
-        return result;
-    }
+
 }
