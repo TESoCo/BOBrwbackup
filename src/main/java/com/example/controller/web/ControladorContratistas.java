@@ -3,6 +3,7 @@ package com.example.controller.web;
 import com.example.domain.*;
 import com.example.servicio.*;
 import com.example.servicioWeb.EmailService;
+import com.example.servicioWeb.OAuth2EmailService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -43,22 +44,37 @@ public class ControladorContratistas {
     private ProveedorServicio proveedorServicio;
 
     @Autowired
+    private UsuarioServicio usuarioServicio;
+
+
+    @Autowired
     private PersonaServicio personaServicio;
 
     @Autowired
     private InfoComServicio infoComServicio;
 
     @Autowired
-    private EmailService emailService;
+    private OAuth2EmailService oauth2EmailService;  // ← NUEVO: Para envío desde cuentas OAuth2
 
 
 
     @GetMapping
-    public String inicioContrat(Model model){
+    public String inicioContrat(Model model, Authentication authentication){
         List<Contratista> contratistas = contratistaServicio.listarContratistas();
         List<InformacionComercial> informacionesComerciales = infoComServicio.comercialList();
         model.addAttribute("contratistas",contratistas);
         model.addAttribute("informacionesComerciales", informacionesComerciales);
+
+        // Agregar información del usuario autenticado
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+            if (usuario != null) {
+                model.addAttribute("authProvider", usuario.getAuthProvider());
+                model.addAttribute("hasRefreshToken", usuario.getGoogleRefreshToken() != null);
+            }
+        }
+
         return "contratistas/contratista";
     }
 
@@ -343,14 +359,56 @@ public class ControladorContratistas {
                 return "redirect:/contratistas";
             }
 
+
+            // Obtener el usuario actual para usar su email como remitente
+            String username = authentication.getName();
+            Usuario usuarioActual = usuarioServicio.encontrarPorNombreUsuario(username);
+
+            if (usuarioActual == null) {
+                ra.addFlashAttribute("error", "Usuario no encontrado");
+                return "redirect:/contratistas";
+            }
+
+            // VERIFICAR QUE EL USUARIO SEA OAuth2
+            if (usuarioActual.getAuthProvider() == Usuario.AuthProvider.LOCAL) {
+                ra.addFlashAttribute("error",
+                        "❌ No puedes enviar correos desde una cuenta LOCAL.\n\n" +
+                                "Para enviar reportes por correo, debes:\n" +
+                                "1. Registrar tu cuenta con Google o Microsoft\n" +
+                                "2. O contactar a un administrador para que vincule tu cuenta\n\n" +
+                                "Actualmente estás autenticado como: " + username);
+                return "redirect:/contratistas";
+            }
+
+            // VERIFICAR QUE TENGA REFRESH TOKEN
+            if (usuarioActual.getGoogleRefreshToken() == null ||
+                    usuarioActual.getGoogleRefreshToken().isEmpty()) {
+                ra.addFlashAttribute("error",
+                        "❌ Tu cuenta no tiene un refresh token válido. " +
+                                "Por favor, vuelve a iniciar sesión con Google o Microsoft.");
+                return "redirect:/contratistas";
+            }
+
+            // Obtener email del usuario como remitente
+            String fromEmail = null;
+            if (usuarioActual.getPersona() != null &&
+                    usuarioActual.getPersona().getCorreo() != null) {
+                fromEmail = usuarioActual.getPersona().getCorreo();
+            }
+
+            if (fromEmail == null || fromEmail.isEmpty()) {
+                fromEmail = usuarioActual.getNombreUsuario() + "@gmail.com";
+                ra.addFlashAttribute("warning",
+                        "El usuario no tiene email configurado. Usando email por defecto.");
+            }
+
+
             // 1. Generar el Excel
             byte[] excelBytes = generarReporteContratistasExcel();
 
             // 2. Enviar por correo (enviar masivamente)
 
-            String username = authentication.getName();
-
-            EmailService.EmailResult result = emailService.sendMassEmailWithAttachment(
+            OAuth2EmailService.EmailResult result = oauth2EmailService.sendMassEmailWithAttachment(
                     allRecipients,
                     subject,
                     message,
@@ -361,8 +419,9 @@ public class ControladorContratistas {
 
             if (result.getSuccessCount() > 0) {
                 String successMsg = String.format(
-                        "Reporte enviado exitosamente a %d destinatario(s)",
-                        result.getSuccessCount()
+                        "Reporte enviado exitosamente a %d destinatario(s) desde %s",
+                        result.getSuccessCount(),
+                        fromEmail
                 );
                 ra.addFlashAttribute("success", successMsg);
 

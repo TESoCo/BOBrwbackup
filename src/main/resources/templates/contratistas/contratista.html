@@ -145,9 +145,23 @@
                 <a th:href="@{/contratistas/excel}" class="btn btn-secondary">
                     <i class="fas fa-download"></i> Descargar Excel
                 </a>
-                <button class="btn btn-secondary" id="sendReportBtn">
-                    <i class="fas fa-envelope"></i> Enviar Reporte
-                </button>
+                <!-- Botón de envío de reporte - Solo para usuarios OAuth2 -->
+                <div>
+                    <th:block th:if="${authProvider != null and authProvider.name() != 'LOCAL' and hasRefreshToken}">
+                        <button type="button" class="btn btn-primary" id="sendReportBtn">
+                            <i class="fas fa-envelope"></i> Enviar Reporte por Correo
+                        </button>
+                    </th:block>
+                </div>
+                <!-- Mensaje informativo para usuarios LOCALES -->
+                <div>
+                    <th:block th:if="${authProvider != null and authProvider.name() == 'LOCAL'}">
+                        <div class="alert alert-info" style="background: #e3f2fd; padding: 12px; border-radius: 5px; border-left: 4px solid #2196F3; margin-bottom: 1rem;">
+                            <i class="fas fa-info-circle"></i>
+                            Para enviar reportes por correo, inicia sesión con tu cuenta de Google o Microsoft.
+                        </div>
+                    </th:block>
+                </div>
             </div>
         </div>
 

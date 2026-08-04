@@ -36,9 +36,6 @@ public class OAuth2EmailController {
     private OAuth2EmailService oauth2EmailService;  // Para usuarios con Google
 
     @Autowired
-    private EmailService emailService;              // Para usuarios locales (OAuth2 del sistema)
-
-    @Autowired
     private UsuarioServicio usuarioServicio;
 
     @PostMapping("/send-report")
@@ -63,6 +60,29 @@ public class OAuth2EmailController {
             System.out.println("Auth Provider: " + usuario.getAuthProvider());
             System.out.println("Tiene refresh token: " + (usuario.getGoogleRefreshToken() != null));
 
+            // VERIFICAR QUE EL USUARIO SEA OAuth2 (Google o Microsoft)
+            if (usuario.getAuthProvider() == Usuario.AuthProvider.LOCAL) {
+                String mensaje = """
+                        No puedes enviar correos desde una cuenta LOCAL.
+                        
+                        Para enviar reportes por correo, debes:
+                        1. Registrar tu cuenta con Google o Microsoft
+                        2. O contactar a un administrador para que vincule tu cuenta
+                        
+                        Actualmente estás autenticado como: %s
+                        """.formatted(username);
+
+                return ResponseEntity.status(403).body(mensaje);
+            }
+
+            // VERIFICAR QUE TENGA REFRESH TOKEN
+            if (usuario.getGoogleRefreshToken() == null || usuario.getGoogleRefreshToken().isEmpty()) {
+                return ResponseEntity.status(403).body(
+                        "Tu cuenta no tiene un refresh token válido. " +
+                                "Por favor, vuelve a iniciar sesión con Google o Microsoft."
+                );
+            }
+
             // Obtener destinatarios
             List<String> recipients = new ArrayList<>();
 
@@ -71,7 +91,13 @@ public class OAuth2EmailController {
             }
 
             if (emailRequest.getCustomEmail() != null && !emailRequest.getCustomEmail().isEmpty()) {
-                recipients.add(emailRequest.getCustomEmail());
+                String[] customEmails = emailRequest.getCustomEmail().split(",");
+                for (String email : customEmails) {
+                    String trimmed = email.trim();
+                    if (!trimmed.isEmpty() && !recipients.contains(trimmed)) {
+                        recipients.add(trimmed);
+                    }
+                }
             }
 
             if (recipients.isEmpty()) {
@@ -101,40 +127,38 @@ public class OAuth2EmailController {
                 return ResponseEntity.badRequest().body("Tipo de reporte no válido");
             }
 
-            // ✅ DECISIÓN: ¿Qué servicio usar?
-            EmailService.EmailResult result;
+            // ENVIAR DESDE LA CUENTA DEL USUARIO OAuth2
+            OAuth2EmailService.EmailResult result = oauth2EmailService.sendMassEmailWithAttachment(
+                    recipients,
+                    emailRequest.getSubject(),
+                    emailRequest.getMessage(),
+                    excelReport,
+                    fileName,
+                    username
+            );
 
-            if (usuario.getGoogleRefreshToken() != null && !usuario.getGoogleRefreshToken().isEmpty()) {
-                // ✅ Usuario con Google → Enviar desde su cuenta
-                System.out.println("📧 Enviando desde cuenta Google de: " + username);
+            if (result.getSuccessCount() > 0) {
+                String emailFrom = usuario.getPersona() != null ?
+                        usuario.getPersona().getCorreo() :
+                        usuario.getNombreUsuario() + "@gmail.com";
 
-                OAuth2EmailService.EmailResult oauth2Result = oauth2EmailService.sendMassEmailWithAttachment(
-                        recipients,
-                        emailRequest.getSubject(),
-                        emailRequest.getMessage(),
-                        excelReport,
-                        fileName,
-                        username
+                String successMsg = String.format(
+                        "Reporte enviado exitosamente a %d destinatario(s) desde %s",
+                        result.getSuccessCount(),
+                        emailFrom
                 );
 
-                // Convertir a EmailResult (misma estructura)
-                result = convertToEmailResult(oauth2Result);
+                if (result.getFailedCount() > 0) {
+                    successMsg += String.format(" ⚠️ %d correo(s) fallaron", result.getFailedCount());
+                }
 
+                return ResponseEntity.ok(successMsg);
             } else {
-                // ✅ Usuario LOCAL → Usar OAuth2 del sistema (cuenta única)
-                System.out.println("📧 Enviando desde cuenta del sistema.");
-
-                result = emailService.sendMassEmailWithAttachment(
-                        recipients,
-                        emailRequest.getSubject(),
-                        emailRequest.getMessage(),
-                        excelReport,
-                        fileName,
-                        username  // Pasamos username para logging
+                return ResponseEntity.status(500).body(
+                        "❌ No se pudo enviar el correo a ningún destinatario"
                 );
             }
 
-            return ResponseEntity.ok(result);
 
         } catch (Exception e) {
             e.printStackTrace();
