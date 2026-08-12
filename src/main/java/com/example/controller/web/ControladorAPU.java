@@ -387,6 +387,9 @@ public class ControladorAPU {
                 return "redirect:/apu/inicioAPU";
             }
 
+            System.out.println("📂 Importando archivo: " + archivo.getOriginalFilename());
+            System.out.println("👤 Usuario: " + usuario.getNombreUsuario());
+
             // Import APUs from CSV
             List<Apu> apusImportados = apuServicio.importarAPUsDesdeCSV(archivo, usuario);
 
@@ -411,6 +414,7 @@ public class ControladorAPU {
 
         return "redirect:/apu/inicioAPU";
     }
+
     private void setDefaultValues(Apu apu) {
         // Set default values for optional fields if null
         if (apu.getVMaterialesAPU() == null) {
