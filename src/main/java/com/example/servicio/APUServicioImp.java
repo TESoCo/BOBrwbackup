@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -162,6 +163,21 @@ public class APUServicioImp implements APUServicio {
         List<Apu> apusImportados = new ArrayList<>();
 
         try {
+                // Detectar y eliminar BOM al inicio del archivo
+                InputStream inputStream = file.getInputStream();
+                byte[] bom = new byte[3];
+                inputStream.mark(3);
+                inputStream.read(bom);
+
+                // Si tiene BOM UTF-8, saltarlo
+                if (bom[0] == (byte) 0xEF && bom[1] == (byte) 0xBB && bom[2] == (byte) 0xBF) {
+                    System.out.println("⚠️ BOM UTF-8 detectado, saltando...");
+                    inputStream.reset();
+                    inputStream.skip(3);
+                } else {
+                    inputStream.reset();
+                }
+
                 CSVParser parser = new CSVParserBuilder()
                         .withSeparator(',')
                         .withQuoteChar('"')
@@ -210,6 +226,28 @@ public class APUServicioImp implements APUServicio {
                     System.err.println("Fila " + i + " ignorada - muy pocas columnas: " + record.length);
                 }
 
+                // Limpiar cada campo
+                for (int j = 0; j < record.length; j++) {
+                    record[j] = cleanValue(record[j]);
+                }
+
+                // Verificar que los campos obligatorios no estén vacíos
+                String nombre = record.length > 1 ? record[1] : "";
+                String descripcion = record.length > 2 ? record[2] : "";
+                String unidad = record.length > 3 ? record[3] : "";
+
+                if (nombre.isEmpty() || descripcion.isEmpty() || unidad.isEmpty()) {
+                    System.err.println("Fila " + i + " ignorada - campos obligatorios vacíos");
+                    continue;
+                }
+
+                Apu apu = crearAPUDesdeCSV(record, usuario);
+                if (apu != null) {
+                    apusImportados.add(apu);
+                    System.out.println("✅ APU agregado: " + apu.getNombreAPU());
+                }
+
+
 
             }
         } catch (CsvException e) {
@@ -228,22 +266,98 @@ public class APUServicioImp implements APUServicio {
 
             // Map CSV columns to APU fields
             // CSV format: item,nombreAPU,descAPU,unidades,duracion, vMaterialesAPU,vManoDeObraAPU,vTransporteAPU,vMiscAPU
-            apu.setNombreAPU(record.length > 1 ? cleanValue(record[1]) : "");     // nombreAPU (column 1)
-            apu.setDescAPU(record.length > 2 ? cleanValue(record[2]) : "");       // descAPU (column 2)
-            apu.setUnidadesAPU(record.length > 3 ? cleanValue(record[3]) : "");   // unidades (column 3)
-            apu.setDuracionAPU(record.length > 4 ? parseBigDecimal(record[4]) : new BigDecimal("1.0"));   // duracion (column 4)
 
-            // Handle optional numeric values (columns 4-7)
-            apu.setVMaterialesAPU(record.length > 5 ? parseBigDecimal(record[5]) : BigDecimal.ZERO);    // vMaterialesAPU
-            apu.setVManoDeObraAPU((record.length > 6) ? parseBigDecimal(record[6]) : BigDecimal.ZERO);    // vManoDeObraAPU
-            apu.setVTransporteAPU(record.length > 7 ? parseBigDecimal(record[7]) : BigDecimal.ZERO);    // vTransporteAPU
-            apu.setVMiscAPU(record.length > 8 ? parseBigDecimal(record[8]) : BigDecimal.ZERO);          // vMiscAPU
+            String nombre = record.length > 1 ? cleanValue(record[1]) : "";// nombreAPU (column 1)
+            String descripcion = record.length > 2 ? cleanValue(record[2]) : "";// descAPU (column 2)
+            String unidad = record.length > 3 ? cleanValue(record[3]) : "";// unidades (column 3)
+            String duracionStr = record.length > 4 ? cleanValue(record[4]) : "";// duracion (column 4)
+            String vMaterialesStr = record.length > 5 ? cleanValue(record[5]) : "";// vMaterialesAPU
+            String vManoObraStr = record.length > 6 ? cleanValue(record[6]) : "";// vManoDeObraAPU
+            String vTransporteStr = record.length > 7 ? cleanValue(record[7]) : "";// vTransporteAPU
+            String vMiscStr = record.length > 8 ? cleanValue(record[8]) : "";// vMiscAPU
+
+
+            // VALIDAR Y TRUNCAR NOMBRE (máximo 255 caracteres)
+            if (nombre.isEmpty()) {
+                System.err.println("⚠️ Nombre vacío, usando valor por defecto");
+                nombre = "APU SIN NOMBRE";
+            }
+
+            if (nombre.length() > 255) {
+                nombre = nombre.substring(0, 255);
+                System.out.println("⚠️ Nombre truncado a 255 caracteres");
+            }
+            apu.setNombreAPU(nombre);
+
+            // VALIDAR DESCRIPCIÓN (TEXT no tiene límite estricto, pero limitamos a 1000 para seguridad)
+            if (descripcion.isEmpty()) {
+                descripcion = "SIN DESCRIPCIÓN";
+            }
+
+            if (descripcion.length() > 1000) {
+                descripcion = descripcion.substring(0, 1000);
+                System.out.println("⚠️ Descripción truncada a 1000 caracteres");
+            }
+            apu.setDescAPU(descripcion);
+
+            // VALIDAR UNIDAD (máximo 50 caracteres, no puede estar vacía)
+            if (unidad == null || unidad.trim().isEmpty()) {
+                unidad = "N/A"; // Valor por defecto si está vacío
+                System.out.println("⚠️ Unidad vacía, usando 'N/A'");
+            } else if (unidad.length() > 50) {
+                unidad = unidad.substring(0, 50);
+                System.out.println("⚠️ Unidad truncada a 50 caracteres");
+            }
+            apu.setUnidadesAPU(unidad);
+
+            // Parsear duración (si es null o vacío, usar 1.0)
+            BigDecimal duracion = parseBigDecimal(duracionStr);
+            if (duracion == null || duracion.compareTo(BigDecimal.ZERO) <= 0) {
+                duracion = new BigDecimal("1.0");
+            }
+            apu.setDuracionAPU(duracion);
+
+            // Parsear valores monetarios
+            apu.setVMaterialesAPU(parseBigDecimalSafe(vMaterialesStr));
+            apu.setVManoDeObraAPU(parseBigDecimalSafe(vManoObraStr));
+            apu.setVTransporteAPU(parseBigDecimalSafe(vTransporteStr));
+            apu.setVMiscAPU(parseBigDecimalSafe(vMiscStr));
+
+            // Establecer activo por defecto
+            apu.setActivo(true);
+
+            // Recalcular el total ANTES de guardar
+            apu.recalcularTotal();
+
+            // DEBUG: Mostrar qué se está procesando
+            System.out.println("📝 APU procesado: " + apu.getNombreAPU() +
+                    " | Unidad: " + apu.getUnidadesAPU() +
+                    " | Total: " + apu.getVTotalApu());
+
 
             return apu;
+
         } catch (Exception e) {
             System.err.println("Error processing CSV record: " + String.join(",", record));
             e.printStackTrace();
             return null;
+        }
+    }
+
+    // Método seguro para parsear BigDecimal
+    private BigDecimal parseBigDecimalSafe(String value) {
+        try {
+            if (value == null || value.trim().isEmpty() || value.equals("null")) {
+                return BigDecimal.ZERO;
+            }
+            String clean = value.trim().replace(",", "").replace("$", "");
+            if (clean.isEmpty()) {
+                return BigDecimal.ZERO;
+            }
+            return new BigDecimal(clean);
+        } catch (NumberFormatException e) {
+            System.err.println("⚠️ Error parseando número: '" + value + "' - usando 0");
+            return BigDecimal.ZERO;
         }
     }
 
@@ -252,7 +366,9 @@ public class APUServicioImp implements APUServicio {
         try {
             // Limpiar caracteres problemáticos
             String cleaned = value
+                    .replace("\uFEFF", "")      // Eliminar BOM
                     .replace("\"", "") // Remover comillas dobles
+                    .replace("'", "")            // Remover comillas simples
                     .replace("\uFFFD", "") // Remover caracteres de reemplazo Unicode
                     .replaceAll("[\\x00-\\x1F\\x7F]", "") // Remover caracteres de control
                     .replaceAll("\\s+", " ") // Normalizar espacios múltiples
@@ -263,7 +379,16 @@ public class APUServicioImp implements APUServicio {
                 System.out.println("⚠️  Texto con caracteres especiales detectado: " + cleaned.substring(0, Math.min(50, cleaned.length())));
             }
 
+            // Si quedó vacío después de limpiar, retornar cadena vacía
+            if (cleaned.isEmpty()) {
+                return "";
+            }
+
+            // Verificar caracteres especiales y reemplazar si es necesario
+            cleaned = cleaned.replaceAll("[^\\p{ASCII}]", " ").trim();
+
             return cleaned.isEmpty() ? "" : cleaned;
+
         } catch (Exception e) {
             System.err.println("Error cleaning value: '" + value + "' - " + e.getMessage());
             return "";
@@ -296,13 +421,97 @@ public class APUServicioImp implements APUServicio {
     @Override
     @Transactional
     public void guardarTodos(List<Apu> apus) {
-        try {
-            APUDao.saveAll(apus);
-            System.out.println("✅ guardarTodos completado");
-        } catch (Exception e) {
-            System.err.println("❌ Error en guardarTodos: " + e.getMessage());
-            e.printStackTrace();
-            throw e; // Re-lanzar para que el rollback sea visible
+        if (apus == null || apus.isEmpty()) {
+            System.out.println("⚠️ Lista de APUs vacía, nada que guardar");
+            return;
+        }
+
+        System.out.println("📊 Intentando guardar " + apus.size() + " APUs");
+
+        // Filtrar y validar APUs antes de guardar
+        List<Apu> apusValidos = new ArrayList<>();
+        List<String> errores = new ArrayList<>();
+
+        for (int i = 0; i < apus.size(); i++) {
+            Apu apu = apus.get(i);
+            try {
+                // Validar campos obligatorios
+                if (apu.getIdUsuario() == null) {
+                    errores.add("APU #" + (i+1) + ": Usuario no asignado");
+                    continue;
+                }
+
+                if (apu.getNombreAPU() == null || apu.getNombreAPU().trim().isEmpty()) {
+                    errores.add("APU #" + (i+1) + ": Nombre vacío o nulo");
+                    continue;
+                }
+
+                if (apu.getDescAPU() == null || apu.getDescAPU().trim().isEmpty()) {
+                    errores.add("APU #" + (i+1) + ": Descripción vacía o nula");
+                    continue;
+                }
+
+                if (apu.getUnidadesAPU() == null || apu.getUnidadesAPU().trim().isEmpty()) {
+                    apu.setUnidadesAPU("N/A");
+                    System.out.println("⚠️ APU #" + (i+1) + " unidad vacía, usando 'N/A'");
+                }
+
+                // Asegurar valores por defecto
+                if (apu.getVMaterialesAPU() == null) apu.setVMaterialesAPU(BigDecimal.ZERO);
+                if (apu.getVManoDeObraAPU() == null) apu.setVManoDeObraAPU(BigDecimal.ZERO);
+                if (apu.getVTransporteAPU() == null) apu.setVTransporteAPU(BigDecimal.ZERO);
+                if (apu.getVMiscAPU() == null) apu.setVMiscAPU(BigDecimal.ZERO);
+                if (apu.getActivo() == null) apu.setActivo(true);
+
+                // Recalcular total
+                apu.recalcularTotal();
+
+                // Truncar nombres largos si es necesario
+                if (apu.getNombreAPU().length() > 255) {
+                    apu.setNombreAPU(apu.getNombreAPU().substring(0, 255));
+                }
+
+                apusValidos.add(apu);
+
+            } catch (Exception e) {
+                errores.add("APU #" + (i+1) + " (" + apu.getNombreAPU() + "): " + e.getMessage());
+            }
+        }
+
+        // Mostrar errores de validación
+        if (!errores.isEmpty()) {
+            System.err.println("❌ ERRORES DE VALIDACIÓN:");
+            for (String error : errores) {
+                System.err.println("   - " + error);
+            }
+        }
+
+        // Guardar APUs válidos
+        if (!apusValidos.isEmpty()) {
+            try {
+                APUDao.saveAll(apusValidos);
+                System.out.println("✅ " + apusValidos.size() + " APUs guardados exitosamente");
+            } catch (Exception e) {
+                System.err.println("❌ Error al guardar APUs en lote: " + e.getMessage());
+                e.printStackTrace();
+
+                // Intentar guardar uno por uno para identificar el problema
+                System.out.println("🔄 Intentando guardar uno por uno...");
+                int guardados = 0;
+                for (Apu apu : apusValidos) {
+                    try {
+                        APUDao.save(apu);
+                        guardados++;
+                    } catch (Exception ex) {
+                        System.err.println("❌ Error guardando APU '" + apu.getNombreAPU() + "': " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                }
+                System.out.println("✅ APUs guardados individualmente: " + guardados + " de " + apusValidos.size());
+                throw new RuntimeException("Error al guardar APUs: " + e.getMessage(), e);
+            }
+        } else {
+            throw new RuntimeException("No hay APUs válidos para guardar");
         }
     }
 
