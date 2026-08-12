@@ -175,8 +175,11 @@ public class APUServicioImp implements APUServicio {
                     inputStream.reset();
                     inputStream.skip(3);
                 } else {
+                    System.out.println("ℹNo se detectó BOM, continuando...");
                     inputStream.reset();
                 }
+
+
 
                 CSVParser parser = new CSVParserBuilder()
                         .withSeparator(',')
@@ -184,19 +187,40 @@ public class APUServicioImp implements APUServicio {
                         .withEscapeChar('\\')
                         .build();
 
+                InputStreamReader readerStream = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+                System.out.println("📖 Leyendo archivo con codificación UTF-8");
 
                 CSVReader reader = new CSVReaderBuilder(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))
                         .withCSVParser(parser)
                         .build();
+
                 List<String[]> records = reader.readAll();
             reader.close();
 
 
             System.out.println("Total de filas en CSV: " + records.size()); // DEBUG
 
+            if (records.isEmpty()) {
+                System.out.println("❌ El archivo CSV está vacío");
+                return apusImportados;
+            }
+
             if (!records.isEmpty()) {
                 System.out.println("Encabezados: " + String.join(" | ", records.get(0)));
             }
+
+            // Mostrar encabezados
+            String[] header = records.get(0);
+            System.out.println("📋 Encabezados (" + header.length + " columnas): " + String.join(" | ", header));
+
+            // Verificar que los encabezados sean correctos
+            if (header.length < 9) {
+                System.out.println("❌ Error: El CSV debe tener al menos 9 columnas, tiene " + header.length);
+                return apusImportados;
+            }
+
+            // Procesar filas
+            System.out.println("🔄 Procesando " + (records.size() - 1) + " filas de datos...");
 
             // Skip header row (index 0) and process data rows
             for (int i = 1; i < records.size(); i++) {
