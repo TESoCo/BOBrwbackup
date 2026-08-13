@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/email")
@@ -138,7 +140,14 @@ public class OAuth2EmailController {
                     username
             );
 
+
+
             if (result.getSuccessCount() > 0) {
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("successCount", result.getSuccessCount());
+
                 String emailFrom = usuario.getPersona() != null ?
                         usuario.getPersona().getCorreo() :
                         usuario.getNombreUsuario() + "@gmail.com";
@@ -153,11 +162,15 @@ public class OAuth2EmailController {
                     successMsg += String.format(" ⚠️ %d correo(s) fallaron", result.getFailedCount());
                 }
 
-                return ResponseEntity.ok(successMsg);
+                response.put("message", successMsg);
+
+                return ResponseEntity.ok(response);
+
             } else {
-                return ResponseEntity.status(500).body(
-                        "❌ No se pudo enviar el correo a ningún destinatario"
-                );
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "❌ No se pudo enviar el correo a ningún destinatario");
+                return ResponseEntity.status(500).body(response);
             }
 
 

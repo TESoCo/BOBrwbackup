@@ -103,12 +103,17 @@ public class ControladorAvance
 
         // Agregar información del tipo de autenticación al modelo
         // Determinar si es usuario OAuth2 o LOCAL
-        boolean esOAuth2 = false;
-        if (authentication != null && authentication.getPrincipal() != null) {
-            // Verificar si el principal es de tipo OAuth2User (para Google/Microsoft)
-            esOAuth2 = authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User;
-        }
+        // Obtener el usuario logueado
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
+        // Verificar el proveedor de autenticación
+        boolean esOAuth2 = usuario != null &&
+                usuario.getAuthProvider() != null &&
+                !"LOCAL".equals(usuario.getAuthProvider());
+
         model.addAttribute("esOAuth2", esOAuth2);
+        model.addAttribute("usuarios", usuarioServicio.listarUsuarios());
 
 
         return "avances/inicioAvances";
