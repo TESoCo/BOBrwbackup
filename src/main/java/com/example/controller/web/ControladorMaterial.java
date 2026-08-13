@@ -108,6 +108,9 @@ public class ControladorMaterial {
     public String mostrarFormularioEdicion(@PathVariable Long id, Model model) {
         Material material = materialServicio.obtenerPorId(id);
         model.addAttribute("material", material);
+        model.addAttribute("precioActual",materialServicio.getPrecioActual(material.getIdMaterial()));
+
+
         return "material/editarMaterial";
     }
 
