@@ -31,14 +31,13 @@ RUN pip install --no-cache-dir \
     python-dotenv \
     requests
 
-# Copiar el código de FastAPI
 COPY main.py .
 
 # ==================== RUNTIME FINAL ====================
 FROM eclipse-temurin:17-jre-alpine
 
-# Instalar Python y supervisor (sin pip3)
-RUN apk add --no-cache python3 supervisor
+# Instalar Python (sin pip3)
+RUN apk add --no-cache python3
 
 # Crear entorno virtual en el runtime
 RUN python3 -m venv /opt/venv
@@ -55,34 +54,20 @@ WORKDIR /app
 # Copiar Spring Boot JAR
 COPY --from=springboot-builder /app/springboot/target/protoCOB-*.jar springboot-app.jar
 
-# Crear archivo de configuración de supervisor
-RUN echo '[supervisord]\n\
-nodaemon=true\n\
-logfile=/var/log/supervisord.log\n\
-pidfile=/var/run/supervisord.pid\n\
-\n\
-[program:springboot]\n\
-command=java -jar /app/springboot-app.jar\n\
-autostart=true\n\
-autorestart=true\n\
-stdout_logfile=/var/log/springboot.log\n\
-stderr_logfile=/var/log/springboot-error.log\n\
-\n\
-[program:fastapi]\n\
-command=/opt/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000\n\
-directory=/app/fastapi\n\
-autostart=true\n\
-autorestart=true\n\
-stdout_logfile=/var/log/fastapi.log\n\
-stderr_logfile=/var/log/fastapi-error.log\n\
-' > /etc/supervisord.conf
-
-# IMPORTANTE: Ambos servicios están en el mismo contenedor
 ENV SPRINGBOOT_URL=http://localhost:8080
-ENV PATH="/opt/venv/bin:$PATH"
 
-# Exponer ambos puertos
 EXPOSE 8080 8000
 
-# Iniciar supervisor
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+# Script de inicio
+RUN echo '#!/bin/sh\n\
+echo "🚀 Iniciando Spring Boot..."\n\
+java -jar /app/springboot-app.jar &\n\
+\n\
+sleep 5\n\
+\n\
+echo "🚀 Iniciando FastAPI..."\n\
+cd /app/fastapi\n\
+/opt/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]
