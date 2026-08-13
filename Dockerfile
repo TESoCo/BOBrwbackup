@@ -16,7 +16,11 @@ FROM python:3.11-slim AS fastapi-builder
 
 WORKDIR /app/fastapi
 
-# Instalar dependencias de Python
+# Crear y activar entorno virtual
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Instalar dependencias en el entorno virtual
 RUN pip install --no-cache-dir \
     fastapi \
     uvicorn \
@@ -33,29 +37,23 @@ COPY main.py .
 # ==================== RUNTIME FINAL ====================
 FROM eclipse-temurin:17-jre-alpine
 
-# Instalar Python, supervisor y dependencias necesarias
-# CORREGIDO: Ya no creamos el enlace simbólico porque python ya existe
-RUN apk add --no-cache python3 py3-pip supervisor
+# Instalar Python y supervisor (sin pip3)
+RUN apk add --no-cache python3 supervisor
 
-# Instalar dependencias de Python en el runtime
-RUN pip3 install --no-cache-dir \
-    fastapi \
-    uvicorn \
-    python-multipart \
-    pymongo \
-    pillow \
-    reportlab \
-    python-dotenv \
-    requests
+# Crear entorno virtual en el runtime
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copiar las dependencias desde el builder
+COPY --from=fastapi-builder /opt/venv /opt/venv
+
+# Copiar el código de FastAPI
+COPY --from=fastapi-builder /app/fastapi/main.py ./fastapi/
 
 WORKDIR /app
 
 # Copiar Spring Boot JAR
 COPY --from=springboot-builder /app/springboot/target/protoCOB-*.jar springboot-app.jar
-
-# Copiar FastAPI
-COPY --from=fastapi-builder /app/fastapi/main.py ./fastapi/
-COPY --from=fastapi-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # Crear archivo de configuración de supervisor
 RUN echo '[supervisord]\n\
@@ -71,20 +69,20 @@ stdout_logfile=/var/log/springboot.log\n\
 stderr_logfile=/var/log/springboot-error.log\n\
 \n\
 [program:fastapi]\n\
-command=python3 -m uvicorn main:app --host 0.0.0.0 --port 8000\n\
+command=/opt/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000\n\
 directory=/app/fastapi\n\
 autostart=true\n\
 autorestart=true\n\
 stdout_logfile=/var/log/fastapi.log\n\
 stderr_logfile=/var/log/fastapi-error.log\n\
-environment=PYTHONPATH="/usr/local/lib/python3.11/site-packages"\n\
 ' > /etc/supervisord.conf
 
 # IMPORTANTE: Ambos servicios están en el mismo contenedor
 ENV SPRINGBOOT_URL=http://localhost:8080
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Exponer ambos puertos
 EXPOSE 8080 8000
 
-# Iniciar supervisor que manejará ambos servicios
+# Iniciar supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
