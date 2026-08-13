@@ -4,7 +4,6 @@ import com.example.domain.*;
 import com.example.servicio.AvanceServicio;
 import com.example.servicio.InventarioServicio;
 import com.example.servicio.ObraServicio;
-import org.apache.poi.hpsf.Decimal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -37,7 +36,15 @@ public class ControladorDashboard {
         try {
             // Obtener datos reales de obras
             List<Obra> obras = obraServicio.listaObra();
-            int cantidadObras = obras.size();
+            int cantidadObras = 0;
+
+            for (Obra obra : obras ){
+                if (obraServicio.isEjecucionActiva(obra.getIdObra())){
+                    cantidadObras++;
+                }
+            }
+
+
 
             // Calcular valor total de obras (sumando valores de APUs)
             BigDecimal valorTotalObras = calcularValorTotalObras(obras);

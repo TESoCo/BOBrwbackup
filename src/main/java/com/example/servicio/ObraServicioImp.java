@@ -237,75 +237,80 @@ public class ObraServicioImp implements ObraServicio {
 
 
     @Override
-    public Obra getObraPresupuesto(Long idProyecto) {
-        Proyecto proyecto = proyectoDao.findById(idProyecto).get();
-        if (proyecto == null) return null;
-        return proyecto.getObras().stream()
-                .filter(o -> Obra.EtapaObra.PRESUPUESTO.equals(o.getEtapa())).findFirst().orElse(null);
+    public Obra getObraPresupuesto(String idUnico) {
+        List<Obra> obras = obraDao.findByIdentificadorUnico(idUnico);
+        if (obras == null) return null;
+        for (Obra obra : obras){
+            if (obra.getEtapa() == Obra.EtapaObra.PRESUPUESTO){
+                return obra;
+            }
+        }
+        return null;
     }
 
     @Override
-    public Obra getObraEjecucion(Long idProyecto) {
-        Proyecto proyecto = proyectoDao.findById(idProyecto).get();
-        if (proyecto == null) return null;
-        return proyecto.getObras().stream()
-                .filter(o -> Obra.EtapaObra.EJECUCION.equals(o.getEtapa()))
-                .findFirst()
-                .orElse(null);
+    public Obra getObraEjecucion(String idUnico) {
+        List<Obra> obras = obraDao.findByIdentificadorUnico(idUnico);
+        if (obras == null) return null;
+        for (Obra obra : obras){
+            if (obra.getEtapa() == Obra.EtapaObra.EJECUCION){
+                return obra;
+            }
+        }
+        return null;
     }
 
     @Override
-    public Obra getObraCierre(Long idProyecto) {
-        Proyecto proyecto = proyectoDao.findById(idProyecto).get();
-        if (proyecto == null) return null;
-        return proyecto.getObras().stream()
-                .filter(o -> Obra.EtapaObra.CIERRE.equals(o.getEtapa()))
-                .findFirst()
-                .orElse(null);
+    public Obra getObraCierre(String idUnico) {
+        List<Obra> obras = obraDao.findByIdentificadorUnico(idUnico);
+        if (obras == null) return null;
+        for (Obra obra : obras){
+            if (obra.getEtapa() == Obra.EtapaObra.CIERRE){
+                return obra;
+            }
+        }
+        return null;
     }
 
     @Override
-    public List<ApusObra> getApusPresupuesto(Long idProyecto) {
-        Obra presupuesto = getObraPresupuesto(idProyecto);
+    public List<ApusObra> getApusPresupuesto(String idUnico) {
+        Obra presupuesto = getObraPresupuesto(idUnico);
         return presupuesto != null ? presupuesto.getApusObraList() : new ArrayList<>();
     }
 
     @Override
-    public List<ApusObra> getApusEjecucion(Long idProyecto) {
-        Obra ejecucion = getObraEjecucion(idProyecto);
+    public List<ApusObra> getApusEjecucion(String idUnico) {
+        Obra ejecucion = getObraEjecucion(idUnico);
         return ejecucion != null ? ejecucion.getApusObraList() : new ArrayList<>();
     }
 
     @Override
-    public List<ApusObra> getApusCierre(Long idProyecto) {
-        Obra cierre = getObraCierre(idProyecto);
+    public List<ApusObra> getApusCierre(String idUnico) {
+        Obra cierre = getObraCierre(idUnico);
         return cierre != null ? cierre.getApusObraList() : new ArrayList<>();
     }
 
     @Override
-    public boolean isPresupuestoCompletado(Long idProyecto) {
-        Obra presupuesto = getObraPresupuesto(idProyecto);
+    public boolean isPresupuestoCompletado(String idUnico) {
+        Obra presupuesto = getObraPresupuesto(idUnico);
         return presupuesto != null &&
                 presupuesto.getApusObraList() != null &&
                 !presupuesto.getApusObraList().isEmpty();
     }
 
     @Override
-    public boolean isEjecucionActiva(Long idProyecto) {
-        Obra ejecucion = getObraEjecucion(idProyecto);
-        return ejecucion != null &&
-                ejecucion.getApusObraList() != null &&
-                !ejecucion.getApusObraList().isEmpty();
+    public boolean isEjecucionActiva(Long idObra) {
+        List<Obra> obras = obraDao.findById(idObra).stream().toList();
+        if (obras == null) return false;
+        for (Obra obra : obras){
+            if (obra.getEtapa() == Obra.EtapaObra.EJECUCION){
+                return true;
+            }
+        }
+        return false;
     }
 
-    @Override
-    public Proyecto encontrarPorIdentificadorObra(String identificadorUnico) {
-        List<Obra> obras = obraDao.findByIdentificadorUnico(identificadorUnico);
-        if (obras != null && !obras.isEmpty()) {
-            return obras.get(0).getProyecto();
-        }
-        return null;
-    }
+
 
 // ========== NUEVOS MÉTODOS PARA EL FLUJO DE ETAPAS ==========
 
@@ -659,7 +664,7 @@ public class ObraServicioImp implements ObraServicio {
 
         Proyecto proyecto = obra.getProyecto();
         if (proyecto != null) {
-            return getObraCierre(proyecto.getIdProyecto()) == null;
+            return getObraCierre(obra.getIdentificadorUnico()) == null;
         }
         return true;
     }

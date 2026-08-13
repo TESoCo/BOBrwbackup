@@ -406,9 +406,9 @@ public class ControladorObras
         model.addAttribute("proyecto", proyecto);
 
         // Obtener obras por etapa
-        Obra presupuesto = obraServicio.getObraPresupuesto(idProyecto);
-        Obra ejecucion = obraServicio.getObraEjecucion(idProyecto);
-        Obra cierre = obraServicio.getObraCierre(idProyecto);
+        List<Obra> presupuesto = proyectoServicio.getObrasProyectoPresupuesto(idProyecto);
+        List<Obra> ejecucion = proyectoServicio.getObrasProyectoEjecucion(idProyecto);
+        List<Obra> cierre = proyectoServicio.getObrasProyectoCierre(idProyecto);
 
         model.addAttribute("presupuesto", presupuesto);
         model.addAttribute("ejecucion", ejecucion);
