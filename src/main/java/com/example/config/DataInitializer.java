@@ -115,6 +115,7 @@ public class DataInitializer implements CommandLineRunner {
         //Equipos
         Permiso crearEquipo = createAndSavePermisoIfNotExists("CREAR_EQUIPO");
         Permiso editarEquipo = createAndSavePermisoIfNotExists("EDITAR_EQUIPO");
+        Permiso eliminarEquipo = createAndSavePermisoIfNotExists("ELIMINAR_EQUIPO");
         //Proyectos
         Permiso crearProyecto= createAndSavePermisoIfNotExists("CREAR_PROYECTO");
         Permiso editarProyecto = createAndSavePermisoIfNotExists("EDITAR_PROYECTO");
