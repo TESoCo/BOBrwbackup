@@ -12,6 +12,10 @@ from reportlab.lib.units import inch
 from io import BytesIO
 import requests
 import logging
+import os
+
+
+
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -40,17 +44,18 @@ class FotosRequest(BaseModel):
     fotos: List[FotoInfo]
 
 # ===== CONFIGURACIÓN =====
-SPRINGBOOT_URL = "http://localhost:2798"  # Puerto de tu Spring Boot
+SPRINGBOOT_URL = os.getenv('SPRINGBOOT_URL', 'http://localhost:2798')  # Puerto de tu Spring Boot
 
 # ===== ENDPOINTS =====
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "pdf-generator"}
+    return {"status": "healthy", "service": "pdf-generator", "springboot_url": SPRINGBOOT_URL}
 
 @app.post("/pdf/fotos-con-info")
 async def generar_pdf_con_info(request: FotosRequest):
     """Genera un PDF con el mismo estilo que pdf_fotodatos.py pero con imágenes reales"""
     logger.info(f"📥 Recibida solicitud con {len(request.fotos)} fotos")
+    logger.info(f"🔗 Usando Spring Boot URL: {SPRINGBOOT_URL}")
 
     try:
         if not request.fotos:
@@ -204,6 +209,7 @@ async def generar_pdf_con_info(request: FotosRequest):
 async def root():
     return {
         "message": "FastAPI PDF Generator",
+        "springboot_url": SPRINGBOOT_URL,
         "endpoints": {
             "/health": "Verificar estado del servicio",
             "/pdf/fotos-con-info": "Generar PDF con información de fotos (POST)",
