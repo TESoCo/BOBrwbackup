@@ -11,16 +11,12 @@ COPY src ./src
 
 RUN mvn clean package -DskipTests
 
-# ==================== FASTAPI BUILDER ====================
-FROM python:3.11-slim AS fastapi-builder
+# ==================== RUNTIME ====================
+FROM python:3.11-slim
 
-WORKDIR /app/fastapi
+WORKDIR /app
 
-# Crear y activar entorno virtual
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Instalar dependencias en el entorno virtual
+# Instalar dependencias de Python
 RUN pip install --no-cache-dir \
     fastapi \
     uvicorn \
@@ -31,43 +27,32 @@ RUN pip install --no-cache-dir \
     python-dotenv \
     requests
 
-COPY main.py .
+# Instalar Java
+RUN apt-get update && \
+    apt-get install -y openjdk-17-jre-headless && \
+    rm -rf /var/lib/apt/lists/*
 
-# ==================== RUNTIME FINAL ====================
-FROM eclipse-temurin:17-jre-alpine
-
-# Instalar Python (sin pip3)
-RUN apk add --no-cache python3
-
-# Crear entorno virtual en el runtime
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Copiar las dependencias desde el builder
-COPY --from=fastapi-builder /opt/venv /opt/venv
-
-# Copiar el código de FastAPI
-COPY --from=fastapi-builder /app/fastapi/main.py ./fastapi/
-
-WORKDIR /app
-
-# Copiar Spring Boot JAR
+# Copiar Spring Boot
 COPY --from=springboot-builder /app/springboot/target/protoCOB-*.jar springboot-app.jar
+
+# Copiar FastAPI
+COPY main.py ./fastapi/
 
 ENV SPRINGBOOT_URL=http://localhost:8080
 
 EXPOSE 8080 8000
 
-# Script de inicio
-RUN echo '#!/bin/sh\n\
+# Script de inicio que corre ambos servicios
+RUN echo '#!/bin/bash\n\
 echo "🚀 Iniciando Spring Boot..."\n\
 java -jar /app/springboot-app.jar &\n\
 \n\
-sleep 5\n\
+# Esperar a que Spring Boot arranque\n\
+sleep 10\n\
 \n\
 echo "🚀 Iniciando FastAPI..."\n\
 cd /app/fastapi\n\
-/opt/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000\n\
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8000\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
 CMD ["/app/start.sh"]
