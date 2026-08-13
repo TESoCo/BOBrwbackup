@@ -3,8 +3,8 @@ FROM maven:3.9.9-eclipse-temurin-17-alpine AS springboot-builder
 
 WORKDIR /app/springboot
 
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 COPY pom.xml .
 COPY src ./src
@@ -34,8 +34,8 @@ COPY main.py .
 FROM eclipse-temurin:17-jre-alpine
 
 # Instalar Python, supervisor y dependencias necesarias
-RUN apk add --no-cache python3 py3-pip supervisor && \
-    ln -s /usr/bin/python3 /usr/bin/python
+# CORREGIDO: Ya no creamos el enlace simbólico porque python ya existe
+RUN apk add --no-cache python3 py3-pip supervisor
 
 # Instalar dependencias de Python en el runtime
 RUN pip3 install --no-cache-dir \
