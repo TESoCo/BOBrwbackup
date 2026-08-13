@@ -268,24 +268,7 @@ public class ControladorEquipos {
                 }
             }
 
-            // TERCERO: Remover todos los proyectos actuales del equipo
-            if (equipoExistente.getProyectos() != null) {
-                for (Proyecto proyecto : equipoExistente.getProyectos()) {
-                    proyecto.setEquipo(null);
-                    proyectoServicio.guardar(proyecto);
-                }
-            }
 
-            // CUARTO: Asignar los nuevos proyectos seleccionados
-            if (idsProyectos != null && !idsProyectos.isEmpty()) {
-                for (Long idProyecto : idsProyectos) {
-                    Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
-                    if (proyecto != null) {
-                        proyecto.setEquipo(equipoExistente);
-                        proyectoServicio.guardar(proyecto);
-                    }
-                }
-            }
 
             redirectAttributes.addFlashAttribute("success", "Equipo actualizado exitosamente");
             return "redirect:/equipos?actualizacionExitosa=true";
