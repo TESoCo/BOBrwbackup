@@ -2,7 +2,6 @@ package com.example.servicio;
 
 import com.example.domain.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -45,15 +44,15 @@ public interface ObraServicio {
     List<Obra> findByProyectoIdProyecto(Long idProyecto);
 
     // funcionalidad por etapas
-    Obra getObraPresupuesto(Long idProyecto);
-    Obra getObraEjecucion(Long idProyecto);
-    Obra getObraCierre(Long idProyecto);
-    List<ApusObra> getApusPresupuesto(Long idProyecto);
-    List<ApusObra> getApusEjecucion(Long idProyecto);
-    List<ApusObra> getApusCierre(Long idProyecto);
-    boolean isPresupuestoCompletado(Long idProyecto);
-    boolean isEjecucionActiva(Long idProyecto);
-    Proyecto encontrarPorIdentificadorObra(String identificadorUnico);
+    Obra getObraPresupuesto(String idUnico);
+    Obra getObraEjecucion(String idUnico);
+    Obra getObraCierre(String idUnico);
+    List<ApusObra> getApusPresupuesto(String idUnico);
+    List<ApusObra> getApusEjecucion(String idUnico);
+    List<ApusObra> getApusCierre(String idUnico);
+    boolean isPresupuestoCompletado(String idUnico);
+    boolean isEjecucionActiva(Long idObra);
+
 
     // NUEVOS MÉTODOS PARA EL FLUJO DE ETAPAS
     // 1. Crear obra en PRESUPUESTO
@@ -87,6 +86,7 @@ public interface ObraServicio {
 
     // 9. Buscar obras por identificador
     List<Obra> findObrasByIdentificador(String identificadorUnico);
+
 
 
 

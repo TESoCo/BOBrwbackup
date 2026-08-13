@@ -16,6 +16,10 @@ public interface ProyectoServicio {
     List<Proyecto> buscarProyectosSinEquipo();
     List<Proyecto> buscarProyectosConObras();
 
+    // funcionalidad por etapas
+    List<Obra> getObrasProyectoPresupuesto(Long idProyecto);
+    List<Obra> getObrasProyectoEjecucion(Long idProyecto);
+    List<Obra> getObrasProyectoCierre(Long idProyecto);
 
 
 
