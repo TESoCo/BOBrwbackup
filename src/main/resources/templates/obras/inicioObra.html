@@ -307,9 +307,9 @@
                     <div th:each="obra : ${obrasSinProyecto}" style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span th:text="${obra.nombreObra}" style="font-size: 0.9rem;"></span>
-                            <span th:classappend="${obra.etapa == 'PRESUPUESTO'} ? 'badge-warning' : (${obra.etapa == 'EJECUCION'} ? 'badge-primary' : 'badge-success')"
+                            <span th:classappend="${obra.etapa.name() == 'PRESUPUESTO'} ? 'badge-warning' : (${obra.etapa.name() == 'EJECUCION'} ? 'badge-primary' : 'badge-success')"
                                   class="badge" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px;">
-                                <span th:text="${obra.etapa}"></span>
+                                <span th:text="${obra.etapa.name()}"></span>
                             </span>
                         </div>
                         <div style="font-size: 0.8rem; color: #6b7280;">
@@ -321,7 +321,7 @@
                             </a>
                             <form th:action="@{/obras/avanzarAEjecucion/} + ${obra.idObra}"
                                   method="post" style="display: inline;"
-                                  th:if="${obra.etapa == 'PRESUPUESTO' and not obra.anular}">
+                                  th:if="${obra.etapa.name() == 'PRESUPUESTO' and not obra.anular}">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <button type="submit" class="btn btn-sm btn-success"
                                         onclick="return confirm('¿Está seguro de avanzar esta obra a EJECUCIÓN? Se creará una nueva obra.')">
@@ -348,9 +348,9 @@
                     <div th:each="obra : ${proyecto.obras}" style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span th:text="${obra.nombreObra}" style="font-size: 0.9rem;"></span>
-                            <span th:classappend="${obra.etapa == 'PRESUPUESTO'} ? 'badge-warning' : (${obra.etapa == 'EJECUCION'} ? 'badge-primary' : 'badge-success')"
+                            <span th:classappend="${obra.etapa.name() == 'PRESUPUESTO'} ? 'badge-warning' : (${obra.etapa.name() == 'EJECUCION'} ? 'badge-primary' : 'badge-success')"
                                   class="badge" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 12px;">
-                        <span th:text="${obra.etapa}"></span>
+                        <span th:text="${obra.etapa.name()}"></span>
                     </span>
                         </div>
                         <div style="font-size: 0.8rem; color: #6b7280;">
@@ -361,7 +361,8 @@
                                 <i class="fas fa-eye"></i> Ver
                             </a>
                             <form th:action="@{/obras/avanzarAEjecucion/} + ${obra.idObra}"
-                                  method="post" style="display: inline;">
+                                  method="post" style="display: inline;"
+                                  th:if="${obra.etapa.name() == 'PRESUPUESTO' and not obra.anular}">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <button type="submit" class="btn btn-sm btn-success"
                                         onclick="return confirm('¿Está seguro de avanzar esta obra a EJECUCIÓN? Se creará una nueva obra.')">
@@ -370,21 +371,11 @@
                             </form>
                             <form th:action="@{/obras/avanzarACierre/} + ${obra.idObra}"
                                   method="post" style="display: inline;"
-                                  th:if="${obra.etapa == 'EJECUCION' and not obra.anular}">
+                                  th:if="${obra.etapa.name() == 'EJECUCION' and not obra.anular}">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <button type="submit" class="btn btn-sm btn-success"
                                         onclick="return confirm('¿Está seguro de avanzar esta obra a CIERRE? Se creará una nueva obra.')">
                                     <i class="fas fa-check-circle"></i> Avanzar a Cierre
-                                </button>
-                            </form>
-                            <form th:action="@{/obras/avanzarACierre/} + ${obra.idObra}"
-                                  method="post" style="display: inline;"
-                                  th:if="${obra.etapa == 'EJECUCION' and not obra.anular}"
-                                  onsubmit="return confirmarCierre()">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                <input type="hidden" name="fechaCierreReal" id="fechaCierreReal_${obra.idObra}"/>
-                                <button type="submit" class="btn btn-sm btn-success">
-                                    <i class="fas fa-check-circle"></i> Cerrar
                                 </button>
                             </form>
                         </div>
@@ -420,7 +411,7 @@
                     <td th:text="${obra.nombreObra}"></td>
                     <td th:text="${obra.proyecto != null ? obra.proyecto.descProyecto : 'Sin proyecto'}"></td>
                     <td>
-                    <span th:classappend="${obra.etapa == 'PRESUPUESTO'} ? 'badge-warning' : (${obra.etapa == 'EJECUCION'} ? 'badge-primary' : 'badge-success')"
+                    <span th:classappend="${obra.etapa.name() == 'PRESUPUESTO'} ? 'badge-warning' : (${obra.etapa.name() == 'EJECUCION'} ? 'badge-primary' : 'badge-success')"
                           class="badge">
                         <span th:text="${obra.etapa}"></span>
                         <span th:if="${obra.anular}" style="color: #dc2626; margin-left: 5px;">
@@ -446,7 +437,8 @@
 
                         <!-- Botón de Avanzar a EJECUCIÓN (solo en PRESUPUESTO) -->
                         <form th:action="@{/obras/avanzarAEjecucion/} + ${obra.idObra}"
-                              method="post" style="display: inline;">
+                              method="post" style="display: inline;"
+                              th:if="${obra.etapa.name() == 'PRESUPUESTO' and not obra.anular}">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-sm btn-success"
                                     onclick="return confirm('¿Está seguro de avanzar esta obra a EJECUCIÓN? Se creará una nueva obra.')">
@@ -455,16 +447,19 @@
                         </form>
 
                         <!-- Botón de Avanzar a CIERRE (solo en EJECUCIÓN) -->
-                        <a th:href="@{/obras/avanzarACierre/} + ${obra.idObra}"
-                           th:if="${obra.etapa == 'EJECUCION' and not obra.anular}"
-                           class="btn btn-sm btn-success"
-                           onclick="return confirm('¿Está seguro de avanzar esta obra a CIERRE? Se creará una nueva obra.')">
-                            <i class="fas fa-check-circle"></i>
-                        </a>
+                        <form th:action="@{/obras/avanzarACierre/} + ${obra.idObra}"
+                              method="post" style="display: inline;"
+                              th:if="${obra.etapa.name() == 'EJECUCION' and not obra.anular}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-sm btn-success"
+                                    onclick="return confirm('¿Está seguro de avanzar esta obra a CIERRE? Se creará una nueva obra.')">
+                                <i class="fas fa-check-circle"></i>
+                            </button>
+                        </form>
 
-                        <!-- Botón de Comparativa (solo en EJECUCIÓN o CIERRE) -->
+                        <!-- Botón de Comparativa (solo en EJECUCIÓN) -->
                         <a th:href="@{/obras/comparativa/} + ${obra.idObra}"
-                           th:if="${obra.etapa == 'EJECUCION' or obra.etapa == 'CIERRE'}"
+                           th:if="${obra.etapa.name() == 'EJECUCION'}"
                            class="btn btn-sm btn-info">
                             <i class="fas fa-chart-bar"></i>
                         </a>

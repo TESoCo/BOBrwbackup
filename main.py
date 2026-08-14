@@ -1,4 +1,5 @@
 # main.py - Versión que combina el estilo de pdf_fotodatos.py con imágenes reales
+import importlib
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -13,15 +14,29 @@ from io import BytesIO
 import requests
 import logging
 import os
-
-
-
+import sys
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="FastAPI PDF Generator", version="1.0")
+# ===== IMPORTAR DIRECTAMENTE DESDE LA RUTA CORRECTA =====
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Ruta al archivo pdf_fotodatos.py (con src/main/pdf_generator)
+file_path = os.path.join(current_dir, 'src', 'main', 'pdf_generator', 'pdf_fotodatos.py')
+
+# Cargar el módulo usando importlib
+spec = importlib.util.spec_from_file_location("pdf_fotodatos", file_path)
+pdf_fotodatos = importlib.util.module_from_spec(spec)
+sys.modules["pdf_fotodatos"] = pdf_fotodatos
+spec.loader.exec_module(pdf_fotodatos)
+
+# Obtener la clase
+PDFFotoDatosGenerator = pdf_fotodatos.PDFFotoDatosGenerator
+logger.info("✅ PDFFotoDatosGenerator importado correctamente")
+
+app = FastAPI(title="FastAPI PDF Generator", version="2.0")
 
 # ===== MODELOS =====
 class FotoInfo(BaseModel):
@@ -46,14 +61,25 @@ class FotosRequest(BaseModel):
 # ===== CONFIGURACIÓN =====
 SPRINGBOOT_URL = os.getenv('SPRINGBOOT_URL', 'http://localhost:2798')  # Puerto de tu Spring Boot
 
+# ===== INICIALIZAR GENERADOR =====
+pdf_generator = PDFFotoDatosGenerator(springboot_base_url=SPRINGBOOT_URL)
+
 # ===== ENDPOINTS =====
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "pdf-generator", "springboot_url": SPRINGBOOT_URL}
+    return {
+        "status": "healthy",
+        "service": "pdf-generator-integrated",
+        "springboot_url": SPRINGBOOT_URL,
+        "version": "2.0"
+    }
 
 @app.post("/pdf/fotos-con-info")
 async def generar_pdf_con_info(request: FotosRequest):
-    """Genera un PDF con el mismo estilo que pdf_fotodatos.py pero con imágenes reales"""
+    """
+    Genera un PDF usando el estilo mejorado de pdf_fotodatos.py
+    con imágenes reales desde Spring Boot
+    """
     logger.info(f"📥 Recibida solicitud con {len(request.fotos)} fotos")
     logger.info(f"🔗 Usando Spring Boot URL: {SPRINGBOOT_URL}")
 
@@ -61,135 +87,11 @@ async def generar_pdf_con_info(request: FotosRequest):
         if not request.fotos:
             raise HTTPException(status_code=400, detail="No hay fotos para procesar")
 
-        # ===== CREAR PDF EN MEMORIA =====
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
-        elements = []
-        styles = getSampleStyleSheet()
+        # ===== USAR EL GENERADOR MEJORADO =====
+        logger.info("🔄 Generando PDF con PDFFotoDatosGenerator...")
 
-        # ===== TÍTULO (igual que pdf_fotodatos.py) =====
-        title = Paragraph(
-            f"Reporte de FotoDatos - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
-            styles['Heading1']
-        )
-        elements.append(title)
-        elements.append(Spacer(1, 20))
-
-        # ===== TABLA DE DATOS (igual que pdf_fotodatos.py) =====
-        tabla_datos = [['ID', 'Obra', 'Actividad', 'Fecha', 'Archivo', 'Tamaño (KB)', 'Usuario']]
-
-        for foto in request.fotos:
-            # Calcular tamaño en KB
-            tamanio_kb = foto.tamanio_archivo / 1024 if foto.tamanio_archivo else 0
-
-            tabla_datos.append([
-                str(foto.id_fotodato or ''),
-                foto.nombre_obra or '',
-                foto.descripcion_actividad or '',
-                foto.fecha_foto or '',
-                foto.nombre_archivo or '',
-                f"{tamanio_kb:.1f}",
-                foto.nombre_usuario or ''
-            ])
-
-        # Crear y estilizar tabla (mismo estilo que pdf_fotodatos.py)
-        tabla = Table(tabla_datos, colWidths=[0.5*inch, 1.5*inch, 1.5*inch, 1.0*inch,
-                                              1.2*inch, 0.8*inch, 1.0*inch])
-
-        tabla.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E86AB')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
-            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
-        ]))
-
-        elements.append(tabla)
-        elements.append(Spacer(1, 20))
-
-        # ===== RESUMEN (igual que pdf_fotodatos.py) =====
-        resumen = Paragraph(f"Total de registros: {len(request.fotos)}", styles['Normal'])
-        elements.append(resumen)
-        elements.append(Spacer(1, 20))
-
-        # ===== SECCIÓN DE FOTOS (NUEVO: imágenes reales) =====
-        elements.append(Paragraph("=" * 80, styles['Normal']))
-        elements.append(Spacer(1, 10))
-
-        titulo_fotos = Paragraph(
-            "<b>DETALLE DE FOTOS</b>",
-            ParagraphStyle('FotoTitle', parent=styles['Normal'], fontSize=12, alignment=1)
-        )
-        elements.append(titulo_fotos)
-        elements.append(Spacer(1, 10))
-
-        # Procesar cada foto con su imagen
-        for idx, foto in enumerate(request.fotos, 1):
-            try:
-                # Título de la foto
-                foto_title = f"Foto #{idx} - {foto.nombre_archivo}"
-                elements.append(Paragraph(foto_title, styles['Heading2']))
-
-                # Información de la foto
-                info_lines = []
-                if foto.fecha_foto:
-                    info_lines.append(f"📅 Fecha: {foto.fecha_foto}")
-                if foto.nombre_obra:
-                    info_lines.append(f"🏗️ Obra: {foto.nombre_obra}")
-                if foto.descripcion_actividad:
-                    info_lines.append(f"📋 Actividad: {foto.descripcion_actividad}")
-                if foto.nombre_usuario:
-                    info_lines.append(f"👤 Usuario: {foto.nombre_usuario}")
-                if foto.coordenadas_n and foto.coordenadas_e:
-                    info_lines.append(f"📍 Coordenadas: {foto.coordenadas_n:.6f}, {foto.coordenadas_e:.6f}")
-                if foto.tamanio_archivo:
-                    info_lines.append(f"📊 Tamaño: {foto.tamanio_archivo / 1024:.1f} KB")
-
-                for line in info_lines:
-                    elements.append(Paragraph(line, styles['Normal']))
-
-                # ===== OBTENER Y AGREGAR LA IMAGEN =====
-                if foto.id_fotodato:
-                    try:
-                        image_url = f"{SPRINGBOOT_URL}/fotodatos/imagen/{foto.id_fotodato}"
-                        logger.info(f"🖼️ Obteniendo imagen: {image_url}")
-
-                        response = requests.get(image_url, timeout=30)
-
-                        if response.status_code == 200:
-                            # Usar BytesIO para la imagen
-                            image_buffer = BytesIO(response.content)
-                            img = Image(image_buffer, width=4*inch, height=3*inch)
-                            elements.append(img)
-                            elements.append(Spacer(1, 10))
-                            logger.info(f"✅ Imagen agregada")
-                        else:
-                            elements.append(Paragraph(f"❌ Imagen no disponible (HTTP {response.status_code})", styles['Normal']))
-
-                    except Exception as e:
-                        logger.error(f"Error obteniendo imagen: {e}")
-                        elements.append(Paragraph(f"❌ Error obteniendo imagen: {str(e)}", styles['Normal']))
-
-                # Línea separadora
-                elements.append(Spacer(1, 10))
-                elements.append(Paragraph("─" * 80, styles['Normal']))
-                elements.append(Spacer(1, 10))
-
-            except Exception as e:
-                logger.error(f"Error procesando foto {idx}: {e}")
-                elements.append(Paragraph(f"❌ Error procesando foto {idx}: {str(e)}", styles['Normal']))
-                elements.append(Spacer(1, 10))
-
-        # ===== GENERAR EL PDF =====
-        logger.info("📄 Generando PDF...")
-        doc.build(elements)
-        pdf_bytes = buffer.getvalue()
-        buffer.close()
-        logger.info(f"✅ PDF generado exitosamente ({len(pdf_bytes)} bytes)")
+        # Generar PDF en bytes
+        pdf_bytes = pdf_generator.generar_pdf_bytes(request.fotos)
 
         # ===== DEVOLVER EL PDF =====
         return Response(
@@ -200,6 +102,9 @@ async def generar_pdf_con_info(request: FotosRequest):
             }
         )
 
+    except ValueError as e:
+        logger.error(f"❌ Error de validación: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"❌ Error general: {str(e)}")
         logger.exception(e)
@@ -208,8 +113,9 @@ async def generar_pdf_con_info(request: FotosRequest):
 @app.get("/")
 async def root():
     return {
-        "message": "FastAPI PDF Generator",
+        "message": "FastAPI PDF Generator (Integrado)",
         "springboot_url": SPRINGBOOT_URL,
+        "version": "2.0",
         "endpoints": {
             "/health": "Verificar estado del servicio",
             "/pdf/fotos-con-info": "Generar PDF con información de fotos (POST)",
@@ -219,21 +125,24 @@ async def root():
 
 @app.get("/test-imagen/{id}")
 async def test_imagen(id: int):
-    """Endpoint de prueba para verificar que se puede obtener una imagen"""
+    """
+    Endpoint de prueba para verificar que se puede obtener una imagen
+    Usa el mismo generador para probar la conexión
+    """
     try:
-        image_url = f"{SPRINGBOOT_URL}/fotodatos/imagen/{id}"
-        response = requests.get(image_url, timeout=10)
+        # Usar el método interno del generador
+        imagen_data = pdf_generator._obtener_imagen_desde_springboot(id)
 
-        if response.status_code == 200:
+        if imagen_data:
             return {
                 "success": True,
-                "size": len(response.content),
-                "status": response.status_code
+                "size": len(imagen_data),
+                "message": f"Imagen {id} obtenida correctamente"
             }
         else:
             return {
                 "success": False,
-                "status": response.status_code
+                "message": f"No se pudo obtener la imagen {id}"
             }
     except Exception as e:
         return {
