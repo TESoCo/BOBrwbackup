@@ -368,6 +368,14 @@
                     <i class="fas fa-file-import"></i> Importar APUs desde CSV
                 </h3>
 
+                <!-- Botón de descarga del formato CSV -->
+                <div class="download-format-container">
+                    <a href="https://drive.proton.me/urls/A52ZACZE0R#UT55eLUkVfMr" target="_blank" class="btn btn-download-format">
+                        <i class="fas fa-download"></i> Descargar formato CSV
+                    </a>
+                    <span class="format-hint">(Plantilla para importar APUs)</span>
+                </div>
+
                 <!-- ACTUAL FORM THAT SUBMITS TO SERVER -->
                 <form th:action="@{/apu/importar}" method="post" enctype="multipart/form-data" id="csvImportForm">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>

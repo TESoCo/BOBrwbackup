@@ -417,6 +417,49 @@
             color: var(--success);
         }
 
+
+/*botón de descarga formato importar APUS*/
+.download-format-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0 20px 0;
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #17a2b8;
+}
+
+.btn-download-format {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.btn-download-format:hover {
+    background-color: #138496;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-download-format i {
+    font-size: 14px;
+}
+
+.format-hint {
+    font-size: 13px;
+    color: #6c757d;
+}
+/*botón de descarga*/
+
 /* Responsive */
 /* ================= RESPONSIVE - MÓVIL (768px y menos) ================= */
 

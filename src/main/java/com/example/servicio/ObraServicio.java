@@ -14,7 +14,7 @@ public interface ObraServicio {
 
     void actualizar(Obra obraActualizar);
 
-    void actualizarActividadesDeObra(Long idObra, List<Long> actividadIds, List<Double> cantidades);
+    void actualizarActividadesDeObra(Long idObra, List<Long> actividadIds, List<Double> cantidades, Usuario usuario);
 
     public void borrar(Obra obraBorrar);
 

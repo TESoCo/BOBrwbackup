@@ -169,10 +169,10 @@
                         <label for="idObraByName">Nombre de la obra:</label>
                         <select id="idObraByName" name="idObraTexto" class="form-control" th:value="${param.idObraTexto}">
                             <option value="">-- Todas las obras --</option>
-                            <option th:each="presupuesto : ${presupuestos}"
-                                    th:value="${presupuesto.idObra}"
-                                    th:text="${presupuesto.nombreObra}"
-                                    th:selected="${param.idObraTexto == presupuesto.idObra}">
+                            <option th:each="obra : ${obras}"
+                                    th:value="${obra.idObra}"
+                                    th:text="${obra.nombreObra}"
+                                    th:selected="${param.idObraTexto == obra.idObra}">
                             </option>
                         </select>
                     </div>
