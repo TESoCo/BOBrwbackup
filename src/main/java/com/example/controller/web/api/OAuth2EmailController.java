@@ -10,6 +10,7 @@ import com.example.servicio.UsuarioServicio;
 import com.example.servicioWeb.OAuth2EmailService;
 import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +51,8 @@ public class OAuth2EmailController {
             @RequestBody EmailRequest emailRequest,
             Authentication authentication) {
 
+        Map<String, Object> response = new HashMap<>();
+
         try {
             System.out.println("=== INICIANDO ENVÍO DE CORREO ===");
             System.out.println("Tipo de reporte: " + emailRequest.getReportType());
@@ -60,7 +63,9 @@ public class OAuth2EmailController {
             Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
 
             if (usuario == null) {
-                return ResponseEntity.badRequest().body("Usuario no encontrado");
+                response.put("success", false);
+                response.put("message", "Usuario no encontrado");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
             System.out.println("Usuario: " + username);
@@ -108,7 +113,9 @@ public class OAuth2EmailController {
             }
 
             if (recipients.isEmpty()) {
-                return ResponseEntity.badRequest().body("No se especificaron destinatarios");
+                response.put("success", false);
+                response.put("message", "No se especificaron destinatarios");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
 
             // Generar el reporte según el tipo
@@ -134,12 +141,23 @@ public class OAuth2EmailController {
                 // Usar idObraSelect para obtener el ID de la obra
                 Long idObra = emailRequest.getIdObraSelect();
                 if (idObra == null) {
-                    return ResponseEntity.badRequest().body("ID de obra no especificado para el reporte de obra");
+                    response.put("success", false);
+                    response.put("message", "ID de obra no especificado para el reporte de obra");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
                 }
                 excelReport = controladorObras.generarReporteObraExcelmail(idObra);
                 fileName = "reporte_obra.xlsx";
             } else {
-                return ResponseEntity.badRequest().body("Tipo de reporte no válido");
+                response.put("success", false);
+                response.put("message", "Tipo de reporte no válido: " + emailRequest.getReportType());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            // Verificar que el reporte se generó correctamente
+            if (excelReport == null || excelReport.length == 0) {
+                response.put("success", false);
+                response.put("message", "No se pudo generar el reporte");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
             // ENVIAR DESDE LA CUENTA DEL USUARIO OAuth2
@@ -156,9 +174,10 @@ public class OAuth2EmailController {
 
             if (result.getSuccessCount() > 0) {
 
-                Map<String, Object> response = new HashMap<>();
                 response.put("success", true);
                 response.put("successCount", result.getSuccessCount());
+                response.put("failedCount", result.getFailedCount());
+                response.put("failedEmails", result.getFailedEmails());
 
                 String emailFrom = usuario.getPersona() != null ?
                         usuario.getPersona().getCorreo() :
@@ -179,17 +198,20 @@ public class OAuth2EmailController {
                 return ResponseEntity.ok(response);
 
             } else {
-                Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
-                response.put("message", "❌ No se pudo enviar el correo a ningún destinatario");
-                return ResponseEntity.status(500).body(response);
+                response.put("message", "No se pudo enviar el correo a ningún destinatario");
+                response.put("failedCount", result.getFailedCount());
+                response.put("failedEmails", result.getFailedEmails());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
 
         } catch (Exception e) {
+            System.err.println("❌ Error en sendReportEmail: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body("Error al enviar el correo: " + e.getMessage());
+            response.put("success", false);
+            response.put("message", "Error al enviar el correo: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
