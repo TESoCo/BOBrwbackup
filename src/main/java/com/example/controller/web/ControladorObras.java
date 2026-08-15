@@ -2,10 +2,15 @@ package com.example.controller.web;
 
 import com.example.domain.*;
 import com.example.servicio.*;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -13,6 +18,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -57,8 +64,6 @@ public class ControladorObras
                 .collect(Collectors.toList());
 
 
-        //model.addAttribute("fotoDatos", new ArrayList<>()); // todo lista real de fotos?
-        // TODO: conexion con fotodato
 
 
 
@@ -432,14 +437,33 @@ public class ControladorObras
 
     //Función y forma de editado
     @GetMapping("/cambiar/{idObra}")
-    public String cambiarObra(@PathVariable Long idObra, Model model) {
+    public String cambiarObra(@PathVariable Long idObra, Model model, Authentication authentication) {
         Obra obra = obraServicio.localizarObra(idObra);
+
+        // Si no tiene APUs, avisar
+        if (obra.getApusObraList() == null || obra.getApusObraList().isEmpty()) {
+            System.out.println("ERROR: no tiene APUs");
+        }
+
+        // Asignar usuario actual
+        String username = authentication.getName();
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
 
         // Create a list of activity IDs and quantities for editing
         List<Apu> apusObra = obraServicio.obtenerApusEntidadesPorObra(idObra);
         List<Apu> todosApus = APUServicio.listarElementos();
         List<Double> cantidades = new ArrayList<>();
         List<ApusObra> apusObraCant = obra.getApusObraList();
+
+        System.out.println("=== CARGANDO EDICIÓN ===");
+        System.out.println("ID Obra: " + idObra);
+        System.out.println("Cantidad de APUs en obra: " + (apusObraCant != null ? apusObraCant.size() : 0));
+        if (apusObraCant != null) {
+            for (ApusObra ao : apusObraCant) {
+                System.out.println("  - APU ID: " + (ao.getApu() != null ? ao.getApu().getIdAPU() : "null") +
+                        ", Cantidad: " + ao.getCantidad());
+            }
+        }
 
         model.addAttribute("obra", obra);
         model.addAttribute("apusObra", apusObra);
@@ -448,20 +472,16 @@ public class ControladorObras
         model.addAttribute("todosApus", todosApus);
         model.addAttribute("matriz", APUServicio.listarElementos());
         model.addAttribute("apusObraCant", apusObraCant);
-        //Map<Integer, Double> actividades = obraEditar.getActiviValues();
-        //model.addAttribute("actividadIds", actividadIds);
         model.addAttribute("cantidades", cantidades);
+        model.addAttribute("usuario", usuario);
 
-/*
-        // Create a Map of Material to Quantity
-        Map<Apu, Double> listApus = new HashMap<>();
-        for (Map.Entry<Integer, Double> entry : obraServicio.obtenerApusPorObra(idObra)) {
-            Apu apuAgregar = APUServicio.obtenerPorId(entry.getKey());
-            listApus.put(apuAgregar, entry.getValue());
-            apusObra.add(apuAgregar);
-            cantidades.add(entry.getValue());
-        }
-*/
+        // Verificar el proveedor de autenticación para envío de correos
+        boolean esOAuth2 = usuario != null &&
+                usuario.getAuthProvider() != null &&
+                !"LOCAL".equals(usuario.getAuthProvider());
+
+        model.addAttribute("esOAuth2", esOAuth2);
+
 
         return "obras/verObras";
     }
@@ -473,8 +493,9 @@ public class ControladorObras
         return "redirect:/obras/inicioObra";
     }*/
 
-    //anular
 
+
+    //anular
     @GetMapping("/anular/{idObra}")
     public String anularObra(Long idObra)
     {
@@ -489,27 +510,67 @@ public class ControladorObras
         return "redirect:/obras/anular/" + idObra;
     }
 
+
     //funcionalidad para guardar cambios
     @PostMapping("/actualizar/{idObra}")
     public String actualizarPresupuesto(
             @PathVariable Long idObra,
-            @RequestParam(required = false) List<Long> actividadIds,
-            @RequestParam(required = false) List<Double> cantidades,
-
+            @RequestParam Map<String, String> allParams,
+            Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
+        System.out.println("Iniciando actualización de obra");
+        System.out.println("ID Obra: " + idObra);
+
+        // Extraer actividadIds y cantidades del Map
+        List<Long> actividadIds = new ArrayList<>();
+        List<Double> cantidades = new ArrayList<>();
+
+        for (Map.Entry<String, String> entry : allParams.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (key.startsWith("actividadIds[") && key.endsWith("]")) {
+                actividadIds.add(Long.parseLong(value));
+            } else if (key.startsWith("cantidades[") && key.endsWith("]")) {
+                cantidades.add(Double.parseDouble(value));
+            }
+        }
+
+        System.out.println("actividadIds extraídos: " + actividadIds);
+        System.out.println("cantidades extraídas: " + cantidades);
+
+        System.out.println("TODOS LOS PARÁMETROS RECIBIDOS");
+        for (Map.Entry<String, String> entry : allParams.entrySet()) {
+            System.out.println(entry.getKey() + " = " + entry.getValue());
+        }
+
         try {
+            System.out.println("Validando actividadIds");
             if (actividadIds == null || actividadIds.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Debe agregar al menos una actividad");
                 return "redirect:/obras/cambiar/" + idObra;
             }
 
-            obraServicio.actualizarActividadesDeObra(idObra, actividadIds, cantidades);
+            // Obtener el usuario autenticado
+            String username = authentication.getName();
+            Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+            System.out.println("Usuario autenticado: " + username + " (ID: " + usuario.getIdUsuario() + ")");
+
+
+
+            System.out.println("Servicio actualizarActividadesDeObra iniciando...");
+            obraServicio.actualizarActividadesDeObra(idObra, actividadIds, cantidades, usuario);
+            System.out.println("Servicio ejecutado correctamente");
 
             redirectAttributes.addFlashAttribute("success", "Obra actualizada correctamente");
             return "redirect:/obras/detalle/" + idObra;
 
         } catch (Exception e) {
+            System.err.println("=== ❌ ERROR EN ACTUALIZACIÓN ===");
+            System.err.println("Mensaje: " + e.getMessage());
+            System.err.println("Tipo: " + e.getClass().getName());
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
             return "redirect:/obras/cambiar/" + idObra;
         }
@@ -533,14 +594,6 @@ public class ControladorObras
             }
         }
 
-        /*
-        // Create a Map of Material to Quantity
-        Map<Apu, Double> listApus = new HashMap<>();
-        for (Map.Entry<Integer, Double> entry : obra.obtenerApusPorObra(id_obra)) {
-            Apu verAPUobra = APUServicio.obtenerPorId(entry.getKey());
-            listApus.put(verAPUobra, entry.getValue());
-        }
-        */
 
         // Calculate total value
         BigDecimal valorTotalEstimado = BigDecimal.ZERO;
@@ -554,11 +607,24 @@ public class ControladorObras
             }
         }
 
+        // Agregar usuarios para el modal de envío de correo
+        model.addAttribute("usuarios", usuarioServicio.listarUsuarios());
+
         model.addAttribute("valorTotalEstimado", valorTotalEstimado);
         model.addAttribute("obra", obra);
         model.addAttribute("valApus",valApusObra);
         model.addAttribute("apusObra",apusObra);
         model.addAttribute("Editando", false); // ← This forces VIEW mode
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+        // Verificar el proveedor de autenticación para envío de correos
+        boolean esOAuth2 = usuario != null &&
+                usuario.getAuthProvider() != null &&
+                !"LOCAL".equals(usuario.getAuthProvider());
+
+        model.addAttribute("esOAuth2", esOAuth2);
+
         return "obras/verObras";
     }
 
@@ -609,9 +675,195 @@ public class ControladorObras
         return "obras/inicioObra";
     }
 
+// ========== NUEVOS MÉTODOS PARA EXPORTACIÓN DE OBRA ==========
 
+    /**
+     * Exporta a Excel las actividades (APUs) de una obra específica
+     */
+    @GetMapping("/exportarObraExcel/{idObra}")
+    public void exportarObraExcel(@PathVariable Long idObra, HttpServletResponse response) throws IOException {
+        Obra obra = obraServicio.localizarObraConApus(idObra);
+        if (obra == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Obra no encontrada");
+            return;
+        }
 
+        String nombreArchivo = "obra_" + obra.getNombreObra().replaceAll("[^a-zA-Z0-9]", "_") + ".xlsx";
 
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=" + nombreArchivo);
+
+        Workbook libro = new XSSFWorkbook();
+        Sheet hoja = libro.createSheet("Actividades de Obra");
+
+        // Título
+        Row titulo = hoja.createRow(0);
+        Cell tituloCell = titulo.createCell(0);
+        tituloCell.setCellValue("Actividades de la Obra: " + obra.getNombreObra());
+
+        // Estilo para título
+        CellStyle titleStyle = libro.createCellStyle();
+        Font titleFont = libro.createFont();
+        titleFont.setBold(true);
+        titleFont.setFontHeightInPoints((short) 14);
+        titleStyle.setFont(titleFont);
+        tituloCell.setCellStyle(titleStyle);
+        hoja.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
+
+        // Información de la obra (fila 2)
+        Row infoRow = hoja.createRow(2);
+        infoRow.createCell(0).setCellValue("ID Obra:");
+        infoRow.createCell(1).setCellValue(obra.getIdObra());
+        infoRow.createCell(2).setCellValue("Etapa:");
+        infoRow.createCell(3).setCellValue(obra.getEtapa().toString());
+        infoRow.createCell(4).setCellValue("Fecha Inicio:");
+        infoRow.createCell(5).setCellValue(obra.getFechaIni().toString());
+        infoRow.createCell(6).setCellValue("Coordenadas:");
+        infoRow.createCell(7).setCellValue("N=" + obra.getCooNObra() + ", E=" + obra.getCooEObra());
+
+        // Fila en blanco
+        hoja.createRow(3);
+
+        // Crear encabezados (fila 4)
+        Row header = hoja.createRow(4);
+        String[] headers = {"ID APU", "Nombre de Actividad", "Unidad", "Cantidad", "Precio Unitario", "Subtotal"};
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = header.createCell(i);
+            cell.setCellValue(headers[i]);
+            // Estilo para encabezados
+            CellStyle headerStyle = libro.createCellStyle();
+            Font headerFont = libro.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            cell.setCellStyle(headerStyle);
+        }
+
+        // Llenar datos con APUs de la obra
+        int fila = 5;
+        BigDecimal totalObra = BigDecimal.ZERO;
+
+        List<ApusObra> apusObraList = obra.getApusObraList();
+        if (apusObraList != null && !apusObraList.isEmpty()) {
+            for (ApusObra apusObra : apusObraList) {
+                Apu apu = apusObra.getApu();
+                if (apu != null) {
+                    Row row = hoja.createRow(fila++);
+                    row.createCell(0).setCellValue(apu.getIdAPU());
+                    row.createCell(1).setCellValue(apu.getNombreAPU());
+                    row.createCell(2).setCellValue(apu.getUnidadesAPU() != null ? apu.getUnidadesAPU() : "");
+                    row.createCell(3).setCellValue(apusObra.getCantidad() != null ? apusObra.getCantidad() : 0.0);
+
+                    // Precio unitario del APU
+                    BigDecimal precioUnitario = apu.getVTotalApu() != null ? apu.getVTotalApu() : BigDecimal.ZERO;
+                    row.createCell(4).setCellValue(precioUnitario.doubleValue());
+
+                    // Subtotal = cantidad * precio unitario
+                    BigDecimal cantidad = BigDecimal.valueOf(apusObra.getCantidad() != null ? apusObra.getCantidad() : 0.0);
+                    BigDecimal subtotal = precioUnitario.multiply(cantidad);
+                    totalObra = totalObra.add(subtotal);
+                    row.createCell(5).setCellValue(subtotal.doubleValue());
+                }
+            }
+        }
+
+        // Fila de total
+        Row totalRow = hoja.createRow(fila + 1);
+        totalRow.createCell(4).setCellValue("TOTAL OBRA:");
+
+        CellStyle totalStyle = libro.createCellStyle();
+        Font totalFont = libro.createFont();
+        totalFont.setBold(true);
+        totalStyle.setFont(totalFont);
+        Cell totalCell = totalRow.createCell(5);
+        totalCell.setCellValue(totalObra.doubleValue());
+        totalCell.setCellStyle(totalStyle);
+
+        // Autoajustar columnas
+        for (int i = 0; i < headers.length; i++) {
+            hoja.autoSizeColumn(i);
+        }
+
+        libro.write(response.getOutputStream());
+        libro.close();
+    }
+
+    /**
+     * Genera reporte de la obra en Excel para enviar por correo
+     */
+    @GetMapping("/generarReporteObraExcelmail/{idObra}")
+    public byte[] generarReporteObraExcelmail(@PathVariable Long idObra) throws IOException {
+        Obra obra = obraServicio.localizarObraConApus(idObra);
+        if (obra == null) {
+            throw new RuntimeException("No se encontró la obra con ID: " + idObra);
+        }
+
+        Workbook libro = new XSSFWorkbook();
+        Sheet hoja = libro.createSheet("Actividades de Obra");
+
+        // Crear encabezados
+        Row header = hoja.createRow(0);
+        header.createCell(0).setCellValue("ID APU");
+        header.createCell(1).setCellValue("Nombre de Actividad");
+        header.createCell(2).setCellValue("Unidad");
+        header.createCell(3).setCellValue("Cantidad");
+        header.createCell(4).setCellValue("Precio Unitario");
+        header.createCell(5).setCellValue("Subtotal");
+
+        // Estilo para encabezados
+        CellStyle headerStyle = libro.createCellStyle();
+        Font headerFont = libro.createFont();
+        headerFont.setBold(true);
+        headerStyle.setFont(headerFont);
+        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        for (int i = 0; i < 6; i++) {
+            header.getCell(i).setCellStyle(headerStyle);
+        }
+
+        // Llenar datos
+        int fila = 1;
+        BigDecimal totalObra = BigDecimal.ZERO;
+        List<ApusObra> apusObraList = obra.getApusObraList();
+
+        if (apusObraList != null && !apusObraList.isEmpty()) {
+            for (ApusObra apusObra : apusObraList) {
+                Apu apu = apusObra.getApu();
+                if (apu != null) {
+                    Row row = hoja.createRow(fila++);
+                    row.createCell(0).setCellValue(apu.getIdAPU());
+                    row.createCell(1).setCellValue(apu.getNombreAPU());
+                    row.createCell(2).setCellValue(apu.getUnidadesAPU() != null ? apu.getUnidadesAPU() : "");
+                    row.createCell(3).setCellValue(apusObra.getCantidad() != null ? apusObra.getCantidad() : 0.0);
+
+                    BigDecimal precioUnitario = apu.getVTotalApu() != null ? apu.getVTotalApu() : BigDecimal.ZERO;
+                    row.createCell(4).setCellValue(precioUnitario.doubleValue());
+
+                    BigDecimal cantidad = BigDecimal.valueOf(apusObra.getCantidad() != null ? apusObra.getCantidad() : 0.0);
+                    BigDecimal subtotal = precioUnitario.multiply(cantidad);
+                    totalObra = totalObra.add(subtotal);
+                    row.createCell(5).setCellValue(subtotal.doubleValue());
+                }
+            }
+        }
+
+        // Fila de total
+        Row totalRow = hoja.createRow(fila + 1);
+        totalRow.createCell(4).setCellValue("TOTAL OBRA:");
+        totalRow.createCell(5).setCellValue(totalObra.doubleValue());
+
+        // Autoajustar columnas
+        for (int i = 0; i < 7; i++) {
+            hoja.autoSizeColumn(i);
+        }
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        libro.write(outputStream);
+        libro.close();
+
+        return outputStream.toByteArray();
+    }
 
 
 }

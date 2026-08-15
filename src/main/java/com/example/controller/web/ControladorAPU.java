@@ -8,6 +8,7 @@ import com.example.servicio.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -117,13 +118,12 @@ public class ControladorAPU {
             // Set default values
             setDefaultValues(apu);
 
-            // Asignar usuario actual si es nuevo
-            if (apu.getIdAPU() == null && authentication != null) {
-                String username = authentication.getName();
-                Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
-                apu.setIdUsuario(usuario);
-                System.out.println("Usuario asignado: " + username);
-            }
+            // Asignar usuario actual
+            String username = authentication.getName();
+            Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+            apu.setIdUsuario(usuario);
+            System.out.println("Usuario asignado: " + username);
+
 
             // Guardar el APU primero para obtener ID
             apuServicio.guardar(apu);
@@ -339,6 +339,13 @@ public class ControladorAPU {
         // Obtener el APU existente para preservar el ID
         Apu apuExistente = apuServicio.obtenerPorId(id);
 
+        // Obtener usuario autenticado
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        // Buscar el usuario en la base de datos
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
         // Actualizar los campos
         apuExistente.setNombreAPU(apu.getNombreAPU());
         apuExistente.setDescAPU(apu.getDescAPU());
@@ -347,6 +354,7 @@ public class ControladorAPU {
         apuExistente.setVManoDeObraAPU(apu.getVManoDeObraAPU() != null ? apu.getVManoDeObraAPU() : BigDecimal.ZERO);
         apuExistente.setVTransporteAPU(apu.getVTransporteAPU() != null ? apu.getVTransporteAPU() : BigDecimal.ZERO);
         apuExistente.setVMiscAPU(apu.getVMiscAPU());
+        apuExistente.setIdUsuario(usuario);
 
         apuServicio.guardar(apuExistente);
         return "redirect:/apu/inicioAPU";

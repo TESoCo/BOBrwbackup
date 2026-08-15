@@ -53,7 +53,7 @@ public class Apu implements Serializable {
 
     @DecimalMin(value = "0.0", inclusive = true, message = "La duración debe ser positiva")
     @Column(name = "duracion_apu", precision = 12, scale = 2)
-    private BigDecimal duracionAPU;
+    private BigDecimal duracionAPU = BigDecimal.ZERO;
 
 
     // ---------- VALORES ----------
@@ -166,9 +166,7 @@ public class Apu implements Serializable {
     protected void onCreate() {
         fechaCreacion = LocalDateTime.now();
         fechaActualizacion = LocalDateTime.now();
-        if (vTotalApu == null) {
-            recalcularTotal();
-        }
+        recalcularTotal();
     }
 
     @PreUpdate

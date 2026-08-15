@@ -28,8 +28,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/avances")
 
-public class ControladorAvance
-{
+public class ControladorAvance {
     //Servicios para utilizar
     @Autowired
     private AvanceServicio avanceServicio;
@@ -57,7 +56,7 @@ public class ControladorAvance
             @RequestParam(required = false) Long idAPU,
             @RequestParam(required = false) String fecha,
 
-            Model model, org.springframework.security.core.Authentication authentication){
+            Model model, org.springframework.security.core.Authentication authentication) {
 
         //Necesito cargar obras para mostrar nombres
         List<Obra> obras = obraServicio.listaObra();
@@ -113,24 +112,23 @@ public class ControladorAvance
                 !"LOCAL".equals(usuario.getAuthProvider());
 
         model.addAttribute("esOAuth2", esOAuth2);
-        model.addAttribute("usuarios", usuarioServicio.listarUsuarios());
+
 
 
         return "avances/inicioAvances";
     }
 
 
-
     //Agregar nuevo
     @GetMapping("/agregarAvance")
-    public String formAnexarAvance(Model model, org.springframework.security.core.Authentication authentication){
+    public String formAnexarAvance(Model model, org.springframework.security.core.Authentication authentication) {
         List<Obra> obras = obraServicio.listaObra();
         List<Apu> apus = apuServicio.listarElementos();
         List<Contratista> contratistas = contratistaServicio.listarContratistas();
 
         model.addAttribute("avance", new Avance());
-        model.addAttribute("obras",obras);
-        model.addAttribute("apus",apus);
+        model.addAttribute("obras", obras);
+        model.addAttribute("apus", apus);
         model.addAttribute("contratistas", contratistas);
 
         return "avances/agregarAvance";
@@ -166,7 +164,7 @@ public class ControladorAvance
             org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String username = auth.getName();
             // Load the full user object from database
-            Usuario usuarioLogeado = usuarioServicio.encontrarPorNombreUsuario(username) ;
+            Usuario usuarioLogeado = usuarioServicio.encontrarPorNombreUsuario(username);
             System.out.println("Logged in username: " + username);
 
             // Verificar etapa de la obra
@@ -370,8 +368,6 @@ public class ControladorAvance
     }
 
 
-
-
     //Función y forma de editado TODO esto no aparece en front tiene problemas
     @GetMapping("/cambiar/{idAvance}")
     public String cambiarAvance(@PathVariable Long idAvance, Model model, org.springframework.security.core.Authentication authentication) {
@@ -407,15 +403,15 @@ public class ControladorAvance
     //funcionalidad para guardar cambios
     @PostMapping("/actualizar/{idAvance}")
     public String actualizarAvance(
-        @PathVariable Long idAvance,
-        @ModelAttribute Avance avance,
-        @RequestParam Double cantidad,
-        @RequestParam Long idUsuario,
-        @RequestParam Long idObra,
-        @RequestParam String fecha,
-        @RequestParam Long idAPU,
-        BindingResult result,
-        Model model) {
+            @PathVariable Long idAvance,
+            @ModelAttribute Avance avance,
+            @RequestParam Double cantidad,
+            @RequestParam Long idUsuario,
+            @RequestParam Long idObra,
+            @RequestParam String fecha,
+            @RequestParam Long idAPU,
+            BindingResult result,
+            Model model) {
 
 
         if (result.hasErrors()) {
@@ -480,7 +476,7 @@ public class ControladorAvance
         model.addAttribute("autor", autor);
         model.addAttribute("contratista", contratista);
         model.addAttribute("actividad", avanceServicio.localizarAvance(idAvance));
-        model.addAttribute("obras",obras);
+        model.addAttribute("obras", obras);
         model.addAttribute("matriz", matriz);
         model.addAttribute("Editando", false); // ← This forces VIEW mode
         return "avances/verAvances";
@@ -558,7 +554,7 @@ public class ControladorAvance
 
         // Llenar datos
         int fila = 1;
-        for (Avance avance:avances) {
+        for (Avance avance : avances) {
             Row row = hoja.createRow(fila++);
             row.createCell(0).setCellValue(avance.getIdApu().getIdAPU());
             row.createCell(1).setCellValue(avance.getIdUsuario().getNombreUsuario());
@@ -568,8 +564,8 @@ public class ControladorAvance
 
             double porcentaje = 0;
             for (ApusObra apusObra : apusObraList) {
-                if (avance.getIdApu().getIdAPU() == apusObra.getApu().getIdAPU()){
-                    porcentaje=(100*avance.getCantEjec())/apusObra.getCantidad();
+                if (avance.getIdApu().getIdAPU() == apusObra.getApu().getIdAPU()) {
+                    porcentaje = (100 * avance.getCantEjec()) / apusObra.getCantidad();
                 }
             }
             row.createCell(5).setCellValue(porcentaje);
@@ -630,13 +626,11 @@ public class ControladorAvance
                                              @RequestParam(required = false) String fecha) throws IOException {
         Obra obra = new Obra();
         List<Avance> avancesObra = new ArrayList<>();
-        if(idObraSelect!=null)
-        {
+        if (idObraSelect != null) {
             obra = obraServicio.localizarObra(idObraSelect);
             avancesObra = avanceServicio.buscarPorIdObra(idObraSelect);
         }
-        if(idObraTexto!=null)
-        {
+        if (idObraTexto != null) {
             obra = obraServicio.localizarObra(idObraTexto);
             avancesObra = avanceServicio.buscarPorIdObra(idObraTexto);
         }
@@ -658,7 +652,7 @@ public class ControladorAvance
 
         // Llenar datos
         int fila = 2;
-        for (Avance avance:avancesObra) {
+        for (Avance avance : avancesObra) {
             Row row = hoja.createRow(fila++);
             row.createCell(0).setCellValue(avance.getIdAvance());
             row.createCell(1).setCellValue(avance.getIdContratista().getNombreContratista());
@@ -789,10 +783,4 @@ public class ControladorAvance
     }
 
 
-
-
-
 }
-
-
-

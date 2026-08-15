@@ -2,6 +2,7 @@ package com.example.servicio;
 
 import com.example.dao.*;
 import com.example.domain.*;
+import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,9 @@ public class ObraServicioImp implements ObraServicio {
     @Autowired
     private EquipoServicio equipoServicio;
 
+    @Autowired
+    private EntityManager entityManager;
+
 
     @Override
     @Transactional(readOnly = true)
@@ -68,34 +72,60 @@ public class ObraServicioImp implements ObraServicio {
 
     @Override
     @Transactional
-    public void actualizarActividadesDeObra(Long idObra, List<Long> actividadIds, List<Double> cantidades) {
+    public void actualizarActividadesDeObra(Long idObra, List<Long> actividadIds, List<Double> cantidades, Usuario usuario) {
+
+        System.out.println("=== ACTUALIZANDO ACTIVIDADES EN SERVICIO ===");
+        System.out.println("ID Obra: " + idObra);
+
         Obra obra = localizarObra(idObra);
         if (obra == null) {
             throw new RuntimeException("Obra no encontrada");
         }
-
-        // Guardar la fecha manual actual antes de modificar
-        LocalDate fechaManualActual = obra.getFechaFinManual();
-
-        // 1. Eliminar APUs existentes
-        List<ApusObra> existentes = apusObraDao.findByObra_IdObra(idObra);
-        for (ApusObra ao : existentes) {
-            apusObraDao.delete(ao);
+        if (usuario == null) {
+            throw new RuntimeException("Usuario no autenticado o no encontrado");
         }
 
-        // 2. Agregar nuevos APUs
+        System.out.println("Usuario original: " + (obra.getIdUsuario() != null ? obra.getIdUsuario().getNombreUsuario() : "NULL"));
+
+        // Guardar la fecha manual actual
+        LocalDate fechaManualActual = obra.getFechaFinManual();
+
+        // 1. LIMPIAR la sesión de Hibernate
+        entityManager.flush();
+        entityManager.clear();
+
+        // 2. Recargar la obra para tener una instancia limpia
+        obra = localizarObra(idObra);
+
+        // 3. Limpiar lista de APUs
+        obra.getApusObraList().clear();
+
+        // 4. Agregar nuevos APUs
         for (int i = 0; i < actividadIds.size(); i++) {
             Apu apu = apuServicio.obtenerPorId(actividadIds.get(i));
             if (apu != null && cantidades.get(i) > 0) {
-                agregarApuAObraConCantidad(obra, apu, cantidades.get(i));
+                ApusObra nuevoApu = new ApusObra();
+                nuevoApu.setObra(obra);
+                nuevoApu.setApu(apu);
+                nuevoApu.setCantidad(cantidades.get(i));
+                // IMPORTANTE: Crear el ID compuesto
+                nuevoApu.setId(new ApusObraId(obra.getIdObra(), apu.getIdAPU()));
+                obra.getApusObraList().add(nuevoApu);
             }
         }
 
-        // 3. Restaurar la fecha manual
+        // 6. Restaurar la fecha manual
         obra.setFechaFinManual(fechaManualActual);
 
-        // 4. Recalcular la fecha calculada
+        // 7. Recalcular la fecha calculada
         calcularDuracionLinealObra(obra);
+
+        // 8. Actualizar usuario
+        obra.setIdUsuario(usuario);
+
+        // 9. Guardar
+        obraDao.save(obra);
+        System.out.println("✅ Obra guardada exitosamente");
     }
 
     @Override
@@ -163,6 +193,7 @@ public class ObraServicioImp implements ObraServicio {
         apusObra.setApu(apu);
         apusObra.setCantidad(cantObra);
         apusObraDao.save(apusObra);
+
     }
 
 
@@ -196,13 +227,21 @@ public class ObraServicioImp implements ObraServicio {
             System.out.println("APUs en obra: " + (apusObraList != null ? apusObraList.size() : 0));
             BigDecimal duracionTotalObra = BigDecimal.ZERO;
             for(ApusObra apusObra : apusObraList) {
-                System.out.println("APU: " + apusObra.getApu().getNombreAPU() + ", Duración: " + apusObra.getApu().getDuracionAPU());
-                duracionTotalObra = duracionTotalObra.add(apusObra.getApu().getDuracionAPU());
-            };
+                Apu apu = apusObra.getApu();
+                if (apu != null) {
+                    BigDecimal duracion = apu.getDuracionAPU();
+                    System.out.println("APU: " + apu.getNombreAPU() + ", Duración: " + duracion);
+
+                    // ✅ Verificar que la duración no sea null
+                    if (duracion != null) {
+                        duracionTotalObra = duracionTotalObra.add(duracion);
+                    }
+                }
+            }
             System.out.println("Duración total: " + duracionTotalObra);
             if(obra.getFechaIni()!=null){
                 obra.setFechaFinCalculada(obra.getFechaIni().plusDays(duracionTotalObra.longValue()));
-            };
+            }
         } catch (Exception e) {
             System.err.println("=== ERROR EN calcularDuracionLinealObra ===");
             e.printStackTrace();

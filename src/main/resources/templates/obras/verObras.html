@@ -144,6 +144,23 @@
         <i class="fas fa-arrow-left"></i> Volver a Obras
       </a>
 
+      <!-- Agregar botones de exportación (solo en modo vista) -->
+      <div  th:unless="${Editando}" class="btn-group" style="display: inline-flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a th:href="@{/obras/exportarObraExcel/} + ${obra.idObra}" class="btn btn-success">
+          <i class="fas fa-file-excel"></i> Exportar Excel
+        </a>
+        <div th:if="${esOAuth2}">
+          <button type="button"
+                  class="btn btn-primary"
+                  onclick="abrirModalCorreo()"
+                  th:data-obra-id="${obra.idObra}"
+                  th:data-obra-nombre="${obra.nombreObra}"
+                  sec:authorize="hasAuthority('LEER_OBRA')">
+            <i class="fas fa-envelope"></i> Enviar por Correo
+          </button>
+        </div>
+      </div>
+
       <div th:unless="${Editando}">
         <a th:href="@{/obras/cambiar/} + ${obra.idObra}"
            class="btn btn-warning"
@@ -347,6 +364,69 @@
         </a>
       </div>
     </div>
+    <!--Modal para envío de correo-->
+    <div class="modal" id="emailReportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+      <div class="modal-content" style="background: white; margin: 5% auto; padding: 2rem; border-radius: var(--border-radius); width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;">
+          <h3 style="margin: 0;">Enviar Reporte de Obra por Correo</h3>
+          <button class="close-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="emailReportForm">
+            <div class="form-group" style="background: #f8fafc; padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1.5rem;">
+              <h4 style="margin-bottom: 0.5rem;">Información de la Obra:</h4>
+              <p id="obraInfo" style="margin: 0; font-size: 0.9rem; color: var(--secondary);">
+                <span id="obraNombreDisplay"></span> (ID: <span id="obraIdDisplay"></span>)
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label>Destinatarios:</label>
+              <div class="recipients-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #d1d5db; border-radius: var(--border-radius); padding: 1rem;">
+                <div th:each="usuario : ${usuarios}" style="margin-bottom: 0.5rem;">
+                  <input type="checkbox" name="recipients"
+                         th:value="${usuario.persona.correo}"
+                         th:attr="data-name=${usuario.persona.nombre} + ' ' + ${usuario.persona.apellido}">
+                  <label th:text="${usuario.persona.nombre} + ' ' + ${usuario.persona.apellido} + ' (' + ${usuario.persona.correo} + ')'" style="margin-left: 0.5rem;"></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="customEmail">Correos adicionales (separados por coma):</label>
+              <input type="text" id="customEmail" name="customEmail" class="form-control"
+                     placeholder="ejemplo1@correo.com, ejemplo2@correo.com">
+              <small style="color: var(--secondary);">Puede ingresar múltiples correos separados por comas</small>
+            </div>
+
+            <div class="form-group">
+              <label for="emailSubject">Asunto:</label>
+              <input type="text" id="emailSubject" name="subject" class="form-control"
+                     value="Reporte de Obra - Construction Optimization Baseline" required>
+            </div>
+
+            <div class="form-group">
+              <label for="emailMessage">Mensaje:</label>
+              <textarea id="emailMessage" name="message" rows="4" class="form-control" required>
+                Cordial saludo,
+
+                Adjunto encontrará el reporte detallado de la obra con sus actividades (APUs).
+
+                Gracias por su atención,
+                Equipo Construction Optimization Baseline
+              </textarea>
+            </div>
+
+            <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+              <button type="button" class="btn btn-secondary btn-cancel">Cancelar</button>
+              <button type="submit" class="btn btn-primary btn-send">
+                <i class="fas fa-paper-plane"></i> Enviar Reporte
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -360,33 +440,57 @@
    * Si no hay filas, crea una desde cero usando el primer select como plantilla.
    */
   function addActivity() {
-      const container = document.getElementById('actividadesContainer');
-      const existingRows = container.querySelectorAll('.activity-edit-row');
+    const container = document.getElementById('actividadesContainer');
+    const existingRows = container.querySelectorAll('.activity-edit-row');
+    const nextIndex = existingRows.length;
 
-      if (existingRows.length > 0) {
-          // Clonar la última fila existente
-          const lastRow = existingRows[existingRows.length - 1];
-          const newRow = lastRow.cloneNode(true);
+    // Crear una nueva fila desde cero
+    const newRow = document.createElement('div');
+    newRow.className = 'activity-edit-row';
 
-          // Actualizar los atributos name para el nuevo índice
-          newRow.querySelector('.activity-select').name = 'actividadIds[' + nextIndex + ']';
-          newRow.querySelector('.activity-select').value = ''; // Resetear valor
-          newRow.querySelector('.activity-quantity').name = 'cantidades[' + nextIndex + ']';
-          newRow.querySelector('.activity-quantity').value = ''; // Resetear valor
+    // Crear el select con el índice correcto
+    const select = document.createElement('select');
+    select.name = 'actividadIds[' + nextIndex + ']';
+    select.className = 'form-select activity-select';
+    select.required = true;
 
-          // Actualizar el onclick del botón de eliminar (si aplica)
-          const removeBtn = newRow.querySelector('.btn-remove');
-          if(removeBtn) {
-              removeBtn.onclick = function() { removeActivity(this); };
-          }
+    // Opción vacía
+    const emptyOption = document.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = 'Seleccione...';
+    select.appendChild(emptyOption);
 
-          container.appendChild(newRow);
-      } else {
-          // Si no hay filas, necesitamos crear la estructura base
-          createNewEmptyRow(container);
-      }
+    // Copiar opciones del primer select
+    const templateSelect = document.querySelector('.activity-select');
+    if (templateSelect) {
+      const options = templateSelect.querySelectorAll('option:not([value=""])');
+      options.forEach(opt => {
+        const newOpt = opt.cloneNode(true);
+        newOpt.selected = false;
+        select.appendChild(newOpt);
+      });
+    }
 
-      nextIndex++;
+    // Crear input de cantidad
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.name = 'cantidades[' + nextIndex + ']';
+    input.step = '0.01';
+    input.min = '0.01';
+    input.placeholder = 'Cantidad';
+    input.required = true;
+    input.className = 'form-input activity-quantity';
+
+    // Botón eliminar
+    const removeBtn = document.createElement('span');
+    removeBtn.className = 'btn-remove';
+    removeBtn.innerHTML = '<i class="fas fa-times-circle"></i> Eliminar';
+    removeBtn.onclick = function() { removeActivity(this); };
+
+    newRow.appendChild(select);
+    newRow.appendChild(input);
+    newRow.appendChild(removeBtn);
+    container.appendChild(newRow);
   }
 
   /**
@@ -487,6 +591,202 @@
               }
           });
       }
+  });
+</script>
+<script>
+  /**
+   * Función para enviar el reporte de la obra por correo
+   */
+  function enviarReportePorCorreo() {
+    const obraId = document.querySelector('[data-obra-id]')?.getAttribute('data-obra-id');
+    const obraNombre = document.querySelector('[data-obra-nombre]')?.getAttribute('data-obra-nombre');
+
+    if (!obraId) {
+      alert('Error: No se pudo obtener el ID de la obra');
+      return;
+    }
+
+    // Mostrar confirmación
+    if (!confirm(`¿Desea enviar el reporte de la obra "${obraNombre}" por correo?`)) {
+      return;
+    }
+
+    // Crear formulario para enviar la solicitud
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/obras/enviarReporteObraCorreo/' + obraId;
+
+    // Agregar token CSRF si es necesario
+    const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+    if (csrfToken) {
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = '_csrf';
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('emailReportModal');
+    const form = document.getElementById('emailReportForm');
+    const closeBtn = modal ? modal.querySelector('.close-modal') : null;
+    const cancelBtn = modal ? modal.querySelector('.btn-cancel') : null;
+    const sendBtn = form ? form.querySelector('.btn-send') : null;
+    const obraIdSpan = document.getElementById('obraIdDisplay');
+    const obraNombreSpan = document.getElementById('obraNombreDisplay');
+
+    // Obtener datos de la obra desde el botón
+    const obraBtn = document.querySelector('[data-obra-id]');
+    const obraId = obraBtn ? obraBtn.getAttribute('data-obra-id') : '';
+    const obraNombre = obraBtn ? obraBtn.getAttribute('data-obra-nombre') : '';
+
+    // Función para abrir el modal
+    window.abrirModalCorreo = function() {
+      if (!obraId) {
+        alert('Error: No se pudo obtener el ID de la obra');
+        return;
+      }
+
+      if (obraIdSpan) obraIdSpan.textContent = obraId;
+      if (obraNombreSpan) obraNombreSpan.textContent = obraNombre;
+
+      if (modal) modal.style.display = 'block';
+    };
+
+    // Función para cerrar el modal
+    function closeModal() {
+      if (modal) modal.style.display = 'none';
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+    if (modal) {
+      window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
+    }
+
+    // Enviar formulario
+    if (form) {
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const originalText = sendBtn ? sendBtn.innerHTML : '';
+        if (sendBtn) {
+          sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+          sendBtn.disabled = true;
+        }
+
+        try {
+          const formData = new FormData(this);
+          const recipients = Array.from(document.querySelectorAll('input[name="recipients"]:checked'))
+                  .map(input => input.value);
+
+          const customEmail = formData.get('customEmail');
+          let customEmails = [];
+          if (customEmail && customEmail.trim() !== '') {
+            customEmails = customEmail.split(',')
+                    .map(email => email.trim())
+                    .filter(email => email !== '');
+          }
+
+          const allRecipients = [...recipients, ...customEmails];
+
+          if (allRecipients.length === 0) {
+            alert('Seleccione al menos un destinatario o ingrese correos manualmente');
+            if (sendBtn) {
+              sendBtn.innerHTML = originalText;
+              sendBtn.disabled = false;
+            }
+            return;
+          }
+
+          // Obtener el token CSRF
+          const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+
+          // Construir el requestData según EmailRequest
+          const requestData = {
+            recipients: allRecipients,
+            customEmail: '', // Ya se procesó
+            subject: formData.get('subject'),
+            message: formData.get('message'),
+            reportType: 'obra',
+            // Usar idObraSelect (Long) para pasar el ID de la obra
+            idObraSelect: parseInt(obraId),
+            idObraTexto: null,
+            idUsuario: null,
+            idAPU: null,
+            fecha: null
+          };
+
+          console.log('Enviando datos al servidor:', requestData);
+
+          const response = await fetch('/api/email/send-report', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': csrfToken || ''
+            },
+            body: JSON.stringify(requestData)
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            alert('✅ Reporte enviado exitosamente a ' + result.successCount + ' destinatario(s)');
+            closeModal();
+          } else {
+            alert('❌ Error al enviar el reporte: ' + (result.message || 'Error desconocido'));
+          }
+
+        } catch (error) {
+          console.error('Error:', error);
+          alert('❌ Error al enviar el correo: ' + error.message);
+        } finally {
+          if (sendBtn) {
+            sendBtn.innerHTML = originalText;
+            sendBtn.disabled = false;
+          }
+        }
+      });
+    }
+
+    // --- Lógica de Control del Menú Móvil ---
+    const menuToggle = document.getElementById('menu-toggle');
+    const appContainer = document.getElementById('app-container');
+    const sidebar = document.querySelector('.sidebar');
+    const menuIcon = menuToggle ? menuToggle.querySelector('i') : null;
+
+    if (menuToggle && appContainer && sidebar && menuIcon) {
+      menuToggle.addEventListener('click', function() {
+        appContainer.classList.toggle('sidebar-active');
+        if (appContainer.classList.contains('sidebar-active')) {
+          menuIcon.classList.remove('fa-bars');
+          menuIcon.classList.add('fa-times');
+        } else {
+          menuIcon.classList.remove('fa-times');
+          menuIcon.classList.add('fa-bars');
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768 && appContainer.classList.contains('sidebar-active')) {
+          if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+            appContainer.classList.remove('sidebar-active');
+            menuIcon.classList.remove('fa-times');
+            menuIcon.classList.add('fa-bars');
+          }
+        }
+      });
+    }
   });
 </script>
 </body>

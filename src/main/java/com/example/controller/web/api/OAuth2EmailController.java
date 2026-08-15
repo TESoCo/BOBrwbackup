@@ -2,6 +2,7 @@ package com.example.controller.web.api;
 
 import com.example.controller.web.ControladorAvance;
 import com.example.controller.web.ControladorContratistas;
+import com.example.controller.web.ControladorObras;
 import com.example.controller.web.ControladorProveedores;
 import com.example.domain.Usuario;
 import com.example.dto.EmailRequest;
@@ -33,6 +34,9 @@ public class OAuth2EmailController {
 
     @Autowired
     private ControladorAvance controladorAvance;
+
+    @Autowired
+    private ControladorObras controladorObras;
 
     @Autowired
     @Lazy
@@ -126,6 +130,14 @@ public class OAuth2EmailController {
                         emailRequest.getFecha()
                 );
                 fileName = "reporte_avances_filtrados.xlsx";
+            } else if ("obra".equalsIgnoreCase(emailRequest.getReportType())) {
+                // Usar idObraSelect para obtener el ID de la obra
+                Long idObra = emailRequest.getIdObraSelect();
+                if (idObra == null) {
+                    return ResponseEntity.badRequest().body("ID de obra no especificado para el reporte de obra");
+                }
+                excelReport = controladorObras.generarReporteObraExcelmail(idObra);
+                fileName = "reporte_obra.xlsx";
             } else {
                 return ResponseEntity.badRequest().body("Tipo de reporte no válido");
             }
