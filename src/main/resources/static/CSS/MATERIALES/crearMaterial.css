@@ -1,14 +1,31 @@
+/* Importar sidebar unificado */
+@import url('/css/sidebar-unificado.css');
+
 /* * ESTILOS ESPECÍFICOS PARA CREAR MATERIALES
  * Estos estilos se centran en los componentes internos: Tabs, Contenedores de Formulario y Tablas.
- * Se asume que las variables CSS (--primary, --shadow, --border-radius, etc.)
- * y los estilos base de botones (.btn) están definidos en dashboard.css.
  */
+
+:root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --secondary: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --light: #f8fafc;
+    --dark: #1e293b;
+    --gray: #94a3b8;
+    --sidebar-width: 260px;
+    --header-height: 70px;
+    --border-radius: 8px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
 
 /* --- Tabs Navigation --- */
 .tabs {
     display: flex;
     margin-bottom: 2rem;
-    border-bottom: 2px solid var(--gray); /* CORREGIDO: Usando --gray */
+    border-bottom: 2px solid var(--gray);
 }
 
 .tab {
@@ -44,7 +61,7 @@
 
 /* --- Form Container (Card Style) --- */
 .form-container {
-    background-color: white; /* CORREGIDO: Usando white (en lugar de --bg-card) */
+    background-color: white;
     padding: 2rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
@@ -62,7 +79,7 @@
     align-items: center;
     gap: 0.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--gray); /* CORREGIDO: Usando --gray */
+    border-bottom: 1px solid var(--gray);
 }
 
 /* --- Form Elements Overrides/Specifics --- */
@@ -117,7 +134,7 @@
     padding: 0.5rem 0;
 }
 
-/* Botones y Acciones (Se asume que .btn está en dashboard.css) */
+/* Botones y Acciones */
 .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -132,15 +149,14 @@
     justify-content: center;
 }
 
-/* --- Estilos para la tabla de Materiales Generados (Import Tab) --- */
-
+/* --- Estilos para la tabla de Materiales Generados --- */
 .table-container {
     overflow-x: auto;
-    background-color: white; /* CORREGIDO: Usando white (en lugar de --bg-card) */
+    background-color: white;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     border: 1px solid var(--gray);
-    margin-top: 1.5rem; /* Asegurar espacio si se muestra dinámicamente */
+    margin-top: 1.5rem;
 }
 
 .data-table {
@@ -177,7 +193,7 @@
 }
 
 .data-table tbody tr:hover {
-    background-color: var(--light); /* Fondo claro para hover */
+    background-color: var(--light);
 }
 
 .data-table td .form-input,
@@ -188,7 +204,6 @@
     background-color: white;
 }
 
-/* Estilo para inputs readonly en la tabla */
 .data-table td input[readonly] {
     background-color: var(--light);
     color: var(--dark);
@@ -203,25 +218,7 @@
     margin: 0;
 }
 
-/* Adaptación responsiva para la tabla */
-@media (max-width: 768px) {
-    .data-table th, .data-table td {
-        padding: 0.75rem 0.5rem;
-        font-size: 0.875rem;
-    }
-
-    .form-actions {
-            flex-direction: column; /* Apila los botones verticalmente */
-            align-items: stretch; /* Estira los botones al 100% del ancho */
-        }
-
-    .form-actions .btn {
-        min-width: 100%; /* Asegura que el botón ocupe el ancho */
-        margin-top: 0.5rem; /* Agrega un pequeño margen entre ellos */
-    }
-}
-
-/* CrearMaterial.css - agregar al final */
+/* Animaciones */
 @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
@@ -248,4 +245,32 @@
     padding: 0.25rem 0.75rem;
     border-radius: 50px;
     font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .data-table th, .data-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-actions .btn {
+        min-width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    .tabs {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
 }

@@ -285,7 +285,7 @@ public class ControladorEquipos {
      * Eliminar equipo
      */
     @PostMapping("/eliminar/{id}")
-    @PreAuthorize("hasAuthority('ELIMINAR_EQUIPO')")
+    @PreAuthorize("hasAuthority('BORRAR_EQUIPO')")
     public String eliminarEquipo(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             Equipo equipo = equipoServicio.encontrarPorId(id);

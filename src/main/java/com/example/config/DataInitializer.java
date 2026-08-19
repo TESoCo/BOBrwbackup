@@ -105,6 +105,22 @@ public class DataInitializer implements CommandLineRunner {
         Permiso leerProveedor =         createAndSavePermisoIfNotExists("LEER_PROVEEDOR");
 
         // ADMIN ONLY permissions
+        //Eliminación
+        Permiso borrarApu = createAndSavePermisoIfNotExists("BORRAR_APU");
+        Permiso borrarAvance = createAndSavePermisoIfNotExists("BORRAR_AVANCE");
+        Permiso borrarContratista = createAndSavePermisoIfNotExists("BORRAR_CONTRATISTA");
+        Permiso borrarEquipo = createAndSavePermisoIfNotExists("BORRAR_EQUIPO");
+        Permiso borrarFotodato = createAndSavePermisoIfNotExists("BORRAR_FOTODATO");
+        Permiso borrarInfoCom = createAndSavePermisoIfNotExists("BORRAR_INFOCOMERCIAL");
+        Permiso borrarInventario = createAndSavePermisoIfNotExists("BORRAR_INVENTARIO");
+        Permiso borrarMaterial = createAndSavePermisoIfNotExists("BORRAR_MATERIAL");
+        Permiso borrarObra = createAndSavePermisoIfNotExists("BORRAR_OBRA");
+        Permiso borrarPermiso = createAndSavePermisoIfNotExists("BORRAR_PERMISO");
+        Permiso borrarPersona = createAndSavePermisoIfNotExists("BORRAR_PERSONA");
+        Permiso borrarProveedor = createAndSavePermisoIfNotExists("BORRAR_PROVEEDOR");
+        Permiso borrarProyecto = createAndSavePermisoIfNotExists("BORRAR_PROYECTO");
+        Permiso borrarRol = createAndSavePermisoIfNotExists("BORRAR_ROL");
+        Permiso borrarUsuario = createAndSavePermisoIfNotExists("BORRAR_USUARIO");
         //roles
         Permiso crearRol = createAndSavePermisoIfNotExists("CREAR_ROL");
         Permiso editarRol = createAndSavePermisoIfNotExists("EDITAR_ROL");

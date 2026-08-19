@@ -38,7 +38,7 @@ body {
 /* Sidebar */
 .sidebar {
   width: var(--sidebar-width);
-  background: #1c5dae;
+  background: #0a1628;
   color: white;
   position: fixed;
   height: 100vh;
@@ -79,21 +79,21 @@ body {
   display: flex;
   align-items: center;
   padding: 0.8rem 1.5rem;
-  color: black;
+  color: #ffffff;
   text-decoration: none;
   transition: all 0.3s;
 }
 
 .nav-links a:hover, .nav-links a.active {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 }
 
 .nav-links i {
   margin-right: 0.75rem;
   width: 20px;
   text-align: center;
-  color: black
+  color: #ffffff
 }
 
 /* Main content */

@@ -231,7 +231,7 @@
                             </form>
                         </div>
                     </td>
-                    <!-- Agregar en la tabla de usuarios -->
+                    <!-- APROBACIÓN DE USUARIOS -->
                     <td>
                         <span th:if="${usuario.status.name() == 'APPROVED'}" class="badge badge-success">Aprobado</span>
                         <span th:if="${usuario.status.name() == 'PENDING'}" class="badge badge-warning">Pendiente</span>
@@ -248,7 +248,13 @@
                                 <button type="submit" class="btn btn-sm btn-danger">Rechazar</button>
                             </form>
                         </div>
+                        <a th:href="@{/usuarios/eliminar/} + ${usuario.idUsuario}" class="btn btn-sm btn-warning"
+                           sec:authorize="hasAuthority('BORRAR_USUARIO')"
+                           onclick="return confirm('¿Está seguro que desea borrar este usuario? esta operación no puede deshacerse.')">
+                            <i class="fas fa-ban"></i> Borrar
+                        </a>
                     </td>
+
                 </tr>
                 <tr th:if="${usuarios == null or usuarios.empty}">
                     <td colspan="6" class="no-data-message">

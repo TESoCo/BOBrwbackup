@@ -463,6 +463,12 @@ public class ControladorInv {
                     inventarioServicio.obtenerAuditoriaPorInventario(inv.getIdInventario()));
         }
 
+        // Crear un mapa con los precios actuales pre-calculados
+        Map<Long, BigDecimal> preciosActuales = new HashMap<>();
+        for (Material material : materiales) {
+            BigDecimal precio = materialServicio.getPrecioActual(material.getIdMaterial());
+            preciosActuales.put(material.getIdMaterial(), precio);
+        }
 
         // Pasar datos a la vista
         model.addAttribute("materiales", materiales);
@@ -472,6 +478,8 @@ public class ControladorInv {
         model.addAttribute("estadoFiltroSeleccionado", estadoFiltro);
         model.addAttribute("tipoBusquedaSeleccionado", tipoBusqueda);
         model.addAttribute("valorBusquedaActual", valorBusqueda);
+        model.addAttribute("preciosActuales", preciosActuales);
+
         if (error != null) {
             model.addAttribute("error", error);
         }

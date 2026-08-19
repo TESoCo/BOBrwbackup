@@ -58,13 +58,21 @@ public class ControladorAvance {
 
             Model model, org.springframework.security.core.Authentication authentication) {
 
-        //Necesito cargar obras para mostrar nombres
-        List<Obra> obras = obraServicio.listaObra();
+        // Obtener el usuario logueado
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
+        //Necesito cargar obras para mostrar nombres, pero solo las visibles según reglas de negocio
+        List<Obra> obras = obraServicio.obtenerObrasVisibles(usuario);
         model.addAttribute("obras", obras);
 
 
         // Start with all avances
-        List<Avance> avances = avanceServicio.listaAvance();
+        List<Avance> avances = new ArrayList<>();
+
+        for (Obra obra : obras){
+            avances.addAll(avanceServicio.buscarPorIdObra(obra.getIdObra()));
+        }
 
         // Apply filters in a more flexible way
         if (idObraSelect != null) {
@@ -90,6 +98,22 @@ public class ControladorAvance {
             }
         }
 
+        // FILTROS PARA CONTROL DE ACCESOS POR EQUIPOS
+
+        // VERIFICAR SI EL USUARIO TIENE EQUIPO
+        if (usuario.getEquipo() == null) {
+            // Si es ADMIN, permitir acceso con mensaje informativo
+            if (usuario.getRol() != null && "ADMIN".equals(usuario.getRol().getNombreRol())) {
+                model.addAttribute("esAdminSinEquipo", true);
+                model.addAttribute("mensajeInfo", "⚠️ Usted es ADMIN pero no tiene equipo asignado. Puede ver todas las obras pero no crear nuevas hasta que se le asigne un equipo.");
+            } else {
+                // Usuario normal sin equipo - redirigir a página de error
+                return "obras/sinEquipoError";
+            }
+        }
+
+        System.out.println("Obras visibles para el usuario: " + obras.size());
+
         // Add the filtered results and parameters back to the model
         model.addAttribute("avances", avances);
         model.addAttribute("idObraSelect", idObraSelect);
@@ -99,17 +123,15 @@ public class ControladorAvance {
         model.addAttribute("contratistas", contratistaServicio.listarContratistas());
         //Usuarios para envío masivo de correos
         model.addAttribute("usuarios", usuarioServicio.listarUsuarios());
+        // Filtro por equipos
+        model.addAttribute("obrasVisibles", obras);
 
         // Agregar información del tipo de autenticación al modelo
         // Determinar si es usuario OAuth2 o LOCAL
-        // Obtener el usuario logueado
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
 
         // Verificar el proveedor de autenticación
-        boolean esOAuth2 = usuario != null &&
-                usuario.getAuthProvider() != null &&
-                !"LOCAL".equals(usuario.getAuthProvider());
+        boolean esOAuth2 = usuarioServicio.esUsuarioOAuth2(usuario);
 
         model.addAttribute("esOAuth2", esOAuth2);
 

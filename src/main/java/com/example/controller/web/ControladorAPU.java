@@ -1,11 +1,11 @@
 package com.example.controller.web;
 
-import com.example.domain.Apu;
-import com.example.domain.Material;
-import com.example.domain.MaterialesApu;
-import com.example.domain.Usuario;
+import com.example.dao.ApusObraDao;
+import com.example.domain.*;
 import com.example.servicio.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,7 +37,8 @@ public class ControladorAPU {
 
     @Autowired
     private MaterialesAPUServicio materialesAPUServicio;
-
+    @Autowired
+    private ApusObraDao apusObraDao;
 
 
     // ========== MÉTODOS PRINCIPALES ==========
@@ -291,6 +292,12 @@ public class ControladorAPU {
                     materialesApu.setMaterial(material);
                     materialesApu.setCantidad(cantidad);
 
+                    //Clave compuesta MaterialesApuId
+                    MaterialesApuId id = new MaterialesApuId();
+                    id.setApu(apu.getIdAPU());
+                    id.setMaterial(materialId);
+                    materialesApu.setId(id);
+
                     // Save the relationship
                     materialesAPUServicio.guardar(materialesApu);
                     apu.getMaterialesApus().add(materialesApu);
@@ -463,6 +470,95 @@ public class ControladorAPU {
             response.put("error", e.getMessage());
         }
         return response;
+    }
+
+
+    // ========== ENDPOINT PARA ELIMINAR APU CON REGISTROS RELACIONADOS ==========
+    @GetMapping("/eliminarCompleto/{id}")
+    @ResponseBody
+    public ResponseEntity<?> eliminarAPUCompleto(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        // 1. Verificar autenticación
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Usuario no autenticado"));
+        }
+
+        // 2. Verificar permiso BORRAR_APU
+        boolean tienePermiso = authentication.getAuthorities().stream()
+                .anyMatch(granted -> granted.getAuthority().equals("BORRAR_APU"));
+
+        if (!tienePermiso) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "No tiene permiso para eliminar APUs"));
+        }
+
+        try {
+            // 3. Verificar que el APU existe
+            Apu apu = apuServicio.obtenerPorId(id);
+            if (apu == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "APU no encontrado con ID: " + id));
+            }
+
+            // 4. Obtener información de lo que se va a eliminar
+            String nombreAPU = apu.getNombreAPU();
+            Long idAPU = apu.getIdAPU();
+
+            // 5. Contar y obtener los registros relacionados
+            List<MaterialesApu> materialesRelacionados = materialesAPUServicio.obtenerPorId(id);
+            List<ApusObra> obrasRelacionadas = apusObraDao.findByApuId(id);
+
+            int cantidadMateriales = materialesRelacionados.size();
+            int cantidadObras = obrasRelacionadas.size();
+
+            // 6. Eliminar los registros relacionados (primero los hijos, luego el padre)
+            // 6.1 Eliminar materiales_apu
+            for (MaterialesApu ma : materialesRelacionados) {
+                materialesAPUServicio.eliminar(ma);
+            }
+
+            // 6.2 Eliminar apus_obra
+            for (ApusObra ao : obrasRelacionadas) {
+                apusObraDao.delete(ao);
+            }
+
+            // 6.3 Eliminar el APU
+            apuServicio.eliminar(apu);
+
+            // 7. Construir respuesta con detalles de lo eliminado
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("mensaje", "APU eliminado correctamente");
+            response.put("apuEliminado", Map.of(
+                    "id", idAPU,
+                    "nombre", nombreAPU
+            ));
+            response.put("registrosEliminados", Map.of(
+                    "materialesAPU", cantidadMateriales,
+                    "apusObra", cantidadObras,
+                    "total", cantidadMateriales + cantidadObras
+            ));
+
+            // Log de la operación
+            String username = authentication.getName();
+            System.out.println("APU eliminado por " + username + ": " + nombreAPU +
+                    " (ID: " + idAPU + "), Materiales: " + cantidadMateriales +
+                    ", Obras: " + cantidadObras);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("Error al eliminar APU " + id + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "error", "Error al eliminar el APU: " + e.getMessage(),
+                            "success", false
+                    ));
+        }
     }
 
 

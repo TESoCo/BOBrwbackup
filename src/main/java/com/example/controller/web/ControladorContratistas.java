@@ -200,7 +200,7 @@ public class ControladorContratistas {
      * Eliminar contratista
      */
     @PostMapping("/eliminar/{id}")
-    @PreAuthorize("hasAuthority('EDITAR_USUARIO')")
+    @PreAuthorize("hasAuthority('BORRAR_CONTRATISTA')")
     public String eliminarUsuario(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             Contratista contratista = contratistaServicio.encontrarPorId(id);

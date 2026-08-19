@@ -4,6 +4,7 @@ import com.example.dao.AvanceDao;
 import com.example.dao.ApuDao;
 import com.example.domain.Apu;
 import com.example.domain.Avance;
+import com.example.domain.FotoDato;
 import com.example.domain.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,8 @@ public class AvanceServicioImp implements AvanceServicio{
 
     @Autowired
     private ApuDao mateDao;
+    @Autowired
+    private FotoDatoServicio fotoDatoServicio;
 
     @Override
     @Transactional(readOnly = true)
@@ -37,6 +40,10 @@ public class AvanceServicioImp implements AvanceServicio{
     @Transactional
     public void borrar(Avance avance) {
         avanceDao.delete(avance);
+        List <FotoDato> fotos = fotoDatoServicio.listaFotoDatoAv(avance);
+        for (FotoDato foto : fotos){
+            fotoDatoServicio.borrar(foto);
+        }
     }
 
     @Override
