@@ -1,6 +1,13 @@
-/* --- IMPORTS DE VARIABLES (Asumimos que están en dashboard.css, pero las repetimos por seguridad) --- */
+/* =======================================================
+   IMPORTAR SIDEBAR UNIFICADO
+   ======================================================= */
+@import url('/CSS/sidebar-unificado.css');
+
+/* =======================================================
+   ESTILOS BASE
+   ======================================================= */
 :root {
-    --primary: #1c5dae; /* Azul BOB */
+    --primary: #1c5dae;
     --primary-dark: #174a89;
     --light: #f8fafc;
     --dark: #1e293b;
@@ -11,10 +18,9 @@
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* ----------------------------------------------------
-   1. ESTILOS DE COMPONENTES ESPECÍFICOS DE LA VISTA
-   (Aplican en todas las resoluciones)
-   ---------------------------------------------------- */
+/* =======================================================
+   ESTILOS DE LA VISTA
+   ======================================================= */
 
 /* --- BOTÓN DE REGRESO --- */
 .back-link {
@@ -62,6 +68,7 @@
     align-items: center;
     gap: 12px;
 }
+
 .search-container h2 i {
     font-size: 1.8rem;
 }
@@ -95,6 +102,13 @@
     transition: border-color 0.3s;
 }
 
+.search-form select:focus,
+.search-form input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(28, 93, 174, 0.15);
+}
+
 .search-form input[type="submit"] {
     background: linear-gradient(45deg, var(--primary), #2563eb);
     color: white;
@@ -114,7 +128,7 @@
     box-shadow: 0 6px 15px rgba(30, 60, 114, 0.3);
 }
 
-/* --- TABLA SIMPLE --- */
+/* --- TABLA --- */
 .table-container {
     width: 100%;
     overflow-x: auto;
@@ -165,30 +179,46 @@ table tbody tr:nth-child(even) {
     background-color: #f9fbfd;
 }
 
-/* Estilos de Acciones en la tabla */
-table td a, table td button {
+/* --- BOTONES DE ACCIÓN --- */
+.btn-export {
+    background: #34d399;
+    color: white;
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    margin-right: 10px;
-    text-decoration: none;
-    font-size: 0.85rem;
     padding: 5px 8px;
     border-radius: 4px;
-    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.85rem;
     border: none;
-    white-space: nowrap; /* Evita que el texto se envuelva en desktop */
+    cursor: pointer;
+    white-space: nowrap;
 }
 
-table td a[th\\:href*='exportarExcelInv'] {
-    background: #34d399; /* Verde (Exportar) */
+.btn-export:hover {
+    background: #10b981;
     color: white;
 }
 
-table td button {
-    background: #3b82f6; /* Azul (Enviar Correo) */
+.btn-email {
+    background: #3b82f6;
     color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
     margin-top: 5px;
+}
+
+.btn-email:hover {
+    background: #2563eb;
+    color: white;
 }
 
 table td input[type="email"] {
@@ -200,69 +230,10 @@ table td input[type="email"] {
     box-sizing: border-box;
 }
 
-/* ----------------------------------------------------
-   2. LÓGICA DE RESPONSIVIDAD Y MENÚ DE HAMBURGUESA
-   (Aplica solo en móvil: max-width: 768px)
-   ---------------------------------------------------- */
-
+/* =======================================================
+   RESPONSIVE PARA LA TABLA
+   ======================================================= */
 @media (max-width: 768px) {
-
-    /* === ARREGLOS DE LAYOUT GENERAL === */
-
-    /* 1. Muestra el botón de hamburguesa y lo posiciona */
-    .menu-toggle {
-        display: block !important;
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 1.2rem;
-        z-index: 1002;
-    }
-
-    /* 2. Oculta el Sidebar y asegura que sea fijo */
-    .sidebar{
-        left: calc(-1 * var(--sidebar-width)) !important; /* Oculta a la izquierda */
-        position: fixed !important;
-        z-index: 1001;
-        transition: left 0.3s ease;
-    }
-
-    /* 3. CLASE para abrir el menú (requiere JS) */
-    .app-container.sidebar-active .sidebar {
-        left: 0 !important; /* Muestra el sidebar */
-    }
-
-    /* 4. Cambia el ícono de hamburguesa a X cuando está abierto */
-    .app-container.sidebar-active .menu-toggle i::before {
-        content: "\f00d"; /* Ícono X de Font Awesome */
-    }
-
-    /* 5. Contenido principal: Ancho completo y sin scroll */
-    .main-content {
-        margin-left: 0 !important; /* Quita el margen de desktop */
-        padding: 1rem; /* Padding reducido */
-        width: 100%;
-        box-sizing: border-box;
-        padding-top: 55px !important;
-        overflow-x: hidden; /* **CLAVE: ELIMINA EL SCROLL HORIZONTAL** */
-    }
-
-    /* 6. Dashboard Content: Ocupa todo el ancho disponible */
-    .dashboard-content {
-        padding: 1rem;
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        box-sizing: border-box;
-    }
-
-    /* === AJUSTES ESPECÍFICOS DE BÚSQUEDA === */
     .search-container {
         padding: 20px;
         margin: 20px 0;
@@ -270,19 +241,19 @@ table td input[type="email"] {
 
     .search-container h2 {
         font-size: 1.4rem;
-        justify-content: center; /* Centra el título */
+        justify-content: center;
         text-align: center;
     }
 
     .search-form {
-        flex-direction: column; /* Apila los inputs verticalmente */
-        align-items: stretch; /* Estira al 100% */
+        flex-direction: column;
+        align-items: stretch;
         gap: 12px;
     }
 
     .search-form label {
         width: 100%;
-        justify-content: flex-start; /* Alinea la etiqueta a la izquierda */
+        justify-content: flex-start;
     }
 
     .search-form select,
@@ -292,25 +263,23 @@ table td input[type="email"] {
         min-width: unset;
     }
 
-    /* === AJUSTES ESPECÍFICOS DE LA TABLA === */
     .table-container {
         padding: 0;
     }
 
     table td {
-        /* Reduce el padding de las celdas para ahorrar espacio */
         padding: 8px;
     }
 
-    /* Las acciones se apilan verticalmente */
-    table td form, table td a[th\\:href*='exportarExcelInv'] {
-        margin-right: 0;
-        display: block;
+    .btn-export,
+    .btn-email {
         width: 100%;
+        justify-content: center;
+        margin-right: 0;
         margin-bottom: 5px;
     }
 
-    table td button {
+    .btn-email {
         margin-top: 0;
     }
 

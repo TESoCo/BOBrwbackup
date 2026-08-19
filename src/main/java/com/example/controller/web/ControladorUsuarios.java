@@ -674,13 +674,13 @@ public class ControladorUsuarios {
      * Eliminar usuario
      */
     @PostMapping("/eliminar/{id}")
-    @PreAuthorize("hasAuthority('EDITAR_USUARIO')")
+    @PreAuthorize("hasAuthority('BORRAR_USUARIO')")
     public String eliminarUsuario(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             Usuario usuario = usuarioServicio.encontrarPorId(id);
             if (usuario != null) {
 
-// Verificar si el usuario actual está intentando eliminarse a sí mismo
+                // Verificar si el usuario actual está intentando eliminarse a sí mismo
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                 String currentUsername = auth.getName();
 

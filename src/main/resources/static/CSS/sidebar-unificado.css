@@ -1,0 +1,184 @@
+/* ============================================================
+   SIDEBAR UNIFICADO - Estilo dashboard.css
+   ============================================================ */
+
+/* ---------- SIDEBAR PRINCIPAL ---------- */
+.sidebar {
+    width: var(--sidebar-width, 260px);
+    background: #0a1628;
+    color: #ffffff;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+/* ---------- HEADER DEL SIDEBAR ---------- */
+.sidebar-header {
+    padding: 1.5rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.sidebar-header img {
+    height: 80px;
+    margin-right: 10px;
+}
+
+.sidebar-header h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+/* ---------- ENLACES DE NAVEGACIÓN ---------- */
+.nav-links {
+    list-style: none;
+    padding: 1rem 0;
+}
+
+.nav-links li {
+    margin-bottom: 0.2rem;
+}
+
+.nav-links a {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1.5rem;
+    color: #ffffff;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+.nav-links i {
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+    color: #ffffff;
+}
+
+/* ---------- RESPONSIVE: TABLET (≤ 992px) ---------- */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 70px;
+    }
+
+    .sidebar-header h1,
+    .nav-links span {
+        display: none;
+    }
+
+    .nav-links a {
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .nav-links i {
+        margin-right: 0;
+    }
+}
+
+/* ---------- RESPONSIVE: MÓVIL (≤ 768px) ---------- */
+@media (max-width: 768px) {
+
+    /* 1. Botón de menú (hamburguesa) */
+    .menu-toggle {
+        display: block !important;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1100;
+        background: var(--primary, #2563eb);
+        color: white;
+        border: none;
+        padding: 10px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1.2rem;
+        box-shadow: var(--shadow, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+    }
+
+    /* 2. Sidebar como off-canvas (oculto por defecto) */
+    .sidebar {
+        width: var(--sidebar-width, 260px);
+        position: fixed;
+        height: 100vh;
+        z-index: 1050;
+        transform: translateX(-260px);
+        transition: transform 0.3s ease;
+    }
+
+    /* 3. Mostrar sidebar con JS */
+    .app-container.sidebar-active .sidebar {
+        transform: translateX(0) !important;
+    }
+
+    /* 4. Restaurar texto en móvil (anula el oculto de 992px) */
+    .sidebar-header h1,
+    .nav-links span {
+        display: block;
+    }
+
+    .nav-links a {
+        justify-content: flex-start;
+        padding: 0.8rem 1.5rem;
+    }
+
+    .nav-links i {
+        margin-right: 0.75rem;
+    }
+
+    /* 5. Desenfoque del contenido al abrir el sidebar */
+    .app-container.sidebar-active .main-content {
+        filter: blur(3px);
+        pointer-events: none;
+    }
+
+    /* 6. Ajustes de layout móvil */
+    .main-content {
+        margin-left: 0 !important;
+        padding: 1rem;
+        padding-top: 70px;
+        width: 100%;
+    }
+
+    .app-container {
+        display: block;
+    }
+}
+
+/* ---------- EXTRAS: BOTÓN DE MENÚ (oculto en desktop) ---------- */
+.menu-toggle {
+    display: none;
+}
+
+/* ---------- ENLACE DE USUARIO (opcional, si lo usas) ---------- */
+.user-name-link {
+    color: var(--primary, #2563eb);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.user-name-link:hover {
+    text-decoration: underline;
+    color: var(--primary-dark, #1d4ed8);
+}

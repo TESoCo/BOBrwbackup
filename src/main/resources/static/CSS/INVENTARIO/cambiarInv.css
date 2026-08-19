@@ -1,6 +1,8 @@
-/* --- IMPORTS DE VARIABLES (Asumimos que están en dashboard.css, pero las repetimos por seguridad) --- */
+/* Importar sidebar unificado */
+@import url('/css/sidebar-unificado.css');
+
 :root {
-    --primary: #1c5dae; /* Azul BOB */
+    --primary: #1c5dae;
     --primary-dark: #174a89;
     --light: #f8fafc;
     --dark: #1e293b;
@@ -13,7 +15,6 @@
 
 /* ----------------------------------------------------
    1. ESTILOS DE COMPONENTES ESPECÍFICOS DE LA VISTA
-   (Aplican en todas las resoluciones)
    ---------------------------------------------------- */
 
 /* --- BOTÓN DE REGRESO --- */
@@ -62,6 +63,7 @@
     align-items: center;
     gap: 12px;
 }
+
 .search-container h2 i {
     font-size: 1.8rem;
 }
@@ -93,6 +95,13 @@
     font-size: 1rem;
     background: white;
     transition: border-color 0.3s;
+}
+
+.search-form select:focus,
+.search-form input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(28, 93, 174, 0.15);
 }
 
 .search-form input[type="submit"] {
@@ -177,16 +186,16 @@ table td a, table td button {
     border-radius: 4px;
     cursor: pointer;
     border: none;
-    white-space: nowrap; /* Evita que el texto se envuelva en desktop */
+    white-space: nowrap;
 }
 
 table td a[th\\:href*='exportarExcelInv'] {
-    background: #34d399; /* Verde (Exportar) */
+    background: #34d399;
     color: white;
 }
 
 table td button {
-    background: #3b82f6; /* Azul (Enviar Correo) */
+    background: #3b82f6;
     color: white;
     margin-top: 5px;
 }
@@ -200,8 +209,7 @@ table td input[type="email"] {
     box-sizing: border-box;
 }
 
-/* --- ESTILOS DEL FORMULARIO DE ACTUALIZACIÓN (CARD) --- */
-/* Targetting: .form-container */
+/* --- ESTILOS DEL FORMULARIO DE ACTUALIZACIÓN --- */
 .form-container {
     background: white;
     padding: 30px;
@@ -212,7 +220,7 @@ table td input[type="email"] {
 }
 
 .form-header {
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid #e2e8f0;
     padding-bottom: 15px;
     margin-bottom: 25px;
 }
@@ -231,10 +239,8 @@ table td input[type="email"] {
     font-size: 1.8rem;
 }
 
-/* Rejilla principal del formulario */
 .form-grid {
     display: grid;
-    /* Se ajusta a 3 columnas, pero permite que los grupos de materiales sean más flexibles */
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     margin-bottom: 25px;
@@ -243,7 +249,6 @@ table td input[type="email"] {
 .form-group {
     display: flex;
     flex-direction: column;
-    /* Esto es clave para dar un borde visible a cada grupo, incluyendo los de la iteración de materiales */
     padding: 15px;
     border: 1px solid #f0f3f7;
     border-radius: 8px;
@@ -252,7 +257,7 @@ table td input[type="email"] {
 
 .form-group label {
     font-weight: 600;
-    color: var(--secondary-text);
+    color: var(--dark);
     margin-bottom: 8px;
     font-size: 0.95rem;
 }
@@ -262,7 +267,6 @@ table td input[type="email"] {
     margin-right: 5px;
 }
 
-/* Estilos de inputs y selects */
 .form-group input,
 .form-group select {
     padding: 12px 15px;
@@ -282,35 +286,32 @@ table td input[type="email"] {
     outline: none;
 }
 
-/* Estilo para campos de solo lectura si se usaran */
 .read-only {
-    background-color: #f0f3f7; /* Gris claro para indicar que es de solo lectura */
-    border: 1px solid var(--border-color);
+    background-color: #f0f3f7;
+    border: 1px solid #e2e8f0;
     color: #777;
     cursor: not-allowed;
 }
 
-/* Mensajes de error y validación */
 .error-message {
     color: var(--danger);
     font-size: 0.85rem;
     margin-top: 5px;
     font-weight: 500;
 }
+
 .required-star {
     color: var(--danger);
 }
 
-
-/* --- BOTONES DE ACCIÓN DEL FORMULARIO --- */
 .form-buttons {
-    grid-column: 1 / -1; /* Ocupa todas las columnas en el grid */
+    grid-column: 1 / -1;
     display: flex;
     gap: 15px;
     margin-top: 10px;
     padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-    justify-content: flex-end; /* Alinea los botones a la derecha */
+    border-top: 1px solid #e2e8f0;
+    justify-content: flex-end;
 }
 
 .btn-guardar, .btn-cancelar {
@@ -348,8 +349,7 @@ table td input[type="email"] {
     background: #bbb;
 }
 
-
-/* --- MENSAJES DE ALERTA (Éxito/Error) --- */
+/* --- MENSAJES DE ALERTA --- */
 .alert {
     padding: 15px;
     border-radius: 8px;
@@ -359,93 +359,35 @@ table td input[type="email"] {
     align-items: center;
     gap: 10px;
 }
+
 .alert i {
     font-size: 1.2rem;
 }
+
 .alert-success {
-    background-color: #d1f7e8; /* Verde muy claro */
-    color: var(--success);
-    border: 1px solid var(--success);
+    background-color: #d1f7e8;
+    color: #10b981;
+    border: 1px solid #10b981;
 }
+
 .alert-error {
-    background-color: #fce7e7; /* Rojo muy claro */
-    color: var(--danger);
-    border: 1px solid var(--danger);
+    background-color: #fce7e7;
+    color: #ef4444;
+    border: 1px solid #ef4444;
 }
 
 .no-records {
     padding: 20px;
     text-align: center;
     font-size: 1.1rem;
-    color: var(--secondary-text);
+    color: var(--gray);
     background-color: #f5f5f5;
     border-radius: 8px;
     margin-top: 20px;
 }
 
-/* ----------------------------------------------------
-   2. LÓGICA DE RESPONSIVIDAD Y MENÚ DE HAMBURGUESA
-   (Aplica solo en móvil: max-width: 768px)
-   ---------------------------------------------------- */
-
+/* Responsive */
 @media (max-width: 768px) {
-
-    /* === ARREGLOS DE LAYOUT GENERAL === */
-
-    /* 1. Muestra el botón de hamburguesa y lo posiciona */
-    .menu-toggle {
-        display: block !important;
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 1.2rem;
-        z-index: 1002;
-    }
-
-    /* 2. Oculta el Sidebar y asegura que sea fijo */
-    .sidebar{
-        left: calc(-1 * var(--sidebar-width)) !important; /* Oculta a la izquierda */
-        position: fixed !important;
-        z-index: 1001;
-        transition: left 0.3s ease;
-    }
-
-    /* 3. CLASE para abrir el menú (requiere JS) */
-    .app-container.sidebar-active .sidebar {
-        left: 0 !important; /* Muestra el sidebar */
-    }
-
-    /* 4. Cambia el ícono de hamburguesa a X cuando está abierto */
-    .app-container.sidebar-active .menu-toggle i::before {
-        content: "\f00d"; /* Ícono X de Font Awesome */
-    }
-
-    /* 5. Contenido principal: Ancho completo y sin scroll */
-    .main-content {
-        margin-left: 0 !important; /* Quita el margen de desktop */
-        padding: 1rem; /* Padding reducido */
-        width: 100%;
-        box-sizing: border-box;
-        padding-top: 55px !important;
-        overflow-x: unset; /* **CLAVE: ELIMINA EL SCROLL HORIZONTAL** */
-    }
-
-    /* 6. Dashboard Content: Ocupa todo el ancho disponible */
-    .dashboard-content {
-        padding: 1rem;
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
-        box-sizing: border-box;
-    }
-
-    /* === AJUSTES ESPECÍFICOS DE BÚSQUEDA === */
     .search-container {
         padding: 20px;
         margin: 20px 0;
@@ -453,19 +395,19 @@ table td input[type="email"] {
 
     .search-container h2 {
         font-size: 1.4rem;
-        justify-content: center; /* Centra el título */
+        justify-content: center;
         text-align: center;
     }
 
     .search-form {
-        flex-direction: column; /* Apila los inputs verticalmente */
-        align-items: stretch; /* Estira al 100% */
+        flex-direction: column;
+        align-items: stretch;
         gap: 12px;
     }
 
     .search-form label {
         width: 100%;
-        justify-content: flex-start; /* Alinea la etiqueta a la izquierda */
+        justify-content: flex-start;
     }
 
     .search-form select,
@@ -475,23 +417,21 @@ table td input[type="email"] {
         min-width: unset;
     }
 
-    /* === AJUSTES ESPECÍFICOS DE LA TABLA === */
     .table-container {
         padding: 0;
     }
 
     table td {
-        /* Reduce el padding de las celdas para ahorrar espacio */
         padding: 8px;
     }
 
-    /* Las acciones se apilan verticalmente */
-    table td form, table td a[th\\:href*='exportarExcelInv'] {
-        margin-right: 0;
-        display: block;
-        width: 100%;
-        margin-bottom: 5px;
-    }
+    table td form,
+    table td a[th\\:href*='exportarExcelInv'] {
+    margin-right: 0;
+    display: block;
+    width: 100%;
+    margin-bottom: 5px;
+}
 
     table td button {
         margin-top: 0;
@@ -499,5 +439,19 @@ table td input[type="email"] {
 
     table td input[type="email"] {
         margin-bottom: 0;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-buttons {
+        flex-direction: column;
+    }
+
+    .form-buttons .btn-guardar,
+    .form-buttons .btn-cancelar {
+        width: 100%;
+        justify-content: center;
     }
 }

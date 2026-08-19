@@ -208,6 +208,19 @@ public class UsuarioServicioImpl implements UsuarioServicio {
         return null;
     }
 
+    public boolean esUsuarioOAuth2(Usuario usuario) {
+        if (usuario == null) {
+            return false;
+        }
 
+        String authProvider = usuario.getAuthProvider().toString();
+        if (authProvider == null) {
+            return false;
+        }
+
+        // Trim y comparación sin sensibilidad a mayúsculas
+        String provider = authProvider.trim();
+        return !"LOCAL".equalsIgnoreCase(provider);
+    }
 
 }

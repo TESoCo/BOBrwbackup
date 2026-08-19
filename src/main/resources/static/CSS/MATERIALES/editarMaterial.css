@@ -1,3 +1,6 @@
+/* Importar sidebar unificado */
+@import url('/css/sidebar-unificado.css');
+
 :root {
     --primary: #2563eb;
     --primary-dark: #1d4ed8;
@@ -209,70 +212,41 @@ textarea.form-control {
     color: var(--danger);
 }
 
-/* ================= RESPONSIVE - MÓVIL (768px y menos) ================= */
-@media (max-width: 768px) {
-
-    /* 1. Botón de Toggle (Debe estar visible) */
-    .menu-toggle {
-        display: block !important;
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: var(--border-radius);
-        cursor: pointer;
-        font-size: 1.2rem;
-        z-index: 1100;
-        transition: all 0.3s;
-    }
-
-    /* 2. Ocultar el Sidebar por defecto */
-    .sidebar {
-        transform: translateX(calc(-1 * var(--sidebar-width)));
-        transition: transform 0.3s ease;
-        width: var(--sidebar-width);
-    }
-
-    /* 3. Mostrar el Sidebar cuando JS añade la clase */
-    .app-container.sidebar-active .sidebar { /* CLASE CLAVE: sidebar-active */
-        transform: translateX(0);
-    }
-
-    /* 4. Asegurar que el contenido principal no tenga margen y aplicar el desenfoque */
-    .main-content {
-        margin-left: 0 !important;
-        width: 100%;
-        transition: filter 0.3s ease;
-    }
-
-    .app-container.sidebar-active .main-content {
-        /* Aplicar desenfoque al contenido principal */
-        filter: blur(3px);
-        /* Deshabilitar interacciones mientras el menú está abierto */
-        pointer-events: none;
-    }
-
-    /* 5. Restaurar la visibilidad de texto y centrado */
-    .sidebar-header h1, .nav-links span {
-      display: block;
-    }
-    .nav-links a {
-      justify-content: flex-start;
-    }
-    .nav-links i {
-      margin-right: 0.75rem;
-    }
-}
-
 /* --- Form Container (Card Style) --- */
 .form-container {
-    background-color: white; /* CORREGIDO: Usando white (en lugar de --bg-card) */
+    background-color: white;
     padding: 2rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     margin-bottom: 2rem;
     border-left: 5px solid var(--primary);
+}
+
+/* Responsive específico */
+@media (max-width: 768px) {
+    .form-header {
+        padding: 1rem;
+    }
+
+    .form-body {
+        padding: 1rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .checkbox-group {
+        gap: 0.5rem;
+    }
 }

@@ -1,10 +1,12 @@
+/* Importar sidebar unificado */
+@import url('/css/sidebar-unificado.css');
+
 /* -------------------------------------------------------------------------
    Estilos específicos para la vista de Detalle/Edición de Obra (verObra.html)
 ------------------------------------------------------------------------- */
 
 /* Estilo para los inputs y selects dentro del modo Edición */
 .form-grid {
-    /* Usar la misma rejilla que en detalleMaterial.css */
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
@@ -14,7 +16,7 @@
 .form-input, .form-select {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #cbd5e1; /* slate-300 */
+    border: 1px solid #cbd5e1;
     border-radius: var(--border-radius);
     background-color: white;
     font-size: 1rem;
@@ -43,18 +45,18 @@
     margin-top: 0.5rem;
     background: white;
     border-radius: var(--border-radius);
-    overflow: hidden; /* Para que los bordes redondeados funcionen */
+    overflow: hidden;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .data-table th, .data-table td {
     padding: 1rem 1.25rem;
     text-align: left;
-    border-bottom: 1px solid #e2e8f0; /* slate-200 */
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .data-table th {
-    background-color: #f8fafc; /* slate-50 */
+    background-color: #f8fafc;
     color: var(--secondary);
     font-weight: 600;
     text-transform: uppercase;
@@ -62,7 +64,7 @@
 }
 
 .data-table tbody tr:hover {
-    background-color: #f1f5f9; /* slate-100 */
+    background-color: #f1f5f9;
 }
 
 /* Estilo para valores totales */
@@ -92,7 +94,7 @@
     gap: 1rem;
     align-items: center;
     padding: 0.75rem 0;
-    border-bottom: 1px solid #f1f5f9; /* slate-100 */
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .activity-edit-row:last-of-type {
@@ -100,11 +102,11 @@
 }
 
 .activity-edit-row .activity-select {
-    flex: 3; /* Más espacio para el nombre del APU */
+    flex: 3;
 }
 
 .activity-edit-row .activity-quantity {
-    flex: 1; /* Espacio fijo para la cantidad */
+    flex: 1;
     min-width: 80px;
 }
 

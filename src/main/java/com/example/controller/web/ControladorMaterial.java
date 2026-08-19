@@ -64,6 +64,9 @@ public class ControladorMaterial {
     @Autowired
     private QuantityEstimationService quantityEstimationService;
 
+    @Autowired
+    private MaterialesAPUServicio materialesAPUServicio;
+
 
     @GetMapping("/inicioMaterial")
     public String inicioMaterial(Model model, Authentication authentication) {
@@ -77,9 +80,24 @@ public class ControladorMaterial {
             preciosActuales.put(material.getIdMaterial(), precio);
         }
 
+        //Obtener la cantidad de apus con materiales relacionados
+        List <Apu> apus = apuServicio.listarElementos();
+        int cantApusMat = 0;
+
+        for (Apu apu : apus) {
+            List<MaterialesApu> materialesApus = apu.getMaterialesApus();
+            if (materialesApus != null && !materialesApus.isEmpty()) {
+                MaterialesApu primerMaterial = materialesApus.get(0);
+                if (primerMaterial != null && primerMaterial.getMaterial() != null) {
+                    cantApusMat++;
+                }
+            }
+        }
+
         model.addAttribute("materiales", materiales);
         model.addAttribute("preciosActuales", preciosActuales);
-        model.addAttribute("apus",apuServicio.listarElementos());
+        model.addAttribute("apus",apus);
+        model.addAttribute("cantApusMat", cantApusMat);
 
         return "material/inicioMaterial";
     }
@@ -322,14 +340,14 @@ public class ControladorMaterial {
                 boolean guardar;
                 if (seleccionados == null) {
                     // Caso 1: No hay checkboxes en el formulario
-                    // → Guardar TODOS los materiales
-                    guardar = true;
-                    System.out.println("→ Material " + i + ": Sin checkboxes, se guardará");
+                    // → No guardar
+                    guardar = false;
+                    System.out.println("→ Material " + i + ": Sin checkboxes, no se guardará");
                 } else if (i >= seleccionados.size()) {
                     // Caso 2: El índice excede la lista de seleccionados
-                    // → Guardar por seguridad (no debería ocurrir)
-                    guardar = true;
-                    System.out.println("→ Material " + i + ": Índice fuera de rango, se guardará por seguridad");
+                    // → No guardar
+                    guardar = false;
+                    System.out.println("→ Material " + i + ": Índice fuera de rango, no se guardará por seguridad");
                 } else {
                     // Caso 3: Verificar el estado del checkbox
                     // seleccionados.get(i) = "true" (marcado) o "false" (no marcado)

@@ -1,3 +1,6 @@
+/* Importar sidebar unificado */
+@import url('/css/sidebar-unificado.css');
+
 /* CSS/OBRAS/comparativa.css */
 
 .comparativa-container {
@@ -60,4 +63,15 @@
 .in-progress {
     color: #f59e0b;
     font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .obra-card {
+        margin-bottom: 1rem;
+    }
+
+    .comparativa-container {
+        padding: 0 0.5rem;
+    }
 }

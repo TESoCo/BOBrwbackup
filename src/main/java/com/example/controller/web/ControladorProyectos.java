@@ -305,7 +305,7 @@ public class ControladorProyectos {
      * Eliminar proyecto
      */
     @PostMapping("/eliminar/{id}")
-    @PreAuthorize("hasAuthority('ELIMINAR_PROYECTO')")
+    @PreAuthorize("hasAuthority('BORRAR_PROYECTO')")
     public String eliminarProyecto(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             Proyecto proyecto = proyectoServicio.encontrarPorId(id);

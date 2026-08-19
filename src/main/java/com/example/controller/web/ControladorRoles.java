@@ -166,7 +166,7 @@ public class ControladorRoles {
 
     // 6. ELIMINAR ROL (con validaciones)
     @PostMapping("/eliminar/{id}")
-    @PreAuthorize("hasAuthority('EDITAR_ROL')")
+    @PreAuthorize("hasAuthority('BORRAR_ROL')")
     public String eliminarRol(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             Rol rol = rolServicio.buscarPorId(id);

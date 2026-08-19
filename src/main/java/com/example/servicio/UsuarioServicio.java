@@ -17,4 +17,5 @@ public interface UsuarioServicio {
     public String getAccessTokenForUser(Long userId) throws Exception;
     public List<Usuario> encontrarPorCorreo(String correo);
     public byte[] downloadImageFromUrl(String imageUrl);
+    public boolean esUsuarioOAuth2(Usuario usuario);
 }

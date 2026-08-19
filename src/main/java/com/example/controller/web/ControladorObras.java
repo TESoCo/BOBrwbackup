@@ -619,14 +619,14 @@ public class ControladorObras
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
         // Verificar el proveedor de autenticación para envío de correos
-        boolean esOAuth2 = usuario != null &&
-                usuario.getAuthProvider() != null &&
-                !"LOCAL".equals(usuario.getAuthProvider());
+        boolean esOAuth2 = usuarioServicio.esUsuarioOAuth2(usuario);
+
 
         model.addAttribute("esOAuth2", esOAuth2);
 
         return "obras/verObras";
     }
+
 
 
     //Materiales (para el manejo de la matriz)
