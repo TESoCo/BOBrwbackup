@@ -137,6 +137,7 @@
                     <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Nombre</th>
                         <th>Descripción</th>
                         <th>Equipo Asignado</th>
                         <th>Obras Asociadas</th>
@@ -146,6 +147,9 @@
                     <tbody>
                     <tr th:each="proyecto : ${proyectos}">
                         <td th:text="${proyecto.idProyecto}"></td>
+                        <td>
+                            <strong th:text="${proyecto.nombreProyecto}"></strong>
+                        </td>
                         <td>
                             <strong th:text="${proyecto.descProyecto}"></strong>
                         </td>

@@ -16,6 +16,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/proyectos")
@@ -111,13 +112,34 @@ public class ControladorProyectos {
             @RequestParam(value = "obrasSeleccionadas", required = false) List<Long> obrasSeleccionadas,
             RedirectAttributes redirectAttributes) {
 
+        System.out.println("Iniciando guardado de proyecto... ");
         try {
             // Validar campos obligatorios
             if (proyecto.getDescProyecto() == null || proyecto.getDescProyecto().isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "La descripción del proyecto es obligatoria");
+                System.out.println("Validación descripción en blanco, volviendo a formulario... ");
                 return "redirect:/proyectos/nuevo";
+            } else {
+                if (proyecto.getNombreProyecto() == null || proyecto.getNombreProyecto().isEmpty()) {
+                    redirectAttributes.addFlashAttribute("error", "Rl nombre del proyecto es obligatoria");
+                    System.out.println("Validación nombre de proyecto en blanco, volviendo a formulario... ");
+                    return "redirect:/proyectos/nuevo";
+                } else {
+                    List<Proyecto> TodosProyectos = proyectoServicio.listarProyectos();
+                    for (Proyecto p : TodosProyectos) {
+                        System.out.println("Comparando con proyecto: " + p.getNombreProyecto());
+                        if (Objects.equals(proyecto.getNombreProyecto(), p.getNombreProyecto())) {
+                            redirectAttributes.addFlashAttribute("error", "Ya existe un proyecto con ese nombre");
+                            System.out.println("Validación nombre repetido, volviendo a formulario... ");
+                            return "redirect:/proyectos/nuevo";
+                        }
+                    }
+                }
             }
 
+
+
+            System.out.println("Asignando equipo... ");
             // Asignar equipo si se seleccionó
             if (idEquipo != null) {
                 Equipo equipo = equipoServicio.encontrarPorId(idEquipo);
@@ -125,10 +147,11 @@ public class ControladorProyectos {
                     proyecto.setEquipo(equipo);
                 }
             }
-
+            System.out.println("Guardando proyecto... ");
             // Guardar el proyecto
             proyectoServicio.guardar(proyecto);
 
+            System.out.println("Asignando obras... ");
             // Asignar obras seleccionadas al proyecto
             if (obrasSeleccionadas != null && !obrasSeleccionadas.isEmpty()) {
                 for (Long idObra : obrasSeleccionadas) {
@@ -140,6 +163,7 @@ public class ControladorProyectos {
                 }
             }
 
+            System.out.println("Creación exitosa. ");
             redirectAttributes.addFlashAttribute("success", "Proyecto creado exitosamente");
             return "redirect:/proyectos?creacionExitosa=true";
 

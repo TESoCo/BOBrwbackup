@@ -26,7 +26,7 @@ public class Equipo {
     private Long idEquipo;
 
     @NotEmpty(message = "La descripción del equipo es obligatoria")
-    @Column(name = "descripcion_equipo", nullable = false, length = 255)
+    @Column(name = "descripcion_equipo", nullable = false, length = 255, unique = true)
     private String descEquipo;
 
     @Column(name = "codigo_equipo", length = 50, unique = true)
