@@ -60,10 +60,6 @@ public class ControladorMaterial {
     @Autowired
     private ProveedorServicio proveedorServicio;
 
-
-    @Autowired
-    private QuantityEstimationService quantityEstimationService;
-
     @Autowired
     private MaterialesAPUServicio materialesAPUServicio;
 
@@ -309,9 +305,10 @@ public class ControladorMaterial {
             @RequestParam List<String> nombres,
             @RequestParam List<String> descripciones,
             @RequestParam List<String> unidades,
-            @RequestParam List<String> precios,
+            @RequestParam List<String> cantidades,
             @RequestParam(required = false) List<String> seleccionados,
-            @RequestParam(required = false) List<String> proveedores,
+            @RequestParam Long apuSeleccionado,
+
             RedirectAttributes redirectAttributes,
             Authentication authentication) {
 
@@ -319,8 +316,8 @@ public class ControladorMaterial {
         System.out.println("Nombres recibidos: " + nombres.size());
         System.out.println("Descripciones: " + descripciones.size());
         System.out.println("Unidades: " + unidades.size());
-        System.out.println("Proveedores recibidos: " + (proveedores != null ? proveedores.size() : 0));
-        System.out.println("Precios: " + precios.size());
+
+        System.out.println("Cantidades: " + cantidades.size());
         System.out.println("Seleccionados: " + (seleccionados != null ? seleccionados.size() : "null"));
 
         try {
@@ -370,53 +367,35 @@ public class ControladorMaterial {
                         material.setDescripcionMaterial(descripciones.get(i).trim());
                         material.setUnidadMaterial(unidades.get(i).trim());
 
+                        Apu apu = apuServicio.obtenerPorId(apuSeleccionado);
+
+                        //Crear relación con el APU con objetos MaterialesAPU
+                        MaterialesApu materialesApu = new MaterialesApu();
+                        materialesApu.setApu(apuServicio.obtenerPorId(apuSeleccionado));
+                        materialesApu.setMaterial(material);
+                        materialesApu.setCantidad(Double.valueOf(cantidades.get(i).trim()));
+
+                        //Clave compuesta MaterialesApuId
+                        MaterialesApuId id = new MaterialesApuId();
+                        id.setApu(apuSeleccionado);
+                        id.setMaterial(material.getIdMaterial());
+                        materialesApu.setId(id);
+
                         // Guardar el material primero
                         materialServicio.guardar(material);
+
+                        // Guardar la relación APU-Materiales
+                        materialesAPUServicio.guardar(materialesApu);
+
+                        apu.getMaterialesApus().add(materialesApu);
                         System.out.println("✅ Material guardado: " + material.getNombreMaterial());
 
-                        // Si el formulario envió proveedores:
-                        // PASO 5: Asociar proveedor y precio (si existen)
-                        if(proveedores != null && i < proveedores.size()){
-                            String nombreProveedor = proveedores.get(i);
-                            if (nombreProveedor != null && !nombreProveedor.trim().isEmpty()) {
-                                // PASO 5: Asociar proveedor y precio (si existen)
-                                Proveedor proveedor = proveedorServicio.buscarPorNombre(nombreProveedor);
-                                if (proveedor == null) {
-                                    // Crear proveedor si no existe
-                                    proveedor = new Proveedor();
-                                    proveedor.setNombreProveedor(nombreProveedor);
-                                    proveedorServicio.guardar(proveedor);
-                                    System.out.println("Nuevo proveedor: " + nombreProveedor);
-                                } else {
-                                    System.out.println("Proveedor existente: " + nombreProveedor);
-                                }
-                                // crear relación material-proveedor-precio
-                                if (precios != null && i < precios.size()) {
-                                    try {
-                                        BigDecimal precio = new BigDecimal(precios.get(i).trim());
-                                        materialServicio.asignarPrecioAProveedor(
-                                                material.getIdMaterial(),
-                                                proveedor.getIdProveedor(),
-                                                precio,
-                                                null
-                                        );
-                                        System.out.println(" Precio asignado para proveedor: " + precio);
-                                    } catch (NumberFormatException e) {
-                                        System.out.println("⚠️ Precio inválido para " + nombre);
-                                    }
-                                } else {
-                                    System.out.println("Nombre de proveedor vacío para material: " + nombre);
-                                }
-                            } else {
-                                System.out.println("Material sin proveedor asociado: " + nombre);
-                            }
-                        }
-                        // PASO 6: Incrementar contador de materiales guardados
+                        // PASO 5: Incrementar contador de materiales guardados
                         materialesGuardados++;
                     }
                 }
             }
-            // PASO 7: Mostrar resumen y redirigir
+            // PASO 6: Mostrar resumen y redirigir
             System.out.println("Materiales guardados exitosamente: " + materialesGuardados);
             redirectAttributes.addFlashAttribute("success",
                     materialesGuardados + " materiales guardados exitosamente");
@@ -486,197 +465,12 @@ public class ControladorMaterial {
     }
 
 
-    //AGENTE IA (chat)
-    //TODO: Generar desde APU usando el generador Flex, luego pasa de vuelta el feedback al mismo generador...
-    //  pero ¿no queda un prompt dentro del otro?
-    @PostMapping("/generarConAgente")
-    @ResponseBody
-    public Map<String, Object> generarConAgente(
-            @RequestParam Long apuId,
-            @RequestParam(required = false) String feedback,
-            HttpSession session,
-            Authentication authentication) {
 
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            Apu apu = apuServicio.obtenerPorId(apuId);
-            if (apu == null) {
-                response.put("error", "APU no encontrado");
-                return response;
-            }
-
-            String sessionId = session.getId();
-            String userId = authentication.getName();
-
-            AgentResponse agentResponse = enhancedAgentAIService.generarMaterialesConContexto(
-                    sessionId, userId, apu, feedback
-            );
-
-            response.put("materiales", agentResponse.getMateriales());
-            response.put("mensaje", agentResponse.getMensaje());
-            response.put("sugerencias", agentResponse.getSugerencias());
-            response.put("preguntas", agentResponse.getPreguntas());
-            response.put("success", true);
-
-        } catch (Exception e) {
-            response.put("error", e.getMessage());
-            response.put("success", false);
-        }
-
-        return response;
-    }
-
-    //Estado de cache de conversacion
-    @GetMapping("/conversacion/estado")
-    @ResponseBody
-    public Map<String, Object> getConversacionEstado(HttpSession session) {
-        String sessionId = session.getId();
-        AgentConversation conv = conversationService.getConversation(sessionId);
-
-        Map<String, Object> response = new HashMap<>();
-        if (conv != null) {
-            response.put("interacciones", conv.getInteractionCount());
-            response.put("ultimaActualizacion", conv.getLastUpdated());
-            response.put("materialesGenerados", conv.getUltimosMateriales() != null ?
-                    conv.getUltimosMateriales().size() : 0);
-        } else {
-            response.put("activa", false);
-        }
-        return response;
-    }
-
-    //Endpoint para pruebas memoria cache de la conversacion (redis)
-    @GetMapping("/test-redis-simple")
-    @ResponseBody
-    public String testRedisSimple() {
-        try {
-            // Probar con un objeto simple primero
-            redisTemplate.opsForValue().set("test:simple", "Hola Redis!");
-            String result = (String) redisTemplate.opsForValue().get("test:simple");
-
-            if ("Hola Redis!".equals(result)) {
-                return "✅ Redis básico funciona!";
-            } else {
-                return "❌ Redis básico falló";
-            }
-        } catch (Exception e) {
-            return "❌ Error: " + e.getMessage();
-        }
-    }
-
-    @GetMapping("/test-redis-conversation")
-    @ResponseBody
-    public String testRedisConversation() {
-        try {
-            // Crear una conversación simple sin APU
-            AgentConversation test = new AgentConversation();
-            test.setUserId("test-user");
-            test.setApuId(1L);
-            test.setApuNombre("APU de prueba");
-            test.setInteractionCount(1);
-
-            conversationService.saveConversation("test-session-2", test);
-            AgentConversation retrieved = conversationService.getConversation("test-session-2");
-
-            if (retrieved != null && "test-user".equals(retrieved.getUserId())) {
-                return "✅ Conversación guardada y recuperada correctamente!";
-            } else {
-                return "❌ Falló la recuperación de conversación";
-            }
-        } catch (Exception e) {
-            return "❌ Error: " + e.getMessage();
-        }
-    }
-
-    // Limpiar cache de conversacion
-    @GetMapping("/limpiarCache")
-    @ResponseBody
-    public String limpiarCache() {
-        // Esto es para limpiar
-        // En desarrollo, puedes limpiar desde Redis CLI: redis-cli FLUSHALL
-        return "Para limpiar caché, ejecuta: redis-cli FLUSHALL";
-    }
-
-    //Endpoint para aplicar feedback de usuario a los materiales generados
-    @PostMapping("/refinarMateriales")
-    @ResponseBody
-    public Map<String, Object> refinarMateriales(
-            @RequestBody Map<String, Object> request,
-            HttpServletRequest httpRequest,
-            Authentication authentication) {
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            Long apuId = Long.valueOf(request.get("apuId").toString());
-            String feedback = (String) request.get("feedback");
-            List<Map<String, String>> materialesActuales = (List<Map<String, String>>) request.get("materialesActuales");
-
-            String sessionId = (String) request.get("sessionId");
-            if (sessionId == null || sessionId.isEmpty()) {
-                // Fallback: obtener de la cookie de sesión
-                jakarta.servlet.http.Cookie[] cookies = httpRequest.getCookies();
-                if (cookies != null) {
-                    for (jakarta.servlet.http.Cookie cookie : cookies) {
-                        if ("SESSION".equals(cookie.getName())) {
-                            sessionId = cookie.getValue();
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (sessionId == null) {
-                sessionId = httpRequest.getSession().getId();
-            }
-
-            String userId = authentication.getName();
-
-            Apu apu = apuServicio.obtenerPorId(apuId);
-
-            // Construir prompt con los materiales actuales y el feedback
-            StringBuilder prompt = new StringBuilder();
-            prompt.append("Lista actual de materiales:\n");
-            for (Map<String, String> m : materialesActuales) {
-                prompt.append("- ").append(m.get("nombre"))
-                        .append(" (").append(m.get("unidad")).append("): ")
-                        .append(m.get("descripcion")).append("\n");
-            }
-            prompt.append("\nFeedback del usuario: ").append(feedback);
-            prompt.append("\n\nPor favor, ajusta la lista de materiales según el feedback. ");
-            prompt.append("Responde SOLO con un array JSON como antes.");
-
-            // Usar IA para refinar
-            List<Map<String, String>> materialesRefinados = aiService.generarMateriales(prompt.toString());
-
-            // Guardar en la conversación
-            AgentConversation conversation = conversationService.getConversation(sessionId);
-            if (conversation == null) {
-                conversation = new AgentConversation(userId, apu);
-            }
-            conversation.setUltimosMateriales(materialesRefinados);
-            conversation.getHistorialFeedback().add(feedback);
-            conversation.setInteractionCount(conversation.getInteractionCount() + 1);
-            conversationService.saveConversation(sessionId, conversation);
-
-            response.put("success", true);
-            response.put("materiales", materialesRefinados);
-            response.put("mensaje", "Materiales refinados según tu feedback");
-            response.put("sugerencias", List.of("¿Necesitas ajustar algo más?", "¿Las cantidades son correctas?"));
-
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("error", e.getMessage());
-        }
-
-        return response;
-    }
 
 
 //++++++++++++++++++++++++++++++LLM LOCAL+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Endpoint para pruebas LLM local OLLAMA
-// Endpoint para probar Ollama
+    // Endpoint para probar Ollama
     @GetMapping("/probarOllama")
     @ResponseBody
     public Map<String, Object> probarOllama(@RequestParam(required = false) String descripcion) {
@@ -785,88 +579,6 @@ public class ControladorMaterial {
         model.addAttribute("tabActiva", tabActiva); //  Pasar pestaña a la vista
         return "material/crearMaterial";
     }
-
-
-    // Estimación de cantidades con IA
-    @PostMapping("/estimarCantidades")
-    @ResponseBody
-    public Map<String, Object> estimarCantidades(
-            @RequestBody Map<String, Object> request,
-            Authentication authentication) {
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            System.out.println("=== ESTIMAR CANTIDADES RECIBIDO ===");
-            System.out.println("Request body: " + request);
-
-            // Obtener el APU ID
-            Object apuIdObj = request.get("apuId");
-            if (apuIdObj == null) {
-                response.put("success", false);
-                response.put("error", "No se recibió el ID del APU");
-                return response;
-            }
-
-            Long apuId = Long.valueOf(apuIdObj.toString());
-            System.out.println("APU ID: " + apuId);
-
-            // Obtener materiales
-            @SuppressWarnings("unchecked")
-            List<Map<String, String>> materiales = (List<Map<String, String>>) request.get("materiales");
-            String descripcion = (String) request.get("descripcion");
-            String unidadBase = (String) request.getOrDefault("unidadBase", "unidad");
-
-            System.out.println("Materiales recibidos: " + (materiales != null ? materiales.size() : 0));
-            System.out.println("Descripción: " + descripcion);
-
-            // Si no hay materiales, generarlos desde el APU
-            if (materiales == null || materiales.isEmpty()) {
-                Apu apu = apuServicio.obtenerPorId(apuId);
-                if (apu != null) {
-                    materiales = aiService.generarMateriales(apu.getDescAPU());
-                    descripcion = apu.getDescAPU();
-                    unidadBase = apu.getUnidadesAPU() != null ? apu.getUnidadesAPU() : "unidad";
-                    System.out.println("Materiales generados desde APU: " + materiales.size());
-                }
-            }
-
-            if (materiales == null || materiales.isEmpty()) {
-                response.put("success", false);
-                response.put("error", "No hay materiales para estimar");
-                return response;
-            }
-
-            // Usar QuantityEstimationService
-            List<Map<String, String>> materialesConCantidades =
-                    quantityEstimationService.estimarCantidades(materiales, descripcion, unidadBase);
-
-            response.put("success", true);
-            response.put("materiales", materialesConCantidades);
-            response.put("mensaje", "Cantidades estimadas correctamente");
-            response.put("total", materialesConCantidades.size());
-
-        } catch (NumberFormatException e) {
-            System.err.println("❌ Error parseando APU ID: " + e.getMessage());
-            response.put("success", false);
-            response.put("error", "ID de APU inválido");
-        } catch (Exception e) {
-            System.err.println("❌ Error en estimación: " + e.getMessage());
-            e.printStackTrace();
-            response.put("success", false);
-            response.put("error", e.getMessage());
-        }
-
-        return response;
-    }
-
-
-
-
-
-
-
-
 
 
 
