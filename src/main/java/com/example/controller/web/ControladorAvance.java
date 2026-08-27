@@ -143,8 +143,11 @@ public class ControladorAvance {
 
     //Agregar nuevo
     @GetMapping("/agregarAvance")
-    public String formAnexarAvance(Model model, org.springframework.security.core.Authentication authentication) {
-        List<Obra> obras = obraServicio.listaObra();
+    public String formAnexarAvance(Model model,
+                                   @ModelAttribute("error") String error,
+                                   org.springframework.security.core.Authentication authentication) {
+        String nombreUsuario = authentication.getName();
+        List<Obra> obras = obraServicio.obtenerObrasVisibles(usuarioServicio.encontrarPorNombreUsuario(nombreUsuario));
         List<Apu> apus = apuServicio.listarElementos();
         List<Contratista> contratistas = contratistaServicio.listarContratistas();
 
@@ -152,6 +155,7 @@ public class ControladorAvance {
         model.addAttribute("obras", obras);
         model.addAttribute("apus", apus);
         model.addAttribute("contratistas", contratistas);
+        model.addAttribute("errorMessage", error);
 
         return "avances/agregarAvance";
     }

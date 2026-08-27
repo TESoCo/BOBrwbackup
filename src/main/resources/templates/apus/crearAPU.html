@@ -4,7 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Materiales - Construction Optimization Baseline</title>
+    <title>Gestión de Actividades - Construction Optimization Baseline</title>
+
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <!-- Para PNG (alta resolución) -->
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/IMG/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/IMG/favicon-16x16.png}">
+    <!-- Apple Touch Icon (para iOS) -->
+    <link rel="apple-touch-icon" th:href="@{/IMG/apple-touch-icon.png}">
+
+    <!-- ===== CSS ===== -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
@@ -59,7 +70,7 @@
 
             <!-- APUs - Con permisos de APU -->
             <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
-                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
+                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Actividades</span></a></li>
             </div>
 
             <!-- Menu items for users with progress permissions -->
@@ -106,7 +117,7 @@
     <main class="main-content">
         <!-- Header -->
         <div class="header">
-            <h2>Crear Nuevo APU</h2>
+            <h2>Crear Nueva Actividad</h2>
             <div class="user-menu">
                 <div>
                     <div>
@@ -126,21 +137,21 @@
         <!-- Back button -->
         <div style="margin-bottom: 1rem;">
             <a th:href="@{/apu/inicioAPU}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Volver a APUs
+                <i class="fas fa-arrow-left"></i> Volver a Actividades
             </a>
         </div>
 
         <!-- Tabs for creation methods -->
         <div class="tabs">
-            <div class="tab active" data-tab="single">Crear APU Individual</div>
-            <div class="tab" data-tab="import">Importar APUs desde CSV</div>
+            <div class="tab active" data-tab="single">Crear Actividad Individual</div>
+            <div class="tab" data-tab="import">Importar Actividades desde CSV</div>
         </div>
 
         <!-- Single APU Creation Form -->
         <div class="tab-content active" id="single-tab">
             <div class="form-container">
                 <h3 class="form-title">
-                    <i class="fas fa-plus-circle"></i> Información del APU
+                    <i class="fas fa-plus-circle"></i> Información de Actividad
                 </h3>
 
                 <form th:action="@{/apu/salvar}" method="post" th:object="${apu}" id="apuForm">
@@ -148,9 +159,9 @@
 
                     <!-- Nombre APU (Required) -->
                     <div class="form-group">
-                        <label for="nombreAPU" class="form-label required">Nombre del APU</label>
+                        <label for="nombreAPU" class="form-label required">Nombre de Actividad</label>
                         <input type="text" id="nombreAPU" th:field="*{nombreAPU}" class="form-input"
-                               placeholder="Ingrese el nombre del APU" required maxlength="255">
+                               placeholder="Ingrese el nombre de la actividad" required maxlength="255">
                         <div class="error-message" th:if="${#fields.hasErrors('nombreAPU')}"
                              th:errors="*{nombreAPU}"></div>
                     </div>
@@ -159,7 +170,7 @@
                     <div class="form-group">
                         <label for="descAPU" class="form-label required">Descripción</label>
                         <textarea id="descAPU" th:field="*{descAPU}" class="form-textarea"
-                                  placeholder="Describa el APU detalladamente" required maxlength="1000"></textarea>
+                                  placeholder="Describa la actividad detalladamente" required maxlength="1000"></textarea>
                         <div class="error-message" th:if="${#fields.hasErrors('descAPU')}"
                              th:errors="*{descAPU}"></div>
                     </div>
@@ -178,6 +189,7 @@
                             <option value="l">Litro (l)</option>
                             <option value="hr">Hora (hr)</option>
                             <option value="día">Día</option>
+                            <option value="glb">Global</option>
                         </select>
                         <div class="error-message" th:if="${#fields.hasErrors('unidadesAPU')}"
                              th:errors="*{unidadesAPU}"></div>
@@ -186,7 +198,7 @@
                     <!-- Material Selection Section - Improved -->
                     <div class="detail-section">
                         <h4 class="section-title">
-                            <i class="fas fa-cubes"></i> Materiales del APU
+                            <i class="fas fa-cubes"></i> Materiales para la Actividad
                         </h4>
 
                         <!-- Search and Filter Bar -->
@@ -270,7 +282,7 @@
                             <div th:if="${materiales == null or materiales.empty}" class="empty-state">
                                 <i class="fas fa-box-open" style="font-size: 3rem; color: var(--gray); margin-bottom: 1rem;"></i>
                                 <h4>No hay materiales disponibles</h4>
-                                <p>Agrega materiales primero para poder seleccionarlos en el APU</p>
+                                <p>Agrega materiales primero para poder seleccionarlos en la actividad</p>
                                 <a th:href="@{/material/inicioMaterial}" class="btn btn-primary">
                                     <i class="fas fa-plus"></i> Gestionar Materiales
                                 </a>
@@ -344,7 +356,7 @@
                             <i class="fas fa-undo"></i> Limpiar
                         </button>
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Crear APU
+                            <i class="fas fa-save"></i> Crear Actividad
                         </button>
                     </div>
                 </form>
@@ -355,7 +367,7 @@
         <div class="tab-content" id="import-tab">
             <div class="form-container">
                 <h3 class="form-title">
-                    <i class="fas fa-file-import"></i> Importar APUs desde CSV
+                    <i class="fas fa-file-import"></i> Importar Actividades desde CSV
                 </h3>
 
                 <!-- Botón de descarga del formato CSV -->
@@ -363,7 +375,7 @@
                     <a href="https://drive.proton.me/urls/A52ZACZE0R#UT55eLUkVfMr" target="_blank" class="btn btn-download-format">
                         <i class="fas fa-download"></i> Descargar formato CSV
                     </a>
-                    <span class="format-hint">(Plantilla para importar APUs)</span>
+                    <span class="format-hint">(Plantilla para importar Actividades)</span>
                 </div>
 
                 <!-- ACTUAL FORM THAT SUBMITS TO SERVER -->
@@ -388,7 +400,7 @@
                             <i class="fas fa-times"></i> Cancelar
                         </button>
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-upload"></i> Importar APUs
+                            <i class="fas fa-upload"></i> Importar Actividades
                         </button>
                     </div>
                 </form>
@@ -397,7 +409,7 @@
                 <table class="preview-table" id="previewTable" style="display: none;">
                     <thead>
                     <tr>
-                        <th>Nombre APU</th>
+                        <th>Nombre Actividad</th>
                         <th>Descripción</th>
                         <th>Unidades</th>
                         <th>Valor Materiales</th>
@@ -417,10 +429,10 @@
         <!-- Help Section -->
         <div class="form-container">
             <h3 class="form-title">
-                <i class="fas fa-info-circle"></i> Información sobre APUs
+                <i class="fas fa-info-circle"></i> Información sobre Actividades
             </h3>
             <div style="color: var(--secondary); line-height: 1.6;">
-                <p><strong>APU (Análisis de Precios Unitarios)</strong> es un documento que desglosa el costo de una unidad de obra.</p>
+                <p><strong>Las actividades de COB son una aproximación a APU (Análisis de Precios Unitarios)</strong> Desglosando costos y tiempos para control y monitoreo.</p>
                 <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
                     <li><strong>Campos obligatorios:</strong> Nombre, Descripción, Unidades y Valor Misceláneo</li>
                     <li><strong>Campos opcionales:</strong> Valores de Materiales, Mano de Obra y Transporte</li>

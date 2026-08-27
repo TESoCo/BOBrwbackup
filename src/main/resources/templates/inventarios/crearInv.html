@@ -5,6 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construction Optimization Baseline - Crear Inventario</title>
+
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <!-- Para PNG (alta resolución) -->
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/IMG/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/IMG/favicon-16x16.png}">
+    <!-- Apple Touch Icon (para iOS) -->
+    <link rel="apple-touch-icon" th:href="@{/IMG/apple-touch-icon.png}">
+
+    <!-- ===== CSS ===== -->
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
     <link rel="stylesheet" th:href="@{/CSS/INVENTARIO/crearInv.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -168,10 +179,10 @@
                         <div class="materials-section">
                             <h3><i class='bx bx-list-plus'></i> Materiales</h3>
                             <div class="material-items" id="materialItems">
-                                <div class="material-item">
+                                <div class="material-item" id="materialTemplate">
                                     <div class="form-group">
                                         <label>Material:</label>
-                                        <select name="materialIds" class="material-select" onchange="mostrarStock(this)">
+                                        <select name="materialIds" class="material-select">
                                             <option value="">-- Seleccionar Material --</option>
                                             <option th:each="material : ${materiales}"
                                                     th:value="${material.idMaterial}"
@@ -181,13 +192,22 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Cantidad:</label>
-                                        <input type="number" name="materialCantidades" class="material-quantity" placeholder="Ingrese cantidad" min="0" step="0.01" onchange="validarStock(this)">
+                                        <input type="number" name="materialCantidades" class="material-quantity"
+                                               placeholder="Ingrese cantidad" min="0" step="1.00">
                                     </div>
                                     <div class="form-group">
                                         <label>Stock actual:</label>
                                         <input type="number" class="stock-disponible" readonly
                                                placeholder="0.00" step="0.01">
                                     </div>
+                                    <div class="form-group">
+                                        <label>Stock después:</label>
+                                        <input type="number" class="stock-despues" readonly
+                                               placeholder="0.00" step="0.01">
+                                    </div>
+                                    <button type="button" class="btn-remove-material" onclick="removeMaterial(this)">
+                                        <i class='bx bx-minus'></i> Eliminar
+                                    </button>
                                 </div>
                             </div>
                             <button type="button" class="btn-add-material" onclick="addMaterial()">
@@ -252,6 +272,154 @@
 
     // ========== FUNCIONES PARA STOCK ==========
 
+    // Función mejorada para agregar materiales
+    function addMaterial() {
+        const materialItems = document.getElementById('materialItems');
+        const template = document.getElementById('materialTemplate');
+
+        if (!materialItems || !template) {
+            console.error('No se encontraron los elementos necesarios');
+            return;
+        }
+
+        // Clonar el template
+        const newMaterialItem = template.cloneNode(true);
+
+        // Limpiar los valores
+        const select = newMaterialItem.querySelector('.material-select');
+        const quantityInput = newMaterialItem.querySelector('.material-quantity');
+        const stockInput = newMaterialItem.querySelector('.stock-disponible');
+        const stockDespuesInput = newMaterialItem.querySelector('.stock-despues');
+
+        if (select) select.value = '';
+        if (quantityInput) quantityInput.value = '';
+        if (stockInput) stockInput.value = '0.00';
+        if (stockDespuesInput) stockDespuesInput.value = '0.00';
+
+        // Quitar el ID del template para que sea único
+        newMaterialItem.removeAttribute('id');
+
+        // Configurar eventos
+        if (select) {
+            select.onchange = function() { mostrarStock(this); };
+        }
+        if (quantityInput) {
+            quantityInput.onchange = function() { validarStock(this); };
+            quantityInput.oninput = function() { validarStock(this); };
+        }
+
+        // Aplicar el tipo de destino actual
+        const tipoDestino = document.getElementById('tipoDestino').value;
+        if (quantityInput) {
+            quantityInput.dataset.validarStock = tipoDestino === 'STOCK' ? 'false' : 'true';
+        }
+
+        // Agregar el nuevo elemento
+        materialItems.appendChild(newMaterialItem);
+
+        // Mostrar el botón de eliminar si hay más de un material
+        updateRemoveButtons();
+    }
+
+    // Función mejorada para eliminar materiales
+    function removeMaterial(button) {
+        const materialItems = document.getElementById('materialItems');
+        const parentItem = button.closest('.material-item');
+
+        if (!materialItems || !parentItem) return;
+
+        // No eliminar si solo queda un material
+        if (materialItems.children.length <= 1) {
+            alert('Debe haber al menos un material en la lista');
+            return;
+        }
+
+        parentItem.remove();
+        updateRemoveButtons();
+    }
+
+    // Función para actualizar la visibilidad de los botones de eliminar
+    function updateRemoveButtons() {
+        const materialItems = document.getElementById('materialItems');
+        const removeButtons = document.querySelectorAll('.btn-remove-material');
+
+        if (materialItems.children.length <= 1) {
+            // Ocultar el botón de eliminar si solo hay un material
+            removeButtons.forEach(btn => btn.style.display = 'none');
+        } else {
+            // Mostrar todos los botones de eliminar
+            removeButtons.forEach(btn => btn.style.display = 'inline-block');
+        }
+    }
+
+    // Función mejorada para mostrar stock
+    function mostrarStock(select) {
+        const item = select.closest('.material-item');
+        if (!item) return;
+
+        const stock = parseFloat(select.options[select.selectedIndex]?.dataset?.stock || 0);
+        const stockInput = item.querySelector('.stock-disponible');
+        if (stockInput) {
+            stockInput.value = stock.toFixed(2);
+        }
+        calcularStockDespues(item);
+    }
+
+    // Función mejorada para validar stock
+    function validarStock(input) {
+        const item = input.closest('.material-item');
+        if (!item) return true;
+
+        const tipoDestino = document.getElementById('tipoDestino').value;
+
+        // Si es STOCK, no validar
+        if (tipoDestino === 'STOCK') {
+            calcularStockDespues(item);
+            return true;
+        }
+
+        const select = item.querySelector('.material-select');
+        if (!select) return true;
+
+        const stock = parseFloat(select.options[select.selectedIndex]?.dataset?.stock || 0);
+        const cantidad = parseFloat(input.value) || 0;
+
+        if (cantidad > stock && stock > 0) {
+            alert(`⚠️ Stock insuficiente.\nDisponible: ${stock.toFixed(2)}\nSolicitado: ${cantidad.toFixed(2)}`);
+            input.value = '';
+            calcularStockDespues(item);
+            return false;
+        }
+
+        calcularStockDespues(item);
+        return true;
+    }
+
+    // Función mejorada para calcular stock después
+    function calcularStockDespues(item) {
+        if (!item) return;
+
+        const tipoDestino = document.getElementById('tipoDestino').value;
+        const select = item.querySelector('.material-select');
+        const cantidadInput = item.querySelector('.material-quantity');
+        const stockDespuesInput = item.querySelector('.stock-despues');
+
+        if (!select || !cantidadInput || !stockDespuesInput) return;
+
+        const stock = parseFloat(select.options[select.selectedIndex]?.dataset?.stock || 0);
+        const cantidad = parseFloat(cantidadInput.value) || 0;
+
+        let stockDespues;
+        if (tipoDestino === 'STOCK') {
+            stockDespues = stock + cantidad; // Agregar al stock
+        } else {
+            stockDespues = stock - cantidad; // Consumir del stock
+        }
+
+        stockDespuesInput.value = stockDespues.toFixed(2);
+    }
+
+    // Función mejorada para toggle destino
     function toggleDestino() {
         const tipoDestino = document.getElementById('tipoDestino').value;
         const obraGroup = document.getElementById('obraGroup');
@@ -296,101 +464,28 @@
         document.querySelectorAll('.material-item').forEach(item => {
             calcularStockDespues(item);
         });
-    }
 
-    function mostrarStock(select) {
-        const item = select.closest('.material-item');
-        const stock = parseFloat(select.options[select.selectedIndex]?.dataset?.stock || 0);
-        const stockInput = item.querySelector('.stock-disponible');
-        if (stockInput) {
-            stockInput.value = stock.toFixed(2);
-        }
-        calcularStockDespues(item);
-    }
-
-    function validarStock(input) {
-        const item = input.closest('.material-item');
-        const tipoDestino = document.getElementById('tipoDestino').value;
-
-        // Si es STOCK, no validar
-        if (tipoDestino === 'STOCK') {
-            calcularStockDespues(item);
-            return true;
-        }
-
-        const select = item.querySelector('.material-select');
-        const stock = parseFloat(select.options[select.selectedIndex]?.dataset?.stock || 0);
-        const cantidad = parseFloat(input.value) || 0;
-
-        if (cantidad > stock && stock > 0) {
-            alert(`⚠️ Stock insuficiente.\nDisponible: ${stock.toFixed(2)}\nSolicitado: ${cantidad.toFixed(2)}`);
-            input.value = '';
-            item.querySelector('.stock-despues').value = stock.toFixed(2);
-            return false;
-        }
-
-        calcularStockDespues(item);
-        return true;
-    }
-
-    function calcularStockDespues(item) {
-        const tipoDestino = document.getElementById('tipoDestino').value;
-        const select = item.querySelector('.material-select');
-        const cantidadInput = item.querySelector('.material-quantity');
-        const stockDespuesInput = item.querySelector('.stock-despues');
-
-        if (!select || !cantidadInput || !stockDespuesInput) return;
-
-        const stock = parseFloat(select.options[select.selectedIndex]?.dataset?.stock || 0);
-        const cantidad = parseFloat(cantidadInput.value) || 0;
-
-        let stockDespues;
-        if (tipoDestino === 'STOCK') {
-            stockDespues = stock + cantidad; // Agregar al stock
-        } else {
-            stockDespues = stock - cantidad; // Consumir del stock
-        }
-
-        stockDespuesInput.value = stockDespues.toFixed(2);
-    }
-
-    function addMaterial() {
-        const materialItems = document.getElementById('materialItems');
-        if (materialItems && materialItems.firstElementChild) {
-            const newMaterialItem = materialItems.firstElementChild.cloneNode(true);
-            newMaterialItem.querySelector('.material-select').value = '';
-            newMaterialItem.querySelector('.material-quantity').value = '';
-            newMaterialItem.querySelector('.stock-disponible').value = '0.00';
-            newMaterialItem.querySelector('.stock-despues').value = '0.00';
-
-            // Configurar eventos
-            const select = newMaterialItem.querySelector('.material-select');
-            const input = newMaterialItem.querySelector('.material-quantity');
-
-            select.onchange = function() { mostrarStock(this); };
-            input.onchange = function() { validarStock(this); };
-            input.oninput = function() { validarStock(this); };
-
-            // Aplicar el tipo de destino actual
-            const tipoDestino = document.getElementById('tipoDestino').value;
-            input.dataset.validarStock = tipoDestino === 'STOCK' ? 'false' : 'true';
-
-            materialItems.appendChild(newMaterialItem);
-        }
-    }
-
-    function removeMaterial(button) {
-        const materialItems = document.getElementById('materialItems');
-        const parentItem = button.closest('.material-item');
-        if (materialItems && materialItems.children.length > 1 && parentItem) {
-            parentItem.remove();
-        }
-
+        // Actualizar botones de eliminar
+        updateRemoveButtons();
     }
 
     // Inicializar al cargar
     document.addEventListener("DOMContentLoaded", function() {
+        // ... (mantener el código existente de fecha y menú)
+
+        // Inicializar la sección de materiales
         toggleDestino();
+        updateRemoveButtons();
+
+        // Configurar eventos iniciales
+        document.querySelectorAll('.material-select').forEach(select => {
+            select.onchange = function() { mostrarStock(this); };
+        });
+
+        document.querySelectorAll('.material-quantity').forEach(input => {
+            input.onchange = function() { validarStock(this); };
+            input.oninput = function() { validarStock(this); };
+        });
     });
 
 </script>

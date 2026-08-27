@@ -4,7 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Materiales - Construction Optimization Baseline</title>
+    <title>Gestión de Actividad - Construction Optimization Baseline</title>
+
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <!-- Para PNG (alta resolución) -->
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/IMG/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/IMG/favicon-16x16.png}">
+    <!-- Apple Touch Icon (para iOS) -->
+    <link rel="apple-touch-icon" th:href="@{/IMG/apple-touch-icon.png}">
+
+    <!-- ===== CSS ===== -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}">
@@ -59,7 +70,7 @@
 
             <!-- APUs - Con permisos de APU -->
             <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
-                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
+                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Actividades</span></a></li>
             </div>
 
             <!-- Menu items for users with progress permissions -->
@@ -107,7 +118,7 @@
         <!-- Header -->
         <div class="header">
             <div>
-                <h2><i class="fas fa-calculator"></i> Gestión de APUs</h2>
+                <h2><i class="fas fa-calculator"></i> Gestión de Actividades</h2>
             </div>
             <div class="user-menu">
                 <div>
@@ -132,7 +143,7 @@
                     <i class="fas fa-calculator"></i>
                 </div>
                 <div style="font-size: 1.5rem; font-weight: bold;" th:text="${apus != null ? apus.size() : 0}">0</div>
-                <div style="color: var(--secondary);">Total APUs</div>
+                <div style="color: var(--secondary);">Actividades registradas</div>
             </div>
 
             <div style="background: white; padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); text-align: center;">
@@ -149,14 +160,14 @@
         <!-- Action Buttons -->
         <div class="header-actions" style="margin-bottom: 2rem;">
             <a th:href="@{/apu/crearAPU}" class="btn btn-success" sec:authorize="hasAuthority('CREAR_APU')">
-                <i class="fas fa-plus"></i> Nuevo APU
+                <i class="fas fa-plus"></i> Nueva Actividad
             </a>
         </div>
 
         <!-- Search Section -->
         <div class="search-container">
             <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-search"></i> Buscar APUs
+                <i class="fas fa-search"></i> Buscar Actividades
             </h3>
             <form class="search-form" th:action="@{/apu/inicioAPU}" method="get">
                 <input type="text" name="busqueda" placeholder="Buscar por nombre o descripción..." class="search-input">
@@ -215,7 +226,7 @@
                                 <a th:href="@{/apu/eliminarCompleto/} + ${apu.idAPU}"
                                    class="btn btn-danger btn-sm"
                                    sec:authorize="hasAuthority('BORRAR_APU')"
-                                   onclick="return confirm('¿Está seguro de que desea eliminar este APU?')">
+                                   onclick="return confirm('¿Está seguro de que desea eliminar esta actividad?')">
                                     <i class="fas fa-trash"></i> Eliminar
                                 </a>
                             </td>
@@ -227,7 +238,7 @@
                 <!-- Pagination (if needed) -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
                     <div style="color: var(--secondary);">
-                        Mostrando <strong th:text="${apus.size()}">0</strong> APUs
+                        Mostrando <strong th:text="${apus.size()}">0</strong> Actividades
                     </div>
                     <!-- Add pagination controls here if needed -->
                 </div>
@@ -236,11 +247,11 @@
             <!-- Empty State -->
             <div th:if="${apus == null or apus.empty}" class="empty-message">
                 <i class="fas fa-calculator"></i>
-                <h3>No hay APUs registrados</h3>
-                <p>Comienza creando tu primer APU para verlo aquí.</p>
+                <h3>No hay Actividades registradas</h3>
+                <p>Comienza creando tu primera actividad para verla aquí.</p>
                 <a th:href="@{/apu/crearAPU}" class="btn btn-success" sec:authorize="hasAuthority('CREAR_APU')"
                    style="margin-top: 1rem;">
-                    <i class="fas fa-plus"></i> Crear Primer APU
+                    <i class="fas fa-plus"></i> Crear Primera Actividad
                 </a>
             </div>
 

@@ -138,13 +138,12 @@ public class ControladorAPU {
                 BigDecimal totalMateriales = calcularTotalMateriales(apuGuardado);
                 apuGuardado.setVMaterialesAPU(totalMateriales);
                 System.out.println("Total materiales calculado: " + totalMateriales);
-                // Re-guardar el APU con los materiales actualizados
-                apuServicio.guardar(apuGuardado);
+
             } else {
                 System.out.println("No se recibieron materiales para procesar");
                 // Si no hay materiales, establecer valor en 0
                 apuGuardado.setVMaterialesAPU(BigDecimal.ZERO);
-                apuServicio.guardar(apuGuardado);
+
             }
 
             String mensaje = apu.getIdAPU() == null ? "APU creado correctamente" : "APU actualizado correctamente";
@@ -264,6 +263,9 @@ public class ControladorAPU {
 
     // ========== MÉTOD0 PARA PROCESAR MATERIALES ==========
     private void procesarMaterialesAPU(Apu apu, List<Long> materialIds, List<Double> cantidades) {
+
+        System.out.println("Iniciando guardado de APU...");
+
         // Limpiar materiales existentes si estamos editando
         if (apu.getIdAPU() != null) {
             List<MaterialesApu> materialesExistentes = materialesAPUServicio.obtenerPorId(apu.getIdAPU());
@@ -272,6 +274,7 @@ public class ControladorAPU {
             }
         }
 
+
         // Crear nueva lista si no existe
         if (apu.getMaterialesApus() == null) {
             apu.setMaterialesApus(new ArrayList<>());
@@ -279,32 +282,49 @@ public class ControladorAPU {
             apu.getMaterialesApus().clear();
         }
 
-        // Agregar nuevos materiales
+        // Almacenar la info en un map
+        Map<Long, Double> materialCantidadMap = new HashMap<>();
+
+        System.out.println("Agrupando materiales por Id...");
+        // Agrupar materiales por ID, sumando cantidades si se repiten
         for (int i = 0; i < materialIds.size(); i++) {
             Long materialId = materialIds.get(i);
             Double cantidad = cantidades.get(i);
 
             if (materialId != null && cantidad != null && cantidad > 0) {
-                Material material = materialServicio.obtenerPorId(materialId);
-                if (material != null) {
-                    MaterialesApu materialesApu = new MaterialesApu();
-                    materialesApu.setApu(apu);
-                    materialesApu.setMaterial(material);
-                    materialesApu.setCantidad(cantidad);
-
-                    //Clave compuesta MaterialesApuId
-                    MaterialesApuId id = new MaterialesApuId();
-                    id.setApu(apu.getIdAPU());
-                    id.setMaterial(materialId);
-                    materialesApu.setId(id);
-
-                    // Save the relationship
-                    materialesAPUServicio.guardar(materialesApu);
-                    apu.getMaterialesApus().add(materialesApu);
-                }
+                materialCantidadMap.merge(materialId, cantidad, Double::sum);
             }
         }
 
+        System.out.println("Procesando materiales...");
+        // Ahora procesar cada material único
+        for (Map.Entry<Long, Double> entry : materialCantidadMap.entrySet()) {
+            Long materialId = entry.getKey();
+            Double cantidadTotal = entry.getValue();
+            System.out.println("Material: " + materialId + " Cantidad: " + cantidadTotal);
+            Material material = materialServicio.obtenerPorId(materialId);
+            if (material != null) {
+                MaterialesApu materialesApu = new MaterialesApu();
+                materialesApu.setApu(apu);
+                materialesApu.setMaterial(material);
+                materialesApu.setCantidad(cantidadTotal);
+
+                // Clave compuesta MaterialesApuId
+                MaterialesApuId id = new MaterialesApuId();
+                id.setApu(apu.getIdAPU());
+                id.setMaterial(materialId);
+                materialesApu.setId(id);
+
+                // Calcular subtotal antes de guardar
+                materialesApu.recalcularSubtotal();
+
+                // Guardar la relación
+                materialesAPUServicio.guardar(materialesApu);
+
+            }
+        }
+
+        System.out.println("Recalculando valor materiales...");
         // Recalcular total de materiales
         apu.setVMaterialesAPU(calcularTotalMateriales(apu));
     }

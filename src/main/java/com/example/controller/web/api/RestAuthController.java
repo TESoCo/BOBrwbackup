@@ -35,6 +35,7 @@ public class RestAuthController {
     private UsuarioServicio usuarioServicio;
 
     @PostMapping("/login")
+
     public ResponseEntity<Map<String, Object>> login(
             @RequestBody Map<String, String> credentials,
             HttpSession session) {

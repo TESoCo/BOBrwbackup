@@ -4,7 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle Inventario</title>
+    <title>Detalle Solicitud</title>
+
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <!-- Para PNG (alta resolución) -->
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/IMG/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/IMG/favicon-16x16.png}">
+    <!-- Apple Touch Icon (para iOS) -->
+    <link rel="apple-touch-icon" th:href="@{/IMG/apple-touch-icon.png}">
+
+    <!-- ===== CSS ===== -->
 
     <!-- CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -64,7 +75,7 @@
 
             <!-- APUs -->
             <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
-                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
+                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Actividades</span></a></li>
             </div>
 
             <!-- Avances -->
@@ -102,7 +113,7 @@
     <!-- Contenido principal -->
     <main class="main-content">
         <div class="header">
-            <h2>Detalle de Inventario</h2>
+            <h2>Detalle de Solicitud</h2>
         </div>
 
         <div class="dashboard-content">
@@ -114,7 +125,7 @@
                     </a>
                 </div>
 
-                <h1>Detalle de Inventario #<span th:text="${inventario.idInventario}"></span></h1>
+                <h1>Detalle de Solicitud #<span th:text="${inventario.idInventario}"></span></h1>
 
                 <!-- Información General -->
                 <div class="card">
