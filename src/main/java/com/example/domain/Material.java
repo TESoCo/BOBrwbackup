@@ -43,7 +43,7 @@ public class Material implements Serializable {
     private String unidadMaterial;
 
     @NotEmpty(message = "El nombre del material es obligatorio")
-    @Column(name = "nombre_material", nullable = false, length = 255)
+    @Column(name = "nombre_material", nullable = false, length = 255, unique = true)
     private String nombreMaterial;
 
     @Column(name = "descripcion_material", columnDefinition = "TEXT")

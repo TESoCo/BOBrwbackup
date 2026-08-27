@@ -6,7 +6,18 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Construction Optimization Baseline - Gestión de Obras</title>
+  <title>Construction Optimization Baseline - Iniciar Sesión</title>
+
+  <!-- ===== FAVICON ===== -->
+  <link rel="icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+  <link rel="shortcut icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+  <!-- Para PNG (alta resolución) -->
+  <link rel="icon" type="image/png" sizes="32x32" th:href="@{/IMG/favicon-32x32.png}">
+  <link rel="icon" type="image/png" sizes="16x16" th:href="@{/IMG/favicon-16x16.png}">
+  <!-- Apple Touch Icon (para iOS) -->
+  <link rel="apple-touch-icon" th:href="@{/IMG/apple-touch-icon.png}">
+
+  <!-- ===== CSS ===== -->
   <link rel="stylesheet" th:href="@{CSS/login.css}">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -128,11 +139,10 @@
       <p>Accede a tu cuenta para gestionar tus proyectos</p>
     </div>
 
-    <!-- Mensaje de error general -->
-    <div th:if="${param.error}" class="alert alert-danger">
+    <!-- Error genérico (cuando no hay estado específico en sesión) -->
+    <div th:if="${param.error != null and session.loginError == null}" class="alert alert-danger">
       <i class="fas fa-exclamation-circle"></i>
-      <span th:if="${param.error[0] == 'true'}">Usuario o contraseña incorrectos</span>
-      <span th:unless="${param.error[0] == 'true'}" th:text="${param.error[0]}"></span>
+      <span>Usuario o contraseña incorrectos</span>
     </div>
 
     <!-- Mensaje de éxito -->
@@ -140,20 +150,20 @@
       <i class="fas fa-check-circle"></i> Has cerrado sesión exitosamente
     </div>
 
-    <!-- ===== NUEVO: Mensaje de cuenta pendiente ===== -->
-    <div th:if="${param.pending}" class="alert alert-warning">
+    <!-- ===== Mensaje de cuenta pendiente ===== -->
+    <div th:if="${session.loginError == 'pending'}" class="alert alert-warning">
       <i class="fas fa-clock"></i>
       <span>Tu cuenta está pendiente de aprobación. Un administrador revisará tu solicitud.</span>
     </div>
 
-    <!-- ===== NUEVO: Mensaje de cuenta rechazada ===== -->
-    <div th:if="${param.rejected}" class="alert alert-danger">
+    <!-- ===== Mensaje de cuenta rechazada ===== -->
+    <div th:if="${session.loginError == 'rejected'}" class="alert alert-danger">
       <i class="fas fa-times-circle"></i>
       <span>Tu cuenta ha sido rechazada. Contacta al administrador para más información.</span>
     </div>
 
-    <!-- ===== NUEVO: Mensaje de cuenta aprobada ===== -->
-    <div th:if="${param.approved}" class="alert alert-success">
+    <!-- ===== Mensaje de cuenta aprobada ===== -->
+    <div th:if="${param.approved != null}" class="alert alert-success">
       <i class="fas fa-check-circle"></i>
       <span>Iniciando sesión...</span>
     </div>
@@ -183,7 +193,6 @@
 -->
 
       <button type="submit" class="login-button">Ingresar</button>
-
     </form>
 
     <!-- ===== NUEVO: Separador y botón de Google ===== -->

@@ -1,18 +1,29 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Estadísticas de Inventario</title>
+    <title>Estadísticas de Solicitud</title>
 </head>
 <body>
 <div class="container">
-    <h1>Estadísticas de Inventario</h1>
+    <h1>Estadísticas de Solicitud</h1>
+
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <!-- Para PNG (alta resolución) -->
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/IMG/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/IMG/favicon-16x16.png}">
+    <!-- Apple Touch Icon (para iOS) -->
+    <link rel="apple-touch-icon" th:href="@{/IMG/apple-touch-icon.png}">
+
+    <!-- ===== CSS ===== -->
 
     <div class="row">
         <div class="col-md-3">
             <div class="card">
                 <div class="card-body text-center">
                     <h2 th:text="${totalInventarios}">0</h2>
-                    <p>Total Inventarios</p>
+                    <p>Total Solicitudes</p>
                 </div>
             </div>
         </div>
@@ -28,7 +39,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h2 th:text="${inventariosActivos}">0</h2>
-                    <p>Activos</p>
+                    <p>Activas</p>
                 </div>
             </div>
         </div>
@@ -36,7 +47,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h2 th:text="${totalInventarios - inventariosActivos}">0</h2>
-                    <p>Finalizados</p>
+                    <p>Finalizadas</p>
                 </div>
             </div>
         </div>
@@ -46,7 +57,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h4>Inventarios por Estado</h4>
+                    <h4>Solicitudes por Estado</h4>
                 </div>
                 <div class="card-body">
                     <table class="table">

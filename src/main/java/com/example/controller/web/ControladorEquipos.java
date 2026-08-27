@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/equipos")
@@ -105,12 +106,25 @@ public class ControladorEquipos {
             @RequestParam(value = "proyectosSeleccionados", required = false) List<Long> idsProyectos,
             RedirectAttributes redirectAttributes) {
 
+        System.out.println("Iniciando guardado de proyecto... ");
         try {
             // Validar campos obligatorios
             if (equipo.getDescEquipo() == null || equipo.getDescEquipo().isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "La descripción del equipo es obligatoria");
+                System.out.println("Validación descripción en blanco, volviendo a formulario... ");
                 return "redirect:/equipos/nuevo";
+            } else {
+                List <Equipo> TodosEquipos = equipoServicio.listarEquipos();
+                for (Equipo e : TodosEquipos){
+                    if (Objects.equals(equipo.getDescEquipo(), e.getDescEquipo())){
+                        redirectAttributes.addFlashAttribute("error", "Ya existe un equipo con esa descripción");
+                        System.out.println("Validación descripción repetida, volviendo a formulario... ");
+                        return "redirect:/equipos/nuevo";
+                    }
+                }
             }
+
+
 
             // Obtener el usuario actual (autenticado)
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -141,8 +155,7 @@ public class ControladorEquipos {
                 }
             }
 
-
-
+            System.out.println("Creación exitosa. ");
             redirectAttributes.addFlashAttribute("success", "Equipo creado exitosamente");
             return "redirect:/equipos?creacionExitosa=true";
 

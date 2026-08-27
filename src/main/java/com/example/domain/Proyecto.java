@@ -36,7 +36,7 @@ public class Proyecto {
     @Column(name = "codigo_proyecto", length = 50, unique = true)
     private String codigoProyecto;
 
-    @Column(name = "nombre_proyecto", length = 255)
+    @Column(name = "nombre_proyecto", length = 255, unique = true)
     private String nombreProyecto;
 
 

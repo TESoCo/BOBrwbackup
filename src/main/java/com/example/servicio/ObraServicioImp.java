@@ -31,6 +31,9 @@ public class ObraServicioImp implements ObraServicio {
     private AvanceDao avanceDao;
 
     @Autowired
+    private AuditoriaDao auditoriaDao;
+
+    @Autowired
     private APUServicio apuServicio;
 
     @Autowired
@@ -916,6 +919,114 @@ public class ObraServicioImp implements ObraServicio {
         return new ArrayList<>();
     }
 
+    /**
+     * Registrar auditoría para una obra
+     */
+    public void registrarAuditoria(Obra obra, String campo, String valorAnterior,
+                                   String valorNuevo, Usuario usuario,
+                                   String comentario, String ipOrigen, String userAgent) {
+        try {
+            Auditoria auditoria = new Auditoria();
+            auditoria.setEntidad("OBRA");
+            auditoria.setIdEntidad(obra.getIdObra());
+            auditoria.setAccion(Auditoria.AccionAuditoria.UPDATE);
+            auditoria.setCampo(campo);
+            auditoria.setValorAnterior(valorAnterior);
+            auditoria.setValorNuevo(valorNuevo);
+            auditoria.setUsuario(usuario);
+            auditoria.setComentario(comentario);
+            auditoria.setIpOrigen(ipOrigen);
+            auditoria.setUserAgent(userAgent);
+
+            auditoriaDao.save(auditoria);
+        } catch (Exception e) {
+            System.err.println("Error al registrar auditoría de obra: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Registrar auditoría de cambio de estado
+     */
+    public void registrarAuditoriaEstado(Obra obra, String estadoAnterior,
+                                         String estadoNuevo, Usuario usuario,
+                                         String ipOrigen, String userAgent) {
+        try {
+            Auditoria auditoria = new Auditoria();
+            auditoria.setEntidad("OBRA");
+            auditoria.setIdEntidad(obra.getIdObra());
+            auditoria.setAccion(Auditoria.AccionAuditoria.STATUS_CHANGE);
+            auditoria.setCampo("estado");
+            auditoria.setValorAnterior(estadoAnterior);
+            auditoria.setValorNuevo(estadoNuevo);
+            auditoria.setUsuario(usuario);
+            auditoria.setComentario("Cambio de estado de obra");
+            auditoria.setIpOrigen(ipOrigen);
+            auditoria.setUserAgent(userAgent);
+
+            auditoriaDao.save(auditoria);
+        } catch (Exception e) {
+            System.err.println("Error al registrar auditoría de estado: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Registrar auditoría de creación de obra
+     */
+    public void registrarAuditoriaCreacion(Obra obra, Usuario usuario,
+                                           String ipOrigen, String userAgent) {
+        try {
+            Auditoria auditoria = new Auditoria();
+            auditoria.setEntidad("OBRA");
+            auditoria.setIdEntidad(obra.getIdObra());
+            auditoria.setAccion(Auditoria.AccionAuditoria.INSERT);
+            auditoria.setCampo("creacion");
+            auditoria.setValorAnterior(null);
+            auditoria.setValorNuevo("Obra creada: " + obra.getNombreObra());
+            auditoria.setUsuario(usuario);
+            auditoria.setComentario("Creación de nueva obra");
+            auditoria.setIpOrigen(ipOrigen);
+            auditoria.setUserAgent(userAgent);
+
+            auditoriaDao.save(auditoria);
+        } catch (Exception e) {
+            System.err.println("Error al registrar auditoría de creación: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Registrar auditoría de anulación de obra
+     */
+    public void registrarAuditoriaAnulacion(Obra obra, Usuario usuario,
+                                            String motivo, String ipOrigen, String userAgent) {
+        try {
+            Auditoria auditoria = new Auditoria();
+            auditoria.setEntidad("OBRA");
+            auditoria.setIdEntidad(obra.getIdObra());
+            auditoria.setAccion(Auditoria.AccionAuditoria.DELETE);
+            auditoria.setCampo("anulacion");
+            auditoria.setValorAnterior("Activa");
+            auditoria.setValorNuevo("Anulada");
+            auditoria.setUsuario(usuario);
+            auditoria.setComentario("Obra anulada: " + motivo);
+            auditoria.setIpOrigen(ipOrigen);
+            auditoria.setUserAgent(userAgent);
+
+            auditoriaDao.save(auditoria);
+        } catch (Exception e) {
+            System.err.println("Error al registrar auditoría de anulación: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Obtener auditoría por ID de obra
+     */
+    public List<Auditoria> obtenerAuditoriaPorObra(Long idObra) {
+        return auditoriaDao.findByEntidadAndIdEntidadOrderByFechaCambioDesc("OBRA", idObra);
+    }
 
 }
 

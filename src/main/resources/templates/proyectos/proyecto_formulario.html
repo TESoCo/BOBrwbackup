@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${modo == 'crear' ? 'Crear Proyecto - BOB' : 'Editar Proyecto - BOB'}">Gestion de Proyectos</title>
+
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <!-- Para PNG (alta resolución) -->
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/IMG/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/IMG/favicon-16x16.png}">
+    <!-- Apple Touch Icon (para iOS) -->
+    <link rel="apple-touch-icon" th:href="@{/IMG/apple-touch-icon.png}">
+
+    <!-- ===== CSS ===== -->
     <link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
     <link rel="stylesheet" th:href="@{/CSS/PROYECTOS/crearProyectos.css}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -57,7 +68,7 @@
 
             <!-- APUs - Con permisos de APU -->
             <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
-                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Gestión de APUs</span></a></li>
+                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Actividades</span></a></li>
             </div>
 
             <!-- Menu items for users with progress permissions -->
@@ -128,7 +139,21 @@
                   method="post" class="mt-4">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-                <!-- FALTA EL NOMBRE -->
+                <!-- Nombre del Proyecto -->
+                <div class="form-group">
+                    <label for="nombreProyecto" class="form-label required">Nombre del Proyecto</label>
+                    <input type="text"
+                           id="nombreProyecto"
+                           name="nombreProyecto"
+                           th:value="${proyecto.nombreProyecto}"
+                           class="form-input"
+                           required
+                           maxlength="100"
+                           placeholder="Ingrese un nombre único para el proyecto.">
+                    <small class="error-message" style="color: var(--secondary); margin-top: 5px; display: block;">
+                        Descripción del proyecto (máximo 100 caracteres)
+                    </small>
+                </div>
 
                 <!-- Descripción del Proyecto -->
                 <div class="form-group">

@@ -2,6 +2,7 @@ package com.example.controller.web;
 
 import com.example.domain.*;
 import com.example.servicio.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -186,7 +187,8 @@ public class ControladorObras
             @RequestParam List<Double> cantidades,
             @RequestParam(required = false) Long idProyecto,
             RedirectAttributes redirectAttributes,
-            Authentication authentication) {
+            Authentication authentication,
+            HttpServletRequest request) {
 
         // Validar input
         System.out.println("=== SALVAR PRESUPUESTO CALLED ===");
@@ -200,9 +202,11 @@ public class ControladorObras
         System.out.println("cantidades: " + cantidades);
         System.out.println("idProyecto: " + idProyecto);
 
+        // Obtener usuario actual
+        String username = authentication.getName();
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
         try {
-
-
 
             // Validar que el proyecto es obligatorio
             if (idProyecto == null) {
@@ -230,10 +234,6 @@ public class ControladorObras
                 actividadesCantidades.put(apuIds.get(i), cantidades.get(i));
             }
 
-            // Obtener usuario actual
-            String username = authentication.getName();
-            Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
-
             System.out.println("=== VERIFICANDO PROYECTO ===");
             System.out.println("idProyecto: " + idProyecto);
             Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
@@ -244,13 +244,51 @@ public class ControladorObras
             System.out.println("usuario.getIdUsuario(): " + (usuario != null ? usuario.getIdUsuario() : "null"));
             System.out.println("usuario.getEquipo(): " + (usuario != null && usuario.getEquipo() != null ? usuario.getEquipo().getIdEquipo() : "null"));
 
-            // Crear obra en PRESUPUESTO usando el nuevo métod0 de servicio
+            // Crear obra en PRESUPUESTO
             Obra obraPresupuesto = obraServicio.crearObraPresupuesto(
                     nombreObra, fechaIni, fechaFin, cooNObra, cooEObra,
                     actividadesCantidades, idProyecto, usuario);
 
-            // Asignar
-            //obraServicio.actualizar(obraPresupuesto);
+            // ADITORIA
+            // Registrar creación
+            obraServicio.registrarAuditoriaCreacion(
+                    obraPresupuesto,
+                    usuario,
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            // Registrar proyecto asignado
+            if (proyecto != null) {
+                obraServicio.registrarAuditoria(
+                        obraPresupuesto,
+                        "proyecto",
+                        null,
+                        proyecto.getNombreProyecto(),
+                        usuario,
+                        "Proyecto asignado a la obra",
+                        request.getRemoteAddr(),
+                        request.getHeader("User-Agent")
+                );
+            }
+
+            // Registrar APUs asignados
+            for (Map.Entry<Long, Double> entry : actividadesCantidades.entrySet()) {
+                Apu apu = apuServicio.obtenerPorId(entry.getKey());
+                if (apu != null) {
+                    obraServicio.registrarAuditoria(
+                            obraPresupuesto,
+                            "apu_asignado",
+                            null,
+                            apu.getNombreAPU() + " (x" + entry.getValue() + ")",
+                            usuario,
+                            "APU asignado al presupuesto",
+                            request.getRemoteAddr(),
+                            request.getHeader("User-Agent")
+                    );
+                }
+            }
+
 
             redirectAttributes.addFlashAttribute("success",
                     "Presupuesto creado exitosamente. ID: " + obraPresupuesto.getIdObra());
@@ -277,7 +315,8 @@ public class ControladorObras
             @PathVariable Long idObra,
             @RequestParam(required = false) LocalDate fechaInicioReal,
             Authentication authentication,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
 
         // Obtener usuario actual
         String username = authentication.getName();
@@ -312,9 +351,58 @@ public class ControladorObras
                 return "redirect:/obras/detalle/" + idObra;
             }
 
+            // Guardar estado anterior para auditoría
+            String etapaAnterior = obra.getEtapa().name();
 
             Obra obraEjecucion = obraServicio.avanzarAEjecucion(idObra, fechaInicioReal, usuario);
             System.out.println("Obra de ejecución creada con ID: " + obraEjecucion.getIdObra());
+
+            // --- AUDITORÍA ---
+            // Registrar cambio de estado
+            obraServicio.registrarAuditoriaEstado(
+                    obraEjecucion,
+                    etapaAnterior,
+                    "EJECUCIÓN",
+                    usuario,
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            // Registrar fecha de inicio real
+            obraServicio.registrarAuditoria(
+                    obraEjecucion,
+                    "fecha_inicio_real",
+                    null,
+                    fechaInicioReal != null ? fechaInicioReal.toString() : LocalDate.now().toString(),
+                    usuario,
+                    "Fecha de inicio real de ejecución",
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            // Registrar relación con obra origen
+            obraServicio.registrarAuditoria(
+                    obraEjecucion,
+                    "obra_origen",
+                    null,
+                    "ID: " + idObra,
+                    usuario,
+                    "Obra creada a partir de presupuesto ID: " + idObra,
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            // Registrar en la obra original que fue clonada
+            obraServicio.registrarAuditoria(
+                    obra,
+                    "estado",
+                    "PRESUPUESTO",
+                    "CLONADO_A_EJECUCION",
+                    usuario,
+                    "Obra clonada para ejecución",
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
 
             redirectAttributes.addFlashAttribute("success",
                     "Obra avanzada a EJECUCIÓN. ID de ejecución: " + obraEjecucion.getIdObra());
@@ -336,7 +424,8 @@ public class ControladorObras
             @PathVariable Long idObra,
             @RequestParam(required = false) LocalDate fechaCierreReal,
             Authentication authentication,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
 
         // Obtener usuario actual
         String username = authentication.getName();
@@ -359,8 +448,59 @@ public class ControladorObras
                 return "redirect:/obras/detalle/" + idObra;
             }
 
+            // Guardar estado anterior para auditoría
+            Obra obra = obraServicio.localizarObraConApus(idObra);
+            String etapaAnterior = obra.getEtapa().name();
+
             Obra obraCierre = obraServicio.avanzarACierre(idObra, fechaCierreReal, usuario);
             System.out.println("Obra de cierre creada con ID: " + obraCierre.getIdObra());
+
+            // --- AUDITORÍA ---
+            // Registrar cambio de estado
+            obraServicio.registrarAuditoriaEstado(
+                    obraCierre,
+                    etapaAnterior,
+                    "CIERRE",
+                    usuario,
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            // Registrar fecha de cierre real
+            obraServicio.registrarAuditoria(
+                    obraCierre,
+                    "fecha_cierre_real",
+                    null,
+                    fechaCierreReal != null ? fechaCierreReal.toString() : LocalDate.now().toString(),
+                    usuario,
+                    "Fecha de cierre real",
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            // Registrar porcentaje de avance
+            obraServicio.registrarAuditoria(
+                    obraCierre,
+                    "porcentaje_avance",
+                    "0",
+                    "100",
+                    usuario,
+                    "Obra completada al 100%",
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            // Registrar relación con obra origen
+            obraServicio.registrarAuditoria(
+                    obraCierre,
+                    "obra_origen",
+                    null,
+                    "ID: " + idObra,
+                    usuario,
+                    "Obra creada a partir de ejecución ID: " + idObra,
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
 
             redirectAttributes.addFlashAttribute("success",
                     "Obra avanzada a CIERRE. ID de cierre: " + obraCierre.getIdObra());
@@ -497,17 +637,70 @@ public class ControladorObras
 
     //anular
     @GetMapping("/anular/{idObra}")
-    public String anularObra(Long idObra)
-    {
-        if (idObra !=null && idObra>0) {
-            Obra obraAnular = obraServicio.localizarObra(idObra);
-            obraAnular.setAnular(true);
-            obraServicio.actualizar(obraAnular);
-        }else {
-            System.out.println("ERROR: idObra no válido");
-            return "redirect:/obras/inicioObra";
+    public String anularObra(
+            @PathVariable Long idObra,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
+
+        try {
+            String username = authentication.getName();
+            Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
+            if (idObra != null && idObra > 0) {
+                Obra obraAnular = obraServicio.localizarObra(idObra);
+
+                // Guardar estado anterior para auditoría
+                Boolean activoAnterior = obraAnular.getActivo();
+                Boolean anularAnterior = obraAnular.isAnular();
+
+                obraAnular.setAnular(true);
+                obraAnular.setActivo(false);
+                obraServicio.actualizar(obraAnular);
+
+                // --- AUDITORÍA DE ANULACIÓN ---
+                obraServicio.registrarAuditoriaAnulacion(
+                        obraAnular,
+                        usuario,
+                        "Obra anulada por usuario",
+                        request.getRemoteAddr(),
+                        request.getHeader("User-Agent")
+                );
+
+                obraServicio.registrarAuditoria(
+                        obraAnular,
+                        "activo",
+                        activoAnterior ? "true" : "false",
+                        "false",
+                        usuario,
+                        "Obra desactivada",
+                        request.getRemoteAddr(),
+                        request.getHeader("User-Agent")
+                );
+
+                obraServicio.registrarAuditoria(
+                        obraAnular,
+                        "anulado",
+                        anularAnterior ? "true" : "false",
+                        "true",
+                        usuario,
+                        "Obra marcada como anulada",
+                        request.getRemoteAddr(),
+                        request.getHeader("User-Agent")
+                );
+
+                redirectAttributes.addFlashAttribute("success",
+                        "Obra anulada correctamente. Registro de auditoría creado.");
+            } else {
+                System.out.println("ERROR: idObra no válido");
+                return "redirect:/obras/inicioObra";
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Error al anular la obra: " + e.getMessage());
         }
-        return "redirect:/obras/anular/" + idObra;
+
+        return "redirect:/obras/inicioObra";
     }
 
 
@@ -517,7 +710,8 @@ public class ControladorObras
             @PathVariable Long idObra,
             @RequestParam Map<String, String> allParams,
             Authentication authentication,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
 
         System.out.println("Iniciando actualización de obra");
         System.out.println("ID Obra: " + idObra);
@@ -557,11 +751,81 @@ public class ControladorObras
             Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
             System.out.println("Usuario autenticado: " + username + " (ID: " + usuario.getIdUsuario() + ")");
 
+            // Obtener obra con APUs actuales para comparar
+            Obra obraExistente = obraServicio.localizarObraConApus(idObra);
 
+            // Guardar estado anterior para auditoría
+            Map<Long, Double> estadoAnterior = new HashMap<>();
+            if (obraExistente.getApusObraList() != null) {
+                for (ApusObra ao : obraExistente.getApusObraList()) {
+                    if (ao.getApu() != null) {
+                        estadoAnterior.put(ao.getApu().getIdAPU(), ao.getCantidad());
+                    }
+                }
+            }
 
             System.out.println("Servicio actualizarActividadesDeObra iniciando...");
             obraServicio.actualizarActividadesDeObra(idObra, actividadIds, cantidades, usuario);
             System.out.println("Servicio ejecutado correctamente");
+
+            // Obtener obra actualizada para comparar
+            Obra obraActualizada = obraServicio.localizarObraConApus(idObra);
+
+            // --- AUDITORÍA DE CAMBIOS  ---
+            // 1. Verificar APUs añadidos
+            for (ApusObra ao : obraActualizada.getApusObraList()) {
+                if (ao.getApu() != null) {
+                    Long apuId = ao.getApu().getIdAPU();
+                    Double cantidadNueva = ao.getCantidad();
+                    Double cantidadAnterior = estadoAnterior.get(apuId);
+
+                    if (cantidadAnterior == null) {
+                        // APU añadido
+                        obraServicio.registrarAuditoria(
+                                obraActualizada,
+                                "apu_agregado",
+                                null,
+                                ao.getApu().getNombreAPU() + " (x" + cantidadNueva + ")",
+                                usuario,
+                                "Nuevo APU agregado a la obra",
+                                request.getRemoteAddr(),
+                                request.getHeader("User-Agent")
+                        );
+                    } else if (!cantidadAnterior.equals(cantidadNueva)) {
+                        // Cantidad modificada
+                        obraServicio.registrarAuditoria(
+                                obraActualizada,
+                                "apu_cantidad",
+                                "Cantidad anterior: " + cantidadAnterior,
+                                "Cantidad nueva: " + cantidadNueva,
+                                usuario,
+                                "Cantidad modificada para: " + ao.getApu().getNombreAPU(),
+                                request.getRemoteAddr(),
+                                request.getHeader("User-Agent")
+                        );
+                    }
+                    estadoAnterior.remove(apuId);
+                }
+            }
+
+            // 2. Verificar APUs eliminados
+            for (Map.Entry<Long, Double> entry : estadoAnterior.entrySet()) {
+                Long apuId = entry.getKey();
+                Double cantidadAnterior = entry.getValue();
+                Apu apu = apuServicio.obtenerPorId(apuId);
+                if (apu != null) {
+                    obraServicio.registrarAuditoria(
+                            obraActualizada,
+                            "apu_eliminado",
+                            apu.getNombreAPU() + " (x" + cantidadAnterior + ")",
+                            null,
+                            usuario,
+                            "APU eliminado de la obra",
+                            request.getRemoteAddr(),
+                            request.getHeader("User-Agent")
+                    );
+                }
+            }
 
             redirectAttributes.addFlashAttribute("success", "Obra actualizada correctamente");
             return "redirect:/obras/detalle/" + idObra;
@@ -576,7 +840,26 @@ public class ControladorObras
         }
     }
 
+    /**
+     * Ver historial de auditoría de una obra (igual que inventarios)
+     */
+    @GetMapping("/auditoria/{idObra}")
+    public String verAuditoriaObra(@PathVariable Long idObra, Model model) {
+        Obra obra = obraServicio.localizarObra(idObra);
+        if (obra == null) {
+            model.addAttribute("error", "Obra no encontrada");
+            return "redirect:/obras/inicioObra";
+        }
 
+        // Usar el mEtHod de ObraServicio que usa AuditoriaDao
+        List<Auditoria> auditorias = obraServicio.obtenerAuditoriaPorObra(idObra);
+
+        model.addAttribute("obra", obra);
+        model.addAttribute("auditorias", auditorias);
+        model.addAttribute("titulo", "Historial de Auditoría - " + obra.getNombreObra());
+
+        return "obras/auditoriaObra";
+    }
 
 
     //Ver obraDetalle en detalle (sólo lectura)

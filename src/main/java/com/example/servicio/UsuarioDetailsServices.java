@@ -3,6 +3,7 @@ package com.example.servicio;
 import com.example.dao.UsuarioDao;
 import com.example.domain.Permiso;
 import com.example.domain.Usuario;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.DisabledException;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Service
 public class UsuarioDetailsServices implements UserDetailsService {
 
@@ -27,7 +29,10 @@ public class UsuarioDetailsServices implements UserDetailsService {
     @Autowired
     private UsuarioServicio usuarioServicio;
 
-//Method for loading a user by their name
+    @Autowired
+    private HttpSession session;
+
+    //Method for loading a user by their name
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException{
@@ -39,12 +44,16 @@ public class UsuarioDetailsServices implements UserDetailsService {
             throw new UsernameNotFoundException("Usuario NO encontrado: " + username);
         }
 
-        //¿el usuario ha sido aprobado?
+
+        // Guardar estado en sesión ANTES de lanzar excepción
         if (Usuario.StatusUsuario.PENDING.equals(usuario.getStatus())) {
+            session.setAttribute("loginError", "pending");
             throw new DisabledException("Cuenta pendiente de aprobación administrativa.");
         } else if (Usuario.StatusUsuario.REJECTED.equals(usuario.getStatus())) {
+            session.setAttribute("loginError", "rejected");
             throw new DisabledException("Cuenta rechazada por el administrador.");
         } else if (!Usuario.StatusUsuario.APPROVED.equals(usuario.getStatus())) {
+            session.setAttribute("loginError", "invalid");
             throw new DisabledException("Estado de cuenta no válido.");
         }
 

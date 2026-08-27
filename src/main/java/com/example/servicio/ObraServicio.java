@@ -99,4 +99,22 @@ public interface ObraServicio {
     public boolean proyectoPerteneceAlEquipoDeUsuario(Usuario usuario, Long idProyecto);
 
     public List<Proyecto> obtenerProyectosDisponibles(Usuario usuario);
+
+    // AUDITORIAS
+    public void registrarAuditoria(Obra obra, String campo, String valorAnterior, String valorNuevo, Usuario usuario, String comentario, String ipOrigen, String userAgent);
+
+    public void registrarAuditoriaEstado(Obra obra, String estadoAnterior,
+                                         String estadoNuevo, Usuario usuario,
+                                         String ipOrigen, String userAgent);
+
+    public void registrarAuditoriaCreacion(Obra obra, Usuario usuario,
+                                           String ipOrigen, String userAgent);
+
+    public void registrarAuditoriaAnulacion(Obra obra, Usuario usuario,
+                                            String motivo, String ipOrigen, String userAgent);
+
+    public List<Auditoria> obtenerAuditoriaPorObra(Long idObra);
 }
+
+
+
