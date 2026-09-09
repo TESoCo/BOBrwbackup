@@ -147,6 +147,9 @@
 
       <!-- Agregar botones de exportación (solo en modo vista) -->
       <div  th:unless="${Editando}" class="btn-group" style="display: inline-flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a th:href="@{/obras/descargarPlantillaImportacion}" class="btn btn-success">
+          <i class="fas fa-file-excel"></i> Descargar plantilla de importación
+        </a>
         <a th:href="@{/obras/exportarObraExcel/} + ${obra.idObra}" class="btn btn-success">
           <i class="fas fa-file-excel"></i> Exportar Excel
         </a>

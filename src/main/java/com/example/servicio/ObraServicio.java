@@ -1,7 +1,9 @@
 package com.example.servicio;
 
 import com.example.domain.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +116,11 @@ public interface ObraServicio {
                                             String motivo, String ipOrigen, String userAgent);
 
     public List<Auditoria> obtenerAuditoriaPorObra(Long idObra);
+
+    //IMPORTAR EXCEL
+    public Obra importarObraDesdeExcel(MultipartFile archivo, Long idProyecto, Usuario usuario) throws IOException;
+
+
 }
 
 

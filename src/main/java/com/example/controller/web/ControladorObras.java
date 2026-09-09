@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.ByteArrayOutputStream;
@@ -1148,5 +1149,188 @@ public class ControladorObras
         return outputStream.toByteArray();
     }
 
+    //IMPORTAR DE EXCEL */*/*/*/*/*/*/*/*/**/*////////////////////////////////////////*****************//////////////////
+    @PostMapping("/importarExcel")
+    public String importarObraExcel(
+            @RequestParam("archivo") MultipartFile archivo,
+            @RequestParam("idProyecto") Long idProyecto,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes,
+            HttpServletRequest request) {
+
+        System.out.println("Importando obra desde Excel para proyecto: " + idProyecto);
+
+        try {
+            // Validar usuario
+            String username = authentication.getName();
+            Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
+            // Verificar permisos
+            if (!obraServicio.puedeCrearObra(usuario)) {
+                redirectAttributes.addFlashAttribute("error",
+                        "No tiene permisos para crear obras. Contacte al administrador.");
+                return "redirect:/obras/inicioObra";
+            }
+
+            // Validar que el proyecto existe
+            Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
+            if (proyecto == null) {
+                redirectAttributes.addFlashAttribute("error",
+                        "El proyecto seleccionado no existe");
+                return "redirect:/obras/inicioObra";
+            }
+
+            // Importar obra
+            Obra obraImportada = obraServicio.importarObraDesdeExcel(archivo, idProyecto, usuario);
+
+            // Registrar auditoría
+            obraServicio.registrarAuditoria(
+                    obraImportada,
+                    "importacion_excel",
+                    null,
+                    "Obra importada desde Excel: " + archivo.getOriginalFilename(),
+                    usuario,
+                    "Importación masiva desde Excel",
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            redirectAttributes.addFlashAttribute("success",
+                    "✅ Obra importada exitosamente. ID: " + obraImportada.getIdObra());
+
+            return "redirect:/obras/detalle/" + obraImportada.getIdObra();
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error en importación: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/obras/inicioObra";
+
+        } catch (IOException e) {
+            System.err.println("Error de I/O en importación: " + e);
+            redirectAttributes.addFlashAttribute("error",
+                    "Error al procesar el archivo: " + e.getMessage());
+            return "redirect:/obras/inicioObra";
+
+        } catch (Exception e) {
+            System.err.println("Error inesperado en importación" + e);
+            redirectAttributes.addFlashAttribute("error",
+                    "Error inesperado: " + e.getMessage());
+            return "redirect:/obras/inicioObra";
+        }
+    }
+
+    //DESCARGAR PLANTILLA
+    @GetMapping("/descargarPlantillaImportacion")
+    public void descargarPlantillaImportacion(HttpServletResponse response) throws IOException {
+        System.out.println("Descargando plantilla de importación");
+
+        String nombreArchivo = "plantilla_importacion_obras.xlsx";
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=" + nombreArchivo);
+
+        Workbook libro = new XSSFWorkbook();
+        Sheet hoja = libro.createSheet("Actividades de Obra");
+
+        // Título
+        Row titulo = hoja.createRow(0);
+        Cell tituloCell = titulo.createCell(0);
+        tituloCell.setCellValue("Actividades de la Obra: [NOMBRE DE LA OBRA]");
+
+        CellStyle titleStyle = libro.createCellStyle();
+        Font titleFont = libro.createFont();
+        titleFont.setBold(true);
+        titleFont.setFontHeightInPoints((short) 14);
+        titleStyle.setFont(titleFont);
+        tituloCell.setCellStyle(titleStyle);
+        hoja.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
+
+        // Información
+        Row infoRow = hoja.createRow(2);
+        infoRow.createCell(0).setCellValue("ID Obra:");
+        infoRow.createCell(1).setCellValue("[AUTO]");
+        infoRow.createCell(2).setCellValue("Etapa:");
+        infoRow.createCell(3).setCellValue("PRESUPUESTO");
+        infoRow.createCell(4).setCellValue("Fecha Inicio:");
+        infoRow.createCell(5).setCellValue("2026-01-01");
+        infoRow.createCell(6).setCellValue("Coordenadas:");
+        infoRow.createCell(7).setCellValue("N=0.00000, E=0.00000");
+
+        hoja.createRow(3);
+
+        // Encabezados
+        Row header = hoja.createRow(4);
+        String[] headers = {"ID APU", "Nombre de Actividad", "Unidad", "Cantidad", "Precio Unitario", "Subtotal"};
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = header.createCell(i);
+            cell.setCellValue(headers[i]);
+            CellStyle headerStyle = libro.createCellStyle();
+            Font headerFont = libro.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            cell.setCellStyle(headerStyle);
+        }
+
+        // Ejemplo
+        Row ejemplo = hoja.createRow(5);
+        ejemplo.createCell(0).setCellValue(3);
+        ejemplo.createCell(1).setCellValue("ENGRAMADO CUADR 50X50 CM");
+        ejemplo.createCell(2).setCellValue("M2");
+        ejemplo.createCell(3).setCellValue(10);
+        ejemplo.createCell(4).setCellValue(15856);
+        ejemplo.createCell(5).setCellFormula("D6*E6");
+
+        // Total
+        Row totalRow = hoja.createRow(7);
+        totalRow.createCell(4).setCellValue("TOTAL OBRA:");
+        totalRow.createCell(5).setCellFormula("SUM(F6:F6)");
+
+        // Autoajustar
+        for (int i = 0; i < headers.length; i++) {
+            hoja.autoSizeColumn(i);
+        }
+
+        // Hoja de instrucciones
+        Sheet instrucciones = libro.createSheet("Instrucciones");
+        Row instRow0 = instrucciones.createRow(0);
+        instRow0.createCell(0).setCellValue("INSTRUCCIONES PARA IMPORTAR OBRA:");
+
+        String[] instruccionesList = {
+                "1. Complete los datos en la hoja 'Actividades de Obra'",
+                "2. En la fila 1, reemplace [NOMBRE DE LA OBRA] por el nombre real",
+                "3. En la fila 3, actualice Fecha Inicio y Coordenadas",
+                "4. En las filas 6+, agregue los APUs con sus cantidades",
+                "5. El nombre del APU debe corresponder a un APU existente en el sistema",
+                "6. Los Precios Unitarios y Sub-totales se calcularán automáticamente"
+        };
+
+        for (int i = 0; i < instruccionesList.length; i++) {
+            Row row = instrucciones.createRow(i + 2);
+            row.createCell(0).setCellValue(instruccionesList[i]);
+        }
+        instrucciones.autoSizeColumn(0);
+
+        libro.write(response.getOutputStream());
+        libro.close();
+    }
+
+    @GetMapping("/importar")
+    public String mostrarImportador(Model model, Authentication authentication) {
+        String username = authentication.getName();
+        Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
+
+        // Verificar permisos
+        if (!obraServicio.puedeCrearObra(usuario)) {
+            model.addAttribute("error", "No tiene permisos para crear obras. Contacte al administrador.");
+            return "redirect:/obras/inicioObra";
+        }
+
+        // Obtener proyectos disponibles para el usuario
+        List<Proyecto> proyectosDisponibles = obraServicio.obtenerProyectosDisponibles(usuario);
+        model.addAttribute("proyectos", proyectosDisponibles);
+
+        return "obras/importarObra";
+    }
 
 }

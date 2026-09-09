@@ -3,10 +3,14 @@ package com.example.servicio;
 import com.example.dao.*;
 import com.example.domain.*;
 import jakarta.persistence.EntityManager;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -1028,6 +1032,534 @@ public class ObraServicioImp implements ObraServicio {
         return auditoriaDao.findByEntidadAndIdEntidadOrderByFechaCambioDesc("OBRA", idObra);
     }
 
+
+
+    // IMPORTACIÓN DESDE EXEL
+    @Override
+    @Transactional
+    public Obra importarObraDesdeExcel(MultipartFile archivo, Long idProyecto, Usuario usuario) throws IOException {
+        System.out.println("Iniciando importación de obra desde Excel: " + archivo.getOriginalFilename());
+
+        // Validar archivo
+        if (archivo.isEmpty()) {
+            throw new IllegalArgumentException("El archivo Excel está vacío");
+        }
+
+        String fileName = archivo.getOriginalFilename();
+        if (fileName == null || !(fileName.endsWith(".xlsx") || fileName.endsWith(".xls"))) {
+            throw new IllegalArgumentException("El archivo debe ser Excel (.xlsx o .xls)");
+        }
+
+        try (Workbook workbook = new XSSFWorkbook(archivo.getInputStream())) {
+            Sheet hoja = workbook.getSheetAt(0);
+
+            // Extraer datos
+            ObraImportData data = extractObraData(hoja);
+
+            // Validar proyecto
+            Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
+            if (proyecto == null) {
+                throw new IllegalArgumentException("El proyecto con ID " + idProyecto + " no existe");
+            }
+
+            // Validar y obtener APUs por nombre
+            Map<Long, Double> actividades = validateAndGetApusByName(data.getActividadesPorNombre());
+
+            if (actividades.isEmpty()) {
+                throw new IllegalArgumentException("No se encontraron APUs válidos en el archivo");
+            }
+
+            // Crear obra
+            return crearObraPresupuesto(
+                    data.getNombreObra(),
+                    data.getFechaInicio(),
+                    data.getFechaFin(),
+                    data.getCooNObra(),
+                    data.getCooEObra(),
+                    actividades,
+                    idProyecto,
+                    usuario
+            );
+        } catch (Exception e) {
+            System.err.println("Error al importar Excel: " + e.getMessage() + e);
+            throw new IOException("Error al procesar el archivo Excel: " + e.getMessage(), e);
+        }
+    }
+
+    private ObraImportData extractObraData(Sheet hoja) {
+        // Título (fila 0)
+        Row tituloRow = hoja.getRow(0);
+        if (tituloRow == null) {
+            throw new IllegalArgumentException("El archivo no tiene el formato esperado. Falta el título.");
+        }
+
+        String titulo = tituloRow.getCell(0).getStringCellValue();
+        String nombreObra = titulo.replace("Actividades de la Obra: ", "").trim();
+
+        // Información (fila 2)
+        Row infoRow = hoja.getRow(2);
+        if (infoRow == null) {
+            throw new IllegalArgumentException("El archivo no tiene la fila de información.");
+        }
+
+        // Extraer fecha de inicio
+        LocalDate fechaInicio = extractDateFromCell(infoRow.getCell(5));
+        if (fechaInicio == null) {
+            throw new IllegalArgumentException("No se pudo extraer la fecha de inicio");
+        }
+
+        // Extraer fecha de fin (si existe)
+        LocalDate fechaFin = extractDateFromCell(infoRow.getCell(3));
+        if (fechaFin == null) {
+            fechaFin = fechaInicio.plusMonths(1);
+        }
+
+        // Extraer coordenadas
+        Double[] coordenadas = extractCoordinates(infoRow.getCell(7));
+        Double cooNObra = coordenadas[0];
+        Double cooEObra = coordenadas[1];
+
+        // Extraer APUs por nombre
+        Map<String, Double> actividadesPorNombre = extractActivitiesByName(hoja);
+        if (actividadesPorNombre.isEmpty()) {
+            throw new IllegalArgumentException("El archivo no contiene actividades válidas");
+        }
+
+        return new ObraImportData(
+                nombreObra,
+                fechaInicio,
+                fechaFin,
+                cooNObra,
+                cooEObra,
+                actividadesPorNombre
+        );
+    }
+
+    /**
+     * Extrae las actividades del Excel usando el nombre del APU (columna 1)
+     */
+    private Map<String, Double> extractActivitiesByName(Sheet hoja) {
+        Map<String, Double> actividades = new LinkedHashMap<>();
+        int rowIndex = 5; // Empieza después de los encabezados
+
+        while (rowIndex <= hoja.getLastRowNum()) {
+            Row row = hoja.getRow(rowIndex);
+            if (row == null) {
+                rowIndex++;
+                continue;
+            }
+
+            // Verificar si es la fila de TOTAL
+            if (isTotalRow(row)) {
+                break;
+            }
+
+            try {
+                // Obtener nombre del APU (columna 1)
+                Cell nombreCell = row.getCell(1);
+                if (nombreCell == null || nombreCell.getCellType() == CellType.BLANK) {
+                    rowIndex++;
+                    continue;
+                }
+
+                String nombreAPU = nombreCell.getStringCellValue().trim();
+                if (nombreAPU.isEmpty()) {
+                    rowIndex++;
+                    continue;
+                }
+
+                // Obtener cantidad (columna 3)
+                Cell cantidadCell = row.getCell(3);
+                if (cantidadCell == null || cantidadCell.getCellType() == CellType.BLANK) {
+                    rowIndex++;
+                    continue;
+                }
+
+                Double cantidad = cantidadCell.getNumericCellValue();
+
+                if (cantidad != null && cantidad > 0) {
+                    actividades.put(nombreAPU, cantidad);
+                    System.out.println("APU encontrado por nombre: " + nombreAPU +" cantidad: " + cantidad);
+                }
+            } catch (Exception e) {
+                System.err.println("Error al leer fila: " + rowIndex + " " + e.getMessage());
+            }
+            rowIndex++;
+        }
+
+        return actividades;
+    }
+
+    /**
+     * Normaliza un texto para búsqueda flexible:
+     * - Convierte a mayúsculas
+     * - Elimina espacios múltiples
+     * - Elimina caracteres especiales
+     * - Elimina acentos
+     */
+    private String normalizeText(String text) {
+        if (text == null) return "";
+
+        String normalized = text
+                .toUpperCase()
+                .replace("\"", "")           // Eliminar comillas dobles
+                .replace("'", "")            // Eliminar comillas simples
+                .replaceAll("[^A-Z0-9\\s]", " ")  // Solo letras, números y espacios
+                .replaceAll("\\s+", " ")     // Espacios múltiples a uno
+                .trim();
+
+        return normalized;
+    }
+
+    /**
+     * Extrae palabras clave significativas de un texto
+     * (ignora palabras muy cortas o comunes)
+     */
+    private List<String> extractKeywords(String text) {
+        String[] words = text.split("\\s+");
+        Set<String> stopWords = new HashSet<>(Arrays.asList(
+                "DE", "LA", "EL", "LOS", "LAS", "Y", "O", "PER",
+                "EN", "CON", "SIN", "POR", "PARA", "UN", "UNA"
+        ));
+
+        return Arrays.stream(words)
+                .filter(w -> w.length() > 2)  // Palabras de al menos 3 caracteres
+                .filter(w -> !stopWords.contains(w))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Calcula el score de similitud entre dos textos
+     */
+    private double calculateSimilarity(String text1, String text2) {
+        String norm1 = normalizeText(text1);
+        String norm2 = normalizeText(text2);
+
+        // Si son exactamente iguales, score máximo
+        if (norm1.equals(norm2)) {
+            return 1.0;
+        }
+
+        // Si uno contiene al otro
+        if (norm1.contains(norm2) || norm2.contains(norm1)) {
+            return 0.9;
+        }
+
+        // Comparar palabras clave
+        List<String> keywords1 = extractKeywords(norm1);
+        List<String> keywords2 = extractKeywords(norm2);
+
+        if (keywords1.isEmpty() || keywords2.isEmpty()) {
+            return 0.0;
+        }
+
+        // Calcular coincidencia de palabras clave
+        long matches = keywords1.stream()
+                .filter(keyword -> keywords2.stream().anyMatch(k -> k.contains(keyword) || keyword.contains(k)))
+                .count();
+
+        double wordMatchScore = (double) matches / Math.max(keywords1.size(), keywords2.size());
+
+        // Si hay al menos una coincidencia de palabra clave, dar un score base
+        if (matches > 0) {
+            return Math.max(0.3, wordMatchScore);
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Busca APU por nombre con múltiples estrategias
+     */
+    private Apu findApuByFlexibleName(String nombreBuscado, List<String> errores, List<String> advertencias) {
+        String nombreNormalizado = normalizeText(nombreBuscado);
+        System.out.println("Buscando APU para: " + nombreBuscado + " (normalizado: " + nombreNormalizado + ")");
+
+        // 1. ESTRATEGIA 1: Búsqueda exacta (MÁS IMPORTANTE)
+        List<Apu> apusExactos = apuDao.findByNombreAPU(nombreBuscado);
+        if (!apusExactos.isEmpty()) {
+            System.out.println("Encontrado por nombre exacto: " + apusExactos.get(0).getNombreAPU());
+            return apusExactos.get(0);
+        }
+
+        // 1b. Búsqueda exacta ignorando comillas y espacios
+        List<Apu> todosApus = apuDao.findAll();
+        for (Apu apu : todosApus) {
+            String nombreApuNormalizado = normalizeText(apu.getNombreAPU());
+            if (nombreApuNormalizado.equals(nombreNormalizado)) {
+                System.out.println("Encontrado por nombre normalizado: " + apu.getNombreAPU());
+                return apu;
+            }
+        }
+
+        // 2. ESTRATEGIA 2: Buscar por palabras clave PERO con validación
+        // Solo usar esto si el nombre tiene palabras clave específicas
+        List<String> keywords = extractKeywords(nombreNormalizado);
+        if (!keywords.isEmpty() && keywords.size() >= 2) {
+            Map<Long, Integer> coincidencias = new HashMap<>();
+            Map<Long, Apu> apuMap = new HashMap<>();
+
+            for (String keyword : keywords) {
+                if (keyword.length() < 3) continue;
+
+                List<Apu> encontrados = apuDao.findByNombreAPUContainingIgnoreCase(keyword);
+                for (Apu apu : encontrados) {
+                    apuMap.putIfAbsent(apu.getIdAPU(), apu);
+                    coincidencias.put(apu.getIdAPU(),
+                            coincidencias.getOrDefault(apu.getIdAPU(), 0) + 1);
+                }
+            }
+
+            if (!apuMap.isEmpty()) {
+                // Solo usar si hay coincidencia de al menos 2 palabras clave
+                Apu mejorApu = apuMap.values().stream()
+                        .filter(a -> coincidencias.getOrDefault(a.getIdAPU(), 0) >= 2)
+                        .max(Comparator.comparingInt(a -> coincidencias.getOrDefault(a.getIdAPU(), 0)))
+                        .orElse(null);
+
+                if (mejorApu != null) {
+                    // ADVERTENCIA: usando coincidencia parcial
+                    advertencias.add("⚠️ APU '" + nombreBuscado + "' no encontrado exactamente. " +
+                            "Se usó coincidencia parcial: '" + mejorApu.getNombreAPU() + "' " +
+                            "(" + coincidencias.get(mejorApu.getIdAPU()) + " palabras clave coinciden)");
+
+                    System.out.println("⚠️ Usando coincidencia parcial para " +nombreBuscado+ " :" + mejorApu.getNombreAPU());
+                    return mejorApu;
+                }
+            }
+        }
+
+        // 3. ESTRATEGIA 3: Coincidencia parcial (conteniendo)
+        List<Apu> apusContienen = apuDao.findByNombreAPUContainingIgnoreCase(nombreBuscado);
+        if (!apusContienen.isEmpty()) {
+            // Si hay múltiples, elegir el que tenga más palabras coincidentes
+            Apu mejorApu = apusContienen.stream()
+                    .max(Comparator.comparingDouble(a -> {
+                        String nombreApu = normalizeText(a.getNombreAPU());
+                        Set<String> palabrasBuscadas = new HashSet<>(Arrays.asList(nombreNormalizado.split("\\s+")));
+                        Set<String> palabrasApu = new HashSet<>(Arrays.asList(nombreApu.split("\\s+")));
+
+                        long coincidenciasPalabras = palabrasBuscadas.stream()
+                                .filter(p -> p.length() > 2)
+                                .filter(palabrasApu::contains)
+                                .count();
+
+                        return (double) coincidenciasPalabras / palabrasBuscadas.size();
+                    }))
+                    .orElse(apusContienen.get(0));
+
+            // ADVERTENCIA: usando coincidencia parcial
+            advertencias.add("⚠️ APU '" + nombreBuscado + "' no encontrado exactamente. " +
+                    "Se usó coincidencia parcial: '" + mejorApu.getNombreAPU() + "'");
+
+            System.out.println("⚠️ Usando coincidencia parcial para: " + nombreBuscado + " " +  mejorApu.getNombreAPU());
+            return mejorApu;
+        }
+
+        // No se encontró
+        errores.add(nombreBuscado + " (normalizado: " + nombreNormalizado + ")");
+        return null;
+    }
+
+    /**
+     * Valida y obtiene APUs por nombre con estrategias flexibles
+     */
+    private Map<Long, Double> validateAndGetApusByName(Map<String, Double> actividadesPorNombre) {
+        Map<Long, Double> actividades = new LinkedHashMap<>();
+        List<String> errores = new ArrayList<>();
+        List<String> advertencias = new ArrayList<>();
+
+        System.out.println("Buscando " + actividadesPorNombre.size() + " APUs en el sistema");
+
+        for (Map.Entry<String, Double> entry : actividadesPorNombre.entrySet()) {
+            String nombreBuscado = entry.getKey();
+            Double cantidad = entry.getValue();
+
+            // Buscar APU con estrategias flexibles
+            Apu apuEncontrado = findApuByFlexibleName(nombreBuscado, errores, advertencias);
+
+            if (apuEncontrado != null) {
+                // Verificar que no esté duplicado (mismo APU con diferentes nombres)
+                if (actividades.containsKey(apuEncontrado.getIdAPU())) {
+                    advertencias.add("APU duplicado: '" + nombreBuscado + "' y '" +
+                            actividadesPorNombre.entrySet().stream()
+                                    .filter(e -> e.getValue().equals(apuEncontrado.getIdAPU()))
+                                    .map(Map.Entry::getKey)
+                                    .findFirst()
+                                    .orElse("") + "' son el mismo APU");
+                }
+
+                actividades.put(apuEncontrado.getIdAPU(), cantidad);
+                System.out.println("APU encontrado: " + nombreBuscado + " -> " + apuEncontrado.getNombreAPU());
+
+            } else {
+                errores.add(nombreBuscado);
+                System.err.println("❌ APU no encontrado: " + nombreBuscado);
+            }
+        }
+
+        // Mostrar advertencias
+        if (!advertencias.isEmpty()) {
+            System.err.println("Advertencias en la importación:");
+            advertencias.forEach(System.err::println);
+        }
+
+        // Lanzar error si hay APUs no encontrados
+        if (!errores.isEmpty()) {
+            StringBuilder mensaje = new StringBuilder();
+            mensaje.append("❌ ERROR: Los siguientes APUs no existen en el sistema:\n\n");
+
+            for (String error : errores) {
+                mensaje.append("   • ").append(error).append("\n");
+            }
+
+            mensaje.append("\n Sugerencias para resolver el problema:\n");
+            mensaje.append("   1. Verifique que los nombres estén escritos correctamente\n");
+            mensaje.append("   2. Puede usar solo partes del nombre (ej: 'PASAMUROS' en lugar del nombre completo)\n");
+            mensaje.append("   3. El sistema busca por coincidencias parciales y palabras clave\n");
+            mensaje.append("   4. Descargue la plantilla de ejemplo para ver nombres válidos\n");
+            mensaje.append("\n APUs disponibles en el sistema:\n");
+
+            // Mostrar algunos APUs similares como sugerencia
+            for (String nombreErroneo : errores) {
+                List<String> sugerencias = findSimilarApis(nombreErroneo);
+                if (!sugerencias.isEmpty()) {
+                    mensaje.append("   • Para '").append(nombreErroneo).append("' → sugiero: ");
+                    mensaje.append(String.join(", ", sugerencias)).append("\n");
+                }
+            }
+
+            throw new IllegalArgumentException(mensaje.toString());
+        }
+
+        return actividades;
+    }
+
+    /**
+     * Encuentra APUs similares para sugerencias
+     */
+    private List<String> findSimilarApis(String nombre) {
+        List<String> sugerencias = new ArrayList<>();
+        String normalized = normalizeText(nombre);
+        List<String> keywords = extractKeywords(normalized);
+
+        if (keywords.isEmpty()) return sugerencias;
+
+        // Buscar APUs que contengan al menos una palabra clave
+        Set<Apu> apusEncontrados = new HashSet<>();
+        for (String keyword : keywords) {
+            apusEncontrados.addAll(apuDao.findByNombreAPUContainingIgnoreCase(keyword));
+        }
+
+        // Limitar a 5 sugerencias
+        return apusEncontrados.stream()
+                .limit(5)
+                .map(Apu::getNombreAPU)
+                .collect(Collectors.toList());
+    }
+
+    // Métodos auxiliares (extractDateFromCell, extractCoordinates, isTotalRow)
+    private LocalDate extractDateFromCell(Cell cell) {
+        if (cell == null) return null;
+        try {
+            if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+                return cell.getLocalDateTimeCellValue().toLocalDate();
+            } else if (cell.getCellType() == CellType.STRING) {
+                return LocalDate.parse(cell.getStringCellValue());
+            }
+        } catch (Exception e) {
+            System.out.println("Error al extraer fecha de celda: " + e.getMessage());
+        }
+        return null;
+    }
+
+    private Double[] extractCoordinates(Cell cell) {
+        try {
+            String coordsStr = cell.getStringCellValue();
+            // Formato: "N=4.75555, E=-74.05555"
+            String[] parts = coordsStr.replace("N=", "").replace("E=", "").split(", ");
+            return new Double[]{
+                    Double.parseDouble(parts[0]),
+                    Double.parseDouble(parts[1])
+            };
+        } catch (Exception e) {
+            System.out.println("Error al extraer coordenadas: " + e.getMessage());
+            return new Double[]{0.0, 0.0}; // Valores por defecto
+        }
+    }
+
+    // Importar usando IDs (no usar por ahora)
+    private Map<Long, Double> extractActivities(Sheet hoja) {
+        Map<Long, Double> actividades = new LinkedHashMap<>();
+        int rowIndex = 5; // Empieza después de los encabezados
+
+        while (rowIndex <= hoja.getLastRowNum()) {
+            Row row = hoja.getRow(rowIndex);
+            if (row == null) {
+                rowIndex++;
+                continue;
+            }
+
+            // Verificar si es la fila de TOTAL
+            if (isTotalRow(row)) {
+                break;
+            }
+
+            try {
+                // Obtener ID APU (columna 0)
+                Cell idCell = row.getCell(0);
+                if (idCell == null || idCell.getCellType() == CellType.BLANK) {
+                    rowIndex++;
+                    continue;
+                }
+
+                Long idAPU = (long) idCell.getNumericCellValue();
+
+                // Obtener cantidad (columna 3)
+                Cell cantidadCell = row.getCell(3);
+                if (cantidadCell == null || cantidadCell.getCellType() == CellType.BLANK) {
+                    rowIndex++;
+                    continue;
+                }
+
+                Double cantidad = cantidadCell.getNumericCellValue();
+
+                if (idAPU != null && cantidad != null && cantidad > 0) {
+                    actividades.put(idAPU, cantidad);
+                    System.out.println("APU ID: " + idAPU +" Cantidad: " + cantidad);
+                }
+            } catch (Exception e) {
+                System.err.println("Error al leer fila: " + rowIndex + " " + e.getMessage());
+            }
+            rowIndex++;
+        }
+
+        return actividades;
+    }
+
+    private boolean isTotalRow(Row row) {
+        Cell cell = row.getCell(4);
+        if (cell == null) return false;
+
+        try {
+            String value = cell.getStringCellValue();
+            return value != null && value.contains("TOTAL OBRA:");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // Clase interna para datos extraídos
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    private static class ObraImportData {
+        private String nombreObra;
+        private LocalDate fechaInicio;
+        private LocalDate fechaFin;
+        private Double cooNObra;
+        private Double cooEObra;
+        private Map<String, Double> actividadesPorNombre; // Cambio: ahora usa nombres
+    }
 }
 
 

@@ -218,6 +218,25 @@
             </div>
         </div>
 
+        <!--  sección de acciones -->
+        <div class="header-actions" style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a th:href="@{/obras/agregarObra}" class="btn btn-primary"
+               th:if="${puedeCrearObra}">
+                <i class="fas fa-plus"></i> Nueva Obra
+            </a>
+
+            <!-- Botón de importación -->
+            <a th:href="@{/obras/importar}" class="btn btn-success"
+               th:if="${puedeCrearObra}">
+                <i class="fas fa-file-import"></i> Importar desde Excel
+            </a>
+
+            <!-- Botón de descarga de plantilla (opcional) -->
+            <a th:href="@{/obras/descargarPlantillaImportacion}" class="btn btn-warning">
+                <i class="fas fa-download"></i> Plantilla Excel
+            </a>
+        </div>
+
         <!-- Sección del Mapa -->
         <section class="map-section">
             <h2>
@@ -684,6 +703,26 @@
         }
         return false;
     }
+</script>
+
+<script>
+    // Usar toastr.js para notificaciones más elegantes
+    function showToast(message, type = 'error') {
+        if (typeof toastr !== 'undefined') {
+            toastr[type](message);
+        } else {
+            alert(message);
+        }
+    }
+
+    // En el JavaScript, puedes personalizar los mensajes
+    const errorMessages = {
+        invalidType: '❌ El archivo debe ser Excel (.xlsx o .xls)',
+        maxSize: '❌ El archivo supera el tamaño máximo de 10MB',
+        noProject: '❌ Por favor seleccione un proyecto destino',
+        noFile: '❌ Por favor seleccione un archivo Excel'
+    };
+
 </script>
 
 </body>
