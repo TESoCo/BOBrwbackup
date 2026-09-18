@@ -105,6 +105,12 @@ public class Apu implements Serializable {
     @ToString.Exclude
     private List<Avance> avances = new ArrayList<>();
 
+    //'preciario_apu'
+    @OneToMany(mappedBy = "apu", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<PreciarioApu> preciariosList = new ArrayList<>();
+
 
     // ---------- AUDITORÍA ----------
     @Column(name = "activo", nullable = false)

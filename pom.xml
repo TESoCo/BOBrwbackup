@@ -14,9 +14,9 @@
 
 	<groupId>com.example</groupId>
 	<artifactId>protoCOB</artifactId>
-	<version>0.9.3.0-SNAPSHOT</version>
+	<version>0.10.0.0-SNAPSHOT</version>
 	<name>PrototipoCOB</name>
-	<description>Prototipo de COB - agosto de 2026</description>
+	<description>Prototipo de COB - septiembre de 2026</description>
 	<url/>
 
 	<licenses>

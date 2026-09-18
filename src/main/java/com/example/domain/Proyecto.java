@@ -54,6 +54,12 @@ public class Proyecto {
     @ToString.Exclude
     private List<Obra> obras = new ArrayList<>();
 
+    //Relación con preciario
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_preciario")
+    @JsonIgnore
+    @ToString.Exclude
+    private Preciario preciario;
 
     // ---------- AUDITORÍA ----------
     @Column(name = "activo")

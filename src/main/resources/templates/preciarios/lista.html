@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preciarios - BOB</title>
+
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/IMG/favicon.ico}">
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/IMG/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/IMG/favicon-16x16.png}">
+    <link rel="apple-touch-icon" th:href="@{/IMG/apple-touch-icon.png}">
+
+    <!-- ===== CSS ===== -->
+    <link rel="stylesheet" th:href="@{/CSS/dashboard.css}"/>
+    <link rel="stylesheet" th:href="@{/CSS/EQUIPOS/inicioEquipos.css}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<button id="menu-toggle" class="menu-toggle">
+    <i class="fas fa-bars"></i>
+</button>
+<div class="app-container" id="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img th:src="@{/IMG/imagen-cob.png}" alt="BOB Logo">
+        </div>
+        <ul class="nav-links">
+
+            <!-- Dashboard - Para todos los usuarios autenticados -->
+            <div sec:authorize="isAuthenticated()">
+                <li><a th:href="@{/redirigir}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
+            </div>
+
+            <!-- Gestión de Equipos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_EQUIPO', 'EDITAR_EQUIPO')">
+                <li><a th:href="@{/equipos}"><i class="fas fa-users"></i> <span>Equipos</span></a></li>
+            </div>
+
+            <!-- Gestión de Proyectos -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROYECTO', 'EDITAR_PROYECTO')">
+                <li><a th:href="@{/proyectos}"><i class="fas fa-project-diagram"></i> <span>Proyectos</span></a></li>
+            </div>
+
+            <!-- Gestión de Usuarios - Solo con permisos de usuario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_USUARIO', 'EDITAR_USUARIO')">
+                <li><a th:href="@{/usuarios}"><i class="fas fa-users-cog"></i> <span>Usuarios</span></a></li>
+            </div>
+
+            <div sec:authorize="hasAnyAuthority('CREAR_ROL', 'EDITAR_ROL', 'LEER_ROL')">
+                <li><a th:href="@{/roles}"><i class="fas fa-user-shield"></i> <span>Roles</span></a></li>
+            </div>
+
+            <!-- Inventario -->
+            <div sec:authorize="hasAnyAuthority('CREAR_INVENTARIO', 'EDITAR_INVENTARIO')">
+                <li><a th:href="@{/inventarios}"><i class="fas fa-box"></i> <span>Inventario</span></a></li>
+            </div>
+
+            <!-- Materiales -->
+            <div sec:authorize="hasAnyAuthority('CREAR_MATERIAL', 'EDITAR_MATERIAL')">
+                <li><a th:href="@{/material/inicioMaterial}"><i class="fas fa-calculator"></i> <span>Materiales</span></a></li>
+            </div>
+
+            <!-- APUs -->
+            <div sec:authorize="hasAnyAuthority('CREAR_APU', 'EDITAR_APU')">
+                <li><a th:href="@{/apu/inicioAPU}"><i class="fas fa-calculator"></i> <span>Actividades</span></a></li>
+            </div>
+
+            <!-- Avances -->
+            <div sec:authorize="hasAnyAuthority('CREAR_AVANCE', 'EDITAR_AVANCE')">
+                <li><a th:href="@{/avances/inicioAvances}"><i class="fas fa-hard-hat"></i> <span>Avances</span></a></li>
+            </div>
+
+            <!-- Obras -->
+            <div sec:authorize="hasAnyAuthority('CREAR_OBRA', 'EDITAR_OBRA', 'LEER_OBRA')">
+                <li><a th:href="@{/obras/inicioObra}"><i class="fas fa-money-bill-wave"></i> <span>Obras</span></a></li>
+            </div>
+
+            <!-- Preciarios - Nueva opción -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PRECIARIO', 'EDITAR_PRECIARIO', 'LEER_PRECIARIO')">
+                <li><a th:href="@{/preciarios}"><i class="fas fa-file-invoice-dollar"></i> <span>Preciarios</span></a></li>
+            </div>
+
+            <!-- Contratistas -->
+            <div sec:authorize="hasAnyAuthority('CREAR_CONTRATISTA', 'EDITAR_CONTRATISTA')">
+                <li><a th:href="@{/contratistas}"><i class="fas fa-handshake"></i> <span>Contratistas</span></a></li>
+            </div>
+
+            <!-- Proveedores -->
+            <div sec:authorize="hasAnyAuthority('CREAR_PROVEEDOR', 'EDITAR_PROVEEDOR')">
+                <li><a href="/proveedores"><i class="fas fa-truck-loading"></i> <span>Proveedores</span></a></li>
+            </div>
+
+            <li>
+                <form th:action="@{/logout}" method="post" id="logoutForm">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <a href="#" onclick="document.getElementById('logoutForm').submit()">
+                        <i class="fas fa-sign-out-alt"></i> <span>Cerrar Sesión</span>
+                    </a>
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <h2><i class="fas fa-file-invoice-dollar"></i> Gestión de Preciarios</h2>
+            <div class="user-menu">
+                <div>
+                    <div>
+                        <a th:href="@{/perfil}" class="user-name-link">
+                            <span sec:authentication="name"></span>
+                        </a>
+                    </div>
+                    <div>
+                        <span class="role-badge">
+                            <span th:text="${#strings.replace(#authentication.principal.authorities[#authentication.principal.authorities.size()-1], 'ROLE_', '')}">Rol</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Botón para crear nuevo preciario -->
+            <div class="mb-3" sec:authorize="hasAuthority('CREAR_PRECIARIO')">
+                <a th:href="@{/preciarios/nuevo}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Nuevo Preciario
+                </a>
+            </div>
+
+            <!-- Barra de búsqueda -->
+            <div class="search-container" style="margin-bottom: 1.5rem;">
+                <form th:action="@{/preciarios}" method="get" style="display: flex; gap: 10px;">
+                    <input type="text" name="busqueda" th:value="${searchTerm}" placeholder="Buscar preciario..."
+                           class="form-control" style="flex: 1; padding: 0.75rem; border: 1px solid var(--gray); border-radius: var(--border-radius);">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </form>
+            </div>
+
+            <!-- Tabla de preciarios -->
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Código</th>
+                        <th>APUs</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${preciarios}">
+                        <td th:text="${p.idPreciario}"></td>
+                        <td>
+                            <strong th:text="${p.nombrePreciario}"></strong>
+                        </td>
+                        <td th:text="${p.descripcionPreciario}"></td>
+                        <td th:text="${p.codigoPreciario}"></td>
+                        <td>
+                            <span class="badge bg-info" th:text="${p.apusList.size()}"></span>
+                            APUs
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a th:href="@{/preciarios/detalle/{id}(id=${p.idPreciario})}"
+                                   class="btn btn-info btn-sm"
+                                   sec:authorize="hasAuthority('LEER_PRECIARIO')">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                                <a th:href="@{/preciarios/editar/{id}(id=${p.idPreciario})}"
+                                   class="btn btn-warning btn-sm"
+                                   sec:authorize="hasAuthority('EDITAR_PRECIARIO')">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <form th:action="@{/preciarios/eliminar/{id}(id=${p.idPreciario})}"
+                                      method="post"
+                                      style="display: inline;"
+                                      onsubmit="return confirm('¿Eliminar este preciario? Esta acción no se puede deshacer.')"
+                                      sec:authorize="hasAuthority('BORRAR_PRECIARIO')">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mensaje si no hay preciarios -->
+            <div th:if="${#lists.isEmpty(preciarios)}" class="alert alert-info">
+                No hay preciarios registrados.
+                <a th:href="@{/preciarios/nuevo}" sec:authorize="hasAuthority('CREAR_PRECIARIO')">Crear el primer preciario</a>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButton = document.getElementById('menu-toggle');
+        const appContainer = document.getElementById('app-container');
+
+        if (toggleButton && appContainer) {
+            toggleButton.addEventListener('click', function() {
+                appContainer.classList.toggle('sidebar-active');
+            });
+        }
+    });
+</script>
+</body>
+</html>

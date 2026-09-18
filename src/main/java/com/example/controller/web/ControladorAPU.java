@@ -37,6 +37,10 @@ public class ControladorAPU {
 
     @Autowired
     private MaterialesAPUServicio materialesAPUServicio;
+
+    @Autowired
+    private PreciarioServicio preciarioServicio;
+
     @Autowired
     private ApusObraDao apusObraDao;
 
@@ -90,6 +94,7 @@ public class ControladorAPU {
         model.addAttribute("apu", new Apu());
         model.addAttribute("materiales", materiales);
         model.addAttribute("precios", precios);
+        model.addAttribute("preciarios", preciarioServicio.listarActivos());
         return "apus/crearAPU";
     }
 
@@ -99,6 +104,9 @@ public class ControladorAPU {
     public String salvarAPU(@ModelAttribute Apu apu,
                             @RequestParam(required = false) List<Long> materialIds,
                             @RequestParam(required = false) List<Double> cantidades,
+                            @RequestParam(required = false) String preciarioId,
+                            @RequestParam(required = false) String nuevoPreciarioNombre,
+                            @RequestParam(required = false) String nuevoPreciarioDescripcion,
                             BindingResult result,
                             Authentication authentication,
                             RedirectAttributes redirectAttributes,
@@ -125,26 +133,25 @@ public class ControladorAPU {
             apu.setIdUsuario(usuario);
             System.out.println("Usuario asignado: " + username);
 
+            // 1. Resolver el preciario ANTES de guardar (puede crear uno nuevo)
+            Long idPreciarioFinal = resolverPreciario(preciarioId, nuevoPreciarioNombre,
+                    nuevoPreciarioDescripcion, usuario);
 
-            // Guardar el APU primero para obtener ID
-            apuServicio.guardar(apu);
-            Apu apuGuardado = apu;
-            System.out.println("APU guardado con ID: " + apuGuardado.getIdAPU());
+            // 2. Guardar APU + asociar a preciario en una sola transacción
+            apuServicio.guardarYAsociarAPreciario(apu, idPreciarioFinal, 0);
 
-            // Procesar materiales si se enviaron
+            // 3. Procesar materiales (sigue siendo paso separado)
             if (materialIds != null && cantidades != null && !materialIds.isEmpty()) {
-                procesarMaterialesAPU(apuGuardado, materialIds, cantidades);
-                // Recalcular y actualizar el valor de materiales
-                BigDecimal totalMateriales = calcularTotalMateriales(apuGuardado);
-                apuGuardado.setVMaterialesAPU(totalMateriales);
-                System.out.println("Total materiales calculado: " + totalMateriales);
-
+                procesarMaterialesAPU(apu, materialIds, cantidades);
+                apu.setVMaterialesAPU(calcularTotalMateriales(apu));
+                apuServicio.guardar(apu); // Persistir el recálculo
             } else {
-                System.out.println("No se recibieron materiales para procesar");
-                // Si no hay materiales, establecer valor en 0
-                apuGuardado.setVMaterialesAPU(BigDecimal.ZERO);
-
+                apu.setVMaterialesAPU(BigDecimal.ZERO);
+                apuServicio.guardar(apu);
             }
+
+
+            redirectAttributes.addFlashAttribute("success", "APU creado y asociado al preciario correctamente");
 
             String mensaje = apu.getIdAPU() == null ? "APU creado correctamente" : "APU actualizado correctamente";
             redirectAttributes.addFlashAttribute("success", mensaje);
@@ -157,6 +164,26 @@ public class ControladorAPU {
             model.addAttribute("materiales", materialServicio.listarTodos());
             return "redirect:/apu/crearAPU" + (apu.getIdAPU() != null ? "?id=" + apu.getIdAPU() : "");
         }
+    }
+
+    /**
+     * Resuelve el preciario: si preciarioId == "nuevo", crea uno nuevo;
+     * de lo contrario retorna el ID del preciario existente.
+     */
+    private Long resolverPreciario(String preciarioId, String nuevoNombre,
+                                   String nuevaDescripcion, Usuario usuario) {
+        if ("nuevo".equals(preciarioId)) {
+            if (nuevoNombre == null || nuevoNombre.trim().isEmpty()) {
+                throw new IllegalArgumentException("El nombre del nuevo preciario es obligatorio");
+            }
+            Preciario nuevo = new Preciario();
+            nuevo.setNombrePreciario(nuevoNombre.trim());
+            nuevo.setDescripcionPreciario(nuevaDescripcion != null ? nuevaDescripcion.trim() : "");
+            nuevo.setIdUsuario(usuario);
+            Preciario guardado = preciarioServicio.guardar(nuevo);
+            return guardado.getIdPreciario();
+        }
+        return Long.parseLong(preciarioId);
     }
 
 
@@ -391,6 +418,9 @@ public class ControladorAPU {
     @PostMapping("/importar")
     public String importarAPUsDesdeCSV(
             @RequestParam("archivoCSV") MultipartFile archivo,
+            @RequestParam(required = false) String preciarioIdImport,
+            @RequestParam(required = false) String nuevoPreciarioNombreImport,
+            @RequestParam(required = false) String nuevoPreciarioDescripcionImport,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
@@ -422,12 +452,30 @@ public class ControladorAPU {
                 return "redirect:/apu/inicioAPU";
             }
 
+            // ===== VALIDAR PRECIARIO =====
+            if (preciarioIdImport == null || preciarioIdImport.trim().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Debe seleccionar o crear un preciario para la importación.");
+                return "redirect:/apu/inicioAPU";
+            }
+
+            // ===== RESOLVER PRECIARIO (crear si es nuevo) =====
+            Long idPreciarioFinal = resolverPreciario(preciarioIdImport,
+                    nuevoPreciarioNombreImport,
+                    nuevoPreciarioDescripcionImport,
+                    usuario);
+
             // Import APUs from CSV
             List<Apu> apusImportados = apuServicio.importarAPUsDesdeCSV(archivo, usuario);
 
             // Save all imported APUs
             if (!apusImportados.isEmpty()) {
-                apuServicio.guardarTodos(apusImportados);
+
+                // ===== ASOCIAR CADA APU AL PRECIARIO =====
+                int orden = 0;
+                for (Apu apu : apusImportados) {
+                    apuServicio.guardarYAsociarAPreciario(apu, idPreciarioFinal, orden++);
+                }
+
                 redirectAttributes.addFlashAttribute("success",
                         "Se importaron " + apusImportados.size() + " APUs correctamente");
             } else {
@@ -446,6 +494,8 @@ public class ControladorAPU {
 
         return "redirect:/apu/inicioAPU";
     }
+
+
     private void setDefaultValues(Apu apu) {
         // Set default values for optional fields if null
         if (apu.getVMaterialesAPU() == null) {

@@ -1,11 +1,7 @@
 package com.example.servicio;
 
-import com.example.dao.ApuDao;
-import com.example.dao.MaterialesApuDao;
-import com.example.dao.PrecioMaterialDao;
-import com.example.domain.Apu;
-import com.example.domain.MaterialesApu;
-import com.example.domain.Usuario;
+import com.example.dao.*;
+import com.example.domain.*;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -37,6 +33,12 @@ public class APUServicioImp implements APUServicio {
 
     @Autowired
     private MaterialServicio materialServicio;
+
+    @Autowired
+    private PreciarioDao preciarioDao;
+
+    @Autowired
+    private PreciarioApuDao preciarioApuDao;
 
     @Override
     @Transactional(readOnly = true)
@@ -306,7 +308,27 @@ public class APUServicioImp implements APUServicio {
         }
     }
 
+    /**
+     * Guarda el APU y lo asocia a un preciario en una sola transacción.
+     */
+    @Override
+    @Transactional
+    public Apu guardarYAsociarAPreciario(Apu apu, Long idPreciario, Integer orden) {
+        // 1. Guardar APU
+        APUDao.save(apu);
 
+        // 2. Obtener entidades gestionadas
+        Preciario preciario = preciarioDao.findById(idPreciario)
+                .orElseThrow(() -> new IllegalArgumentException("Preciario no encontrado: " + idPreciario));
+
+        // 3. Crear asociación
+        PreciarioApu pa = new PreciarioApu(preciario, apu, orden != null ? orden : 0);
+
+        // 4. Guardar asociación
+        preciarioApuDao.save(pa);
+
+        return apu;
+    }
 
 
 }

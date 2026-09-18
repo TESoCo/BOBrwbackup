@@ -156,6 +156,11 @@ public class Usuario implements Serializable {
     @ToString.Exclude
     private List<Inventario> inventariosAprobados = new ArrayList<>();
 
+    @OneToMany(mappedBy = "idUsuario", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<Preciario> preciariosCreados = new ArrayList<>();
+
 
     // ---------- AUDITORÍA ----------
     @Column(name = "activo")

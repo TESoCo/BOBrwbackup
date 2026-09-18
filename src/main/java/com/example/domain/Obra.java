@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Entity
@@ -213,6 +214,16 @@ public class Obra implements Serializable {
         recalcularPorcentajeAvance();
     }
 
+    //Metod para filtrar sólo APUs del preciario asignado al proyecto
+    @JsonIgnore
+    public List<Apu> getApusDisponibles() {
+        if (proyecto != null && proyecto.getPreciario() != null) {
+            return proyecto.getPreciario().getApus().stream()
+                    .filter(Apu::getActivo)
+                    .collect(Collectors.toList());
+        }
+        return List.of(); // O todos los APUs si no hay preciario
+    }
 
 }
 

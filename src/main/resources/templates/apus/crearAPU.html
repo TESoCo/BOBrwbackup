@@ -195,6 +195,43 @@
                              th:errors="*{unidadesAPU}"></div>
                     </div>
 
+                    <!-- ===== SECCIÓN PRECIARIO (OBLIGATORIA) ===== -->
+                    <div class="detail-section" style="background: #fffbeb; border: 2px solid #fbbf24; border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <h4 class="section-title" style="color: #92400e;">
+                            <i class="fas fa-list-alt"></i> Preciario <span style="color: var(--danger);">*</span>
+                        </h4>
+                        <p style="color: #92400e; font-size: 0.875rem; margin-bottom: 1rem;">
+                            Todo APU debe pertenecer a un preciario. Seleccione uno existente o cree uno nuevo.
+                        </p>
+
+                        <!-- Opción: Preciario existente o nuevo -->
+                        <div class="form-group">
+                            <label class="form-label required">Seleccionar Preciario</label>
+                            <select id="preciarioSelect" name="preciarioId" class="form-select" required>
+                                <option value="">-- Seleccione un preciario --</option>
+                                <option value="nuevo">➕ Crear nuevo preciario...</option>
+                                <option th:each="p : ${preciarios}"
+                                        th:value="${p.idPreciario}"
+                                        th:text="${p.nombrePreciario} + ' (' + ${p.codigoPreciario} + ')'">
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Campo para nuevo preciario (oculto por defecto) -->
+                        <div id="nuevoPreciarioFields" style="display: none; margin-top: 1rem; padding: 1rem; background: white; border-radius: var(--border-radius);">
+                            <div class="form-group">
+                                <label for="nuevoPreciarioNombre" class="form-label required">Nombre del nuevo preciario</label>
+                                <input type="text" id="nuevoPreciarioNombre" name="nuevoPreciarioNombre"
+                                       class="form-input" placeholder="Ej: Preciario Obra Civil 2024" maxlength="255">
+                            </div>
+                            <div class="form-group">
+                                <label for="nuevoPreciarioDescripcion" class="form-label">Descripción (opcional)</label>
+                                <textarea id="nuevoPreciarioDescripcion" name="nuevoPreciarioDescripcion"
+                                          class="form-textarea" placeholder="Descripción del preciario" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Material Selection Section - Improved -->
                     <div class="detail-section">
                         <h4 class="section-title">
@@ -393,6 +430,36 @@
                             <i class="fas fa-folder-open"></i> Seleccionar archivo CSV
                         </label>
                         <div class="file-name" id="fileName"></div>
+                    </div>
+
+                    <!-- Selección de preciario -->
+                    <div class="detail-section" style="background: #fffbeb; border: 2px solid #fbbf24; border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <h4 class="section-title" style="color: #92400e;">
+                            <i class="fas fa-list-alt"></i> Preciario destino <span style="color: var(--danger);">*</span>
+                        </h4>
+                        <div class="form-group">
+                            <label class="form-label required">Seleccionar Preciario</label>
+                            <select id="preciarioSelectImport" name="preciarioIdImport" class="form-select" required>
+                                <option value="">-- Seleccione un preciario --</option>
+                                <option value="nuevo">➕ Crear nuevo preciario...</option>
+                                <option th:each="p : ${preciarios}"
+                                        th:value="${p.idPreciario}"
+                                        th:text="${p.nombrePreciario} + ' (' + ${p.codigoPreciario} + ')'">
+                                </option>
+                            </select>
+                        </div>
+                        <div id="nuevoPreciarioFieldsImport" style="display: none; margin-top: 1rem; padding: 1rem; background: white; border-radius: var(--border-radius);">
+                            <div class="form-group">
+                                <label for="nuevoPreciarioNombreImport" class="form-label required">Nombre del nuevo preciario</label>
+                                <input type="text" id="nuevoPreciarioNombreImport" name="nuevoPreciarioNombreImport"
+                                       class="form-input" placeholder="Ej: Preciario Importado 2024" maxlength="255">
+                            </div>
+                            <div class="form-group">
+                                <label for="nuevoPreciarioDescripcionImport" class="form-label">Descripción (opcional)</label>
+                                <textarea id="nuevoPreciarioDescripcionImport" name="nuevoPreciarioDescripcionImport"
+                                          class="form-textarea" placeholder="Descripción del preciario" rows="2"></textarea>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="import-actions" id="importActions">
@@ -972,7 +1039,73 @@
                 }
             });
         }
+        // ========== LÓGICA DE PRECIARIO ==========
+        function setupPreciarioSelect(selectId, fieldsId) {
+            const select = document.getElementById(selectId);
+            const fields = document.getElementById(fieldsId);
+            if (!select || !fields) return;
+
+            select.addEventListener('change', function() {
+                if (this.value === 'nuevo') {
+                    fields.style.display = 'block';
+                    fields.querySelectorAll('input[name*="Nombre"], textarea').forEach(el => el.required = true);
+                } else {
+                    fields.style.display = 'none';
+                    fields.querySelectorAll('input, textarea').forEach(el => {
+                        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.required = false;
+                    });
+                }
+            });
+        }
+
+        setupPreciarioSelect('preciarioSelect', 'nuevoPreciarioFields');
+        setupPreciarioSelect('preciarioSelectImport', 'nuevoPreciarioFieldsImport');
+
+        // Validación en submit del formulario APU
+        const apuForm = document.getElementById('apuForm');
+        if (apuForm) {
+            apuForm.addEventListener('submit', function(e) {
+                const preciarioSelect = document.getElementById('preciarioSelect');
+                if (!preciarioSelect.value) {
+                    e.preventDefault();
+                    alert('Debe seleccionar o crear un preciario.');
+                    preciarioSelect.focus();
+                    return;
+                }
+                if (preciarioSelect.value === 'nuevo') {
+                    const nombre = document.getElementById('nuevoPreciarioNombre').value.trim();
+                    if (!nombre) {
+                        e.preventDefault();
+                        alert('Ingrese el nombre del nuevo preciario.');
+                        document.getElementById('nuevoPreciarioNombre').focus();
+                    }
+                }
+            });
+        }
+
+        // Validación en submit del formulario CSV
+        const csvForm = document.getElementById('csvImportForm');
+        if (csvForm) {
+            csvForm.addEventListener('submit', function(e) {
+                const preciarioSelect = document.getElementById('preciarioSelectImport');
+                if (!preciarioSelect.value) {
+                    e.preventDefault();
+                    alert('Debe seleccionar o crear un preciario para la importación.');
+                    preciarioSelect.focus();
+                    return;
+                }
+                if (preciarioSelect.value === 'nuevo') {
+                    const nombre = document.getElementById('nuevoPreciarioNombreImport').value.trim();
+                    if (!nombre) {
+                        e.preventDefault();
+                        alert('Ingrese el nombre del nuevo preciario.');
+                        document.getElementById('nuevoPreciarioNombreImport').focus();
+                    }
+                }
+            });
+        }
     });
+
 </script>
 </body>
 </html>

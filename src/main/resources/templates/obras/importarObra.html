@@ -535,9 +535,17 @@
                         <option value="">Seleccione un proyecto...</option>
                         <option th:each="proyecto : ${proyectos}"
                                 th:value="${proyecto.idProyecto}"
-                                th:text="${proyecto.descProyecto}">
+                                th:text="${proyecto.descProyecto}"
+                                th:selected="${idProyectoSeleccionado != null and idProyectoSeleccionado == proyecto.idProyecto}">
                         </option>
                     </select>
+                    <div th:if="${idProyectoSeleccionado != null}"
+                         style="margin-bottom: 1rem; padding: 12px; background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 4px;">
+                        <i class="fas fa-info-circle" style="color: #2563eb;"></i>
+                        <span style="color: #1e40af;">
+                            Los APUs del Excel se validarán contra el preciario del proyecto seleccionado.
+                        </span>
+                    </div>
                     <small style="color: var(--secondary); font-size: 0.875rem; display: block; margin-top: 0.25rem;">
                         <i class="fas fa-info-circle"></i>
                         Seleccione el proyecto al que pertenecerá esta obra

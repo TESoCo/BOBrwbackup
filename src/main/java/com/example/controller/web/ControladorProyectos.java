@@ -1,8 +1,10 @@
 package com.example.controller.web;
 
+import com.example.domain.Preciario;
 import com.example.domain.Proyecto;
 import com.example.domain.Equipo;
 import com.example.domain.Obra;
+import com.example.servicio.PreciarioServicio;
 import com.example.servicio.ProyectoServicio;
 import com.example.servicio.EquipoServicio;
 import com.example.servicio.ObraServicio;
@@ -30,6 +32,9 @@ public class ControladorProyectos {
 
     @Autowired
     private ObraServicio obraServicio;
+
+    @Autowired
+    private PreciarioServicio preciarioServicio;
 
     /**
      * Mostrar la lista de proyectos
@@ -91,6 +96,7 @@ public class ControladorProyectos {
             model.addAttribute("obrasDisponibles", obrasDisponibles);
             model.addAttribute("modo", "crear");
             model.addAttribute("proyecto", new Proyecto());
+            model.addAttribute("preciarios", preciarioServicio.listarActivos());
         } catch (Exception e) {
             System.err.println("Error al cargar formulario nuevo proyecto: " + e.getMessage());
             e.printStackTrace();
@@ -110,6 +116,7 @@ public class ControladorProyectos {
             @ModelAttribute Proyecto proyecto,
             @RequestParam(value = "equipo.idEquipo", required = false) Long idEquipo,
             @RequestParam(value = "obrasSeleccionadas", required = false) List<Long> obrasSeleccionadas,
+            @RequestParam(value = "preciario.idPreciario", required = false) Long idPreciario,
             RedirectAttributes redirectAttributes) {
 
         System.out.println("Iniciando guardado de proyecto... ");
@@ -147,6 +154,16 @@ public class ControladorProyectos {
                     proyecto.setEquipo(equipo);
                 }
             }
+
+            System.out.println("Asignando preciario... ");
+            //Asignar preciario
+            if (idPreciario != null) {
+                System.out.println("preciario.id = " + proyecto.getPreciario().getIdPreciario());
+                System.out.println("preciario class = " + proyecto.getPreciario().getClass());
+                Preciario preciario = preciarioServicio.obtenerPorId(idPreciario);
+                proyecto.setPreciario(preciario);
+            }
+
             System.out.println("Guardando proyecto... ");
             // Guardar el proyecto
             proyectoServicio.guardar(proyecto);
@@ -243,6 +260,7 @@ public class ControladorProyectos {
             model.addAttribute("obrasDisponibles", obrasDisponibles);
             model.addAttribute("obrasAsignadasIds", obrasAsignadasIds);
             model.addAttribute("modo", "editar");
+            model.addAttribute("preciarios", preciarioServicio.listarActivos());
 
             return "proyectos/proyecto_formulario";
 

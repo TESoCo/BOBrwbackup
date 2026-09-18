@@ -97,7 +97,10 @@ public class DataInitializer implements CommandLineRunner {
         Permiso editarObra = createAndSavePermisoIfNotExists("EDITAR_OBRA");
         Permiso leerObra = createAndSavePermisoIfNotExists("LEER_OBRA");
 
-
+        //PRECIARIO
+        Permiso crearPreciario = createAndSavePermisoIfNotExists("CREAR_PRECIARIO");
+        Permiso editarPreciario = createAndSavePermisoIfNotExists("EDITAR_PRECIARIO");
+        Permiso leerPreciario = createAndSavePermisoIfNotExists("LEER_PRECIARIO");
 
         //PROVEEDORES
         Permiso crearProveedor = createAndSavePermisoIfNotExists("CREAR_PROVEEDOR");
@@ -121,6 +124,7 @@ public class DataInitializer implements CommandLineRunner {
         Permiso borrarProyecto = createAndSavePermisoIfNotExists("BORRAR_PROYECTO");
         Permiso borrarRol = createAndSavePermisoIfNotExists("BORRAR_ROL");
         Permiso borrarUsuario = createAndSavePermisoIfNotExists("BORRAR_USUARIO");
+        Permiso borrarPreciario = createAndSavePermisoIfNotExists("BORRAR_PRECIARIO");
         //roles
         Permiso crearRol = createAndSavePermisoIfNotExists("CREAR_ROL");
         Permiso editarRol = createAndSavePermisoIfNotExists("EDITAR_ROL");

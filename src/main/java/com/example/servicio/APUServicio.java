@@ -31,5 +31,6 @@ public interface APUServicio {
 
     public BigDecimal getPrecioTotalAPU(Apu apu);
 
+    public Apu guardarYAsociarAPreciario(Apu apu, Long idPreciario, Integer orden);
 
 }

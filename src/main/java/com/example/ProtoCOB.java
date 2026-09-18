@@ -127,6 +127,10 @@ public class ProtoCOB {
                             .requestMatchers("/rol/editar").hasAuthority("EDITAR_ROL")
                             .requestMatchers("/usuario/registrar").hasAuthority("CREAR_USUARIO")
                             .requestMatchers("/usuario/editar").hasAuthority("EDITAR_USUARIO")
+                            .requestMatchers("/preciarios/nuevo").hasAuthority("CREAR_PRECIARIO")
+                            .requestMatchers("/preciarios/editar/").hasAuthority("EDITAR_PRECIARIO")
+                            .requestMatchers("/preciarios").hasAuthority("LEER_PRECIARIO")
+                            .requestMatchers("/preciarios/eliminar/").hasAuthority("BORRAR_PRECIARIO")
 
 
                             // Combined role and permission access

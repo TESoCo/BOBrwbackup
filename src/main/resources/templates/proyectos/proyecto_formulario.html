@@ -151,7 +151,7 @@
                            maxlength="100"
                            placeholder="Ingrese un nombre único para el proyecto.">
                     <small class="error-message" style="color: var(--secondary); margin-top: 5px; display: block;">
-                        Descripción del proyecto (máximo 100 caracteres)
+                        Nombre del proyecto (máximo 100 caracteres)
                     </small>
                 </div>
 
@@ -185,7 +185,24 @@
                     <div class="form-text">Seleccione el equipo responsable del proyecto (opcional)</div>
                 </div>
 
-                <!-- Selección de Obras -->
+                <!-- Selección de Preciario -->
+                <div>
+                    <label class="form-label required">Preciario: </label>
+                    <select name="preciario.idPreciario" required>
+                        <option value="">-- Sin preciario --</option>
+                        <option th:each="p : ${preciarios}"
+                                th:value="${p.idPreciario}"
+                                th:text="${p.nombrePreciario}"
+                                th:selected="${proyecto.preciario != null && proyecto.preciario.idPreciario == p.idPreciario}">
+                        </option>
+                    </select>
+                </div>
+
+                <a th:href="@{/preciarios}" class="btn btn-secondary">
+                    <i class="fas fa-money-bill-wave"></i> Ver preciarios
+                </a>
+
+                <!-- Selección de Obras-->
                 <div class="form-group mb-3">
                     <label class="form-label">Obras Asociadas</label>
                     <div class="border p-3 rounded" style="max-height: 300px; overflow-y: auto;">

@@ -48,15 +48,15 @@ public class ControladorObras
     @Autowired
     private EquipoServicio equipoServicio;
 
+    @Autowired
+    private PreciarioServicio preciarioServicio;
+
 
     //Acá están los métodos para presupuestos
     @GetMapping("/inicioObra")
-    public String inicioObra(Model model, Authentication authentication){
+    public String inicioObra(@RequestParam(required = false) Long idProyecto, Model model, Authentication authentication){
         // 0. Todas las obras
         List<Obra> obras = obraServicio.listaObra();
-
-
-
 
 
         // 1 .FILTRAR OBRAS CON COORDENADAS PARA EL MAPA
@@ -64,8 +64,6 @@ public class ControladorObras
         List<Obra> obrasConCoordenadas = obras.stream()
                 .filter(obra -> obra.getCooNObra() != null && obra.getCooEObra() != null)
                 .collect(Collectors.toList());
-
-
 
 
 
@@ -105,31 +103,50 @@ public class ControladorObras
             }
         }
 
+        // 5. FILTRAR OBRAS POR PROYECTO (si se seleccionó uno)
+        List<Obra> obrasFiltradas = obrasVisibles;
+        Proyecto proyectoSeleccionado = null;
 
+        if (idProyecto != null) {
+            proyectoSeleccionado = proyectoServicio.encontrarPorId(idProyecto);
+            if (proyectoSeleccionado != null) {
+                obrasFiltradas = obrasVisibles.stream()
+                        .filter(o -> o.getProyecto() != null &&
+                                o.getProyecto().getIdProyecto().equals(idProyecto))
+                        .collect(Collectors.toList());
 
-        // 5. Obras sin proyecto (solo las visibles)
-        model.addAttribute("obrasSinProyecto", obrasVisibles.stream()
+                // Filtrar también las obras del mapa
+                obrasConCoordenadas = obrasConCoordenadas.stream()
+                        .filter(o -> o.getProyecto() != null &&
+                                o.getProyecto().getIdProyecto().equals(idProyecto))
+                        .collect(Collectors.toList());
+            }
+        }
+
+        // 6. Obras sin proyecto (solo las visibles)
+        /*model.addAttribute("obrasSinProyecto", obrasVisibles.stream()
                 .filter(o -> o.getProyecto() == null)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList()));*/
 
-
-        // 6. Verificar si puede crear obra
+        // 7. Verificar si puede crear obra
         boolean puedeCrear = obraServicio.puedeCrearObra(usuarioActual);
         // Mensaje si no puede crear
         if (!puedeCrear) {
             model.addAttribute("mensajeInfo", "Contacte a un administrador para poder crear obras.");
         }
 
-        model.addAttribute("obras", obras); // 0
+        model.addAttribute("obras", obrasFiltradas); // 0
         model.addAttribute("obrasMapa", obrasConCoordenadas); // 1
         // 2. Filtro por equipos
         model.addAttribute("obrasVisibles", obrasVisibles);// ← Esta es la lista para la tabla // 3
         model.addAttribute("proyectos", proyectos);// 4
         // model.addAttribute("proyectos", proyectoServicio.listarProyectos()); // 4 (lista todos los proyectos si el filtro se daña)
-        // 5. Obras sin proyecto
-        model.addAttribute("obrasSinProyecto", obraServicio.findByProyectoIsNull()); // 5 (sacado de la capa de servicio
-        model.addAttribute("puedeCrearObra", puedeCrear); // 6
-        model.addAttribute("equipos", equipoServicio.listarEquipos()); // 7
+        model.addAttribute("proyectoSeleccionado", proyectoSeleccionado);
+        model.addAttribute("idProyectoSeleccionado", idProyecto); // 5
+        // 6. Obras sin proyecto
+        model.addAttribute("obrasSinProyecto", obraServicio.findByProyectoIsNull()); // 6 (sacado de la capa de servicio
+        model.addAttribute("puedeCrearObra", puedeCrear); // 7
+        model.addAttribute("equipos", equipoServicio.listarEquipos()); // 8
 
 
         return "obras/inicioObra";
@@ -141,7 +158,7 @@ public class ControladorObras
 
     //Agregar nuevo presupuesto
     @GetMapping("/agregarObra")
-    public String formAnexarPresupuesto(Model model, Authentication authentication){
+    public String formAnexarPresupuesto(@RequestParam(required = false) Long idProyecto, Model model, Authentication authentication){
 
         Usuario usuarioActual = usuarioServicio.encontrarPorNombreUsuario(authentication.getName());
 
@@ -162,9 +179,32 @@ public class ControladorObras
             model.addAttribute("proyectos", proyectosDisponibles);
         }
 
+        // Determinar APUs disponibles según el proyecto seleccionado
+        List<Apu> apusDisponibles;
+        Proyecto proyectoSeleccionado = null;
+
+        if (idProyecto != null) {
+            proyectoSeleccionado = proyectoServicio.encontrarPorId(idProyecto);
+            if (proyectoSeleccionado != null && proyectoSeleccionado.getPreciario() != null) {
+                // Solo APUs del preciario del proyecto
+                apusDisponibles = preciarioServicio.obtenerApusDePreciario(
+                        proyectoSeleccionado.getPreciario().getIdPreciario());
+                model.addAttribute("preciarioNombre",
+                        proyectoSeleccionado.getPreciario().getNombrePreciario());
+            } else {
+                // Si no hay preciario, mostrar todos (comportamiento actual)
+                apusDisponibles = apuServicio.listarElementos();
+            }
+        } else {
+            // Sin proyecto seleccionado: mostrar todos los APUs (o vacío)
+            apusDisponibles = apuServicio.listarElementos();
+        }
+
         model.addAttribute("obra", new Obra());
-        model.addAttribute("APUs", APUServicio.listarElementos());
+        model.addAttribute("APUs", apusDisponibles);
         model.addAttribute("proyectos", proyectosDisponibles);
+        model.addAttribute("idProyectoSeleccionado", idProyecto);
+        model.addAttribute("proyectoSeleccionado", proyectoSeleccionado);
 
         return "obras/agregarObra";
     }
@@ -215,6 +255,31 @@ public class ControladorObras
                 return "redirect:/obras/agregarObra";
             }
 
+            System.out.println("=== VERIFICANDO ACTIVIDADES ===");
+            // Validar que los APUs pertenezcan al preciario del proyecto
+            Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
+            if (proyecto == null) {
+                redirectAttributes.addFlashAttribute("error", "Proyecto no encontrado.");
+                return "redirect:/obras/agregarObra";
+            }
+
+            if (proyecto.getPreciario() != null) {
+                List<Apu> apusPreciario = preciarioServicio.obtenerApusDePreciario(
+                        proyecto.getPreciario().getIdPreciario());
+                Set<Long> idsApusPermitidos = apusPreciario.stream()
+                        .map(Apu::getIdAPU)
+                        .collect(Collectors.toSet());
+
+                for (Long apuId : apuIds) {
+                    if (!idsApusPermitidos.contains(apuId)) {
+                        redirectAttributes.addFlashAttribute("error",
+                                "El APU con ID " + apuId + " no pertenece al preciario del proyecto. " +
+                                        "Solo puede usar APUs del preciario: " + proyecto.getPreciario().getNombrePreciario());
+                        return "redirect:/obras/agregarObra?idProyecto=" + idProyecto;
+                    }
+                }
+            }
+
             // Validar que la etapa sea PRESUPUESTO
             if (!Obra.EtapaObra.PRESUPUESTO.name().equals(etapa)) {
                 redirectAttributes.addFlashAttribute("error",
@@ -237,10 +302,8 @@ public class ControladorObras
 
             System.out.println("=== VERIFICANDO PROYECTO ===");
             System.out.println("idProyecto: " + idProyecto);
-            Proyecto proyecto = proyectoServicio.encontrarPorId(idProyecto);
             System.out.println("proyecto encontrado: " + (proyecto != null ? proyecto.getNombreProyecto() : "NULL"));
             System.out.println("proyecto id: " + (proyecto != null ? proyecto.getIdProyecto() : "null"));
-
             System.out.println("usuario: " + usuario);
             System.out.println("usuario.getIdUsuario(): " + (usuario != null ? usuario.getIdUsuario() : "null"));
             System.out.println("usuario.getEquipo(): " + (usuario != null && usuario.getEquipo() != null ? usuario.getEquipo().getIdEquipo() : "null"));
@@ -1316,7 +1379,7 @@ public class ControladorObras
     }
 
     @GetMapping("/importar")
-    public String mostrarImportador(Model model, Authentication authentication) {
+    public String mostrarImportador(@RequestParam(required = false) Long idProyecto, Model model, Authentication authentication) {
         String username = authentication.getName();
         Usuario usuario = usuarioServicio.encontrarPorNombreUsuario(username);
 
@@ -1329,6 +1392,7 @@ public class ControladorObras
         // Obtener proyectos disponibles para el usuario
         List<Proyecto> proyectosDisponibles = obraServicio.obtenerProyectosDisponibles(usuario);
         model.addAttribute("proyectos", proyectosDisponibles);
+        model.addAttribute("idProyectoSeleccionado", idProyecto);
 
         return "obras/importarObra";
     }

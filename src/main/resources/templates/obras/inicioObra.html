@@ -218,15 +218,33 @@
             </div>
         </div>
 
+        <!-- Indicador de filtro activo -->
+        <div th:if="${proyectoSeleccionado != null}"
+             style="margin-bottom: 1rem; padding: 12px 20px; background: linear-gradient(90deg, #2563eb, #1e40af); color: white; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <i class="fas fa-filter"></i>
+                <strong>Mostrando obras del proyecto:</strong>
+                <span th:text="${proyectoSeleccionado.descProyecto}" style="margin-left: 8px;"></span>
+                <span style="margin-left: 15px; opacity: 0.9;">
+            (<span th:text="${#lists.size(obras)}"></span> obras)
+        </span>
+            </div>
+            <a th:href="@{/obras/inicioObra}" style="color: white; text-decoration: underline;">
+                <i class="fas fa-times-circle"></i> Ver todas
+            </a>
+        </div>
+
+
+
         <!--  sección de acciones -->
         <div class="header-actions" style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a th:href="@{/obras/agregarObra}" class="btn btn-primary"
+            <a th:href="@{/obras/agregarObra(idProyecto=${idProyectoSeleccionado})}" class="btn btn-primary"
                th:if="${puedeCrearObra}">
                 <i class="fas fa-plus"></i> Nueva Obra
             </a>
 
             <!-- Botón de importación -->
-            <a th:href="@{/obras/importar}" class="btn btn-success"
+            <a th:href="@{/obras/importar(idProyecto=${idProyectoSeleccionado})}" class="btn btn-success"
                th:if="${puedeCrearObra}">
                 <i class="fas fa-file-import"></i> Importar desde Excel
             </a>
@@ -236,6 +254,56 @@
                 <i class="fas fa-download"></i> Plantilla Excel
             </a>
         </div>
+
+        <!-- ===== SELECTOR DE PROYECTO (FILTRO) ===== -->
+        <section class="project-filter-section" style="margin: 20px 0; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: #333; font-size: 1.3rem;">
+                <i class="fas fa-filter"></i>
+                Filtrar Obras por Proyecto
+            </h2>
+            <form th:action="@{/obras/inicioObra}" method="get"
+                  style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <label for="idProyecto" style="display: block; margin-bottom: 5px; font-weight: 500; color: #374151;">
+                        <i class="fas fa-project-diagram"></i> Proyecto:
+                    </label>
+                    <select name="idProyecto" id="idProyecto" class="form-select"
+                            style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem;"
+                            onchange="this.form.submit()">
+                        <option value="">-- Todos los proyectos --</option>
+                        <option th:each="proyecto : ${proyectos}"
+                                th:value="${proyecto.idProyecto}"
+                                th:text="${proyecto.descProyecto}"
+                                th:selected="${idProyectoSeleccionado != null and idProyectoSeleccionado == proyecto.idProyecto}">
+                        </option>
+                    </select>
+                </div>
+                <div th:if="${idProyectoSeleccionado != null}">
+                    <a th:href="@{/obras/inicioObra}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Limpiar filtro
+                    </a>
+                </div>
+            </form>
+
+            <!-- Info del preciario del proyecto seleccionado -->
+            <div th:if="${proyectoSeleccionado != null and proyectoSeleccionado.preciario != null}"
+                 style="margin-top: 15px; padding: 12px; background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 4px;">
+                <i class="fas fa-book" style="color: #2563eb;"></i>
+                <strong style="color: #1e40af;">Preciario asignado:</strong>
+                <span th:text="${proyectoSeleccionado.preciario.nombrePreciario}" style="color: #1e3a8a;"></span>
+                <span style="color: #6b7280; font-size: 0.9rem; margin-left: 10px;">
+            (<span th:text="${#lists.size(proyectoSeleccionado.preciario.apusList)}"></span> APUs disponibles)
+        </span>
+            </div>
+            <div th:if="${proyectoSeleccionado != null and proyectoSeleccionado.preciario == null}"
+                 style="margin-top: 15px; padding: 12px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                <strong style="color: #92400e;">Este proyecto no tiene preciario asignado.</strong>
+                <span style="color: #78350f; font-size: 0.9rem; margin-left: 10px;">
+            Se mostrarán todos los APUs del sistema al crear obras.
+        </span>
+            </div>
+        </section>
 
         <!-- Sección del Mapa -->
         <section class="map-section">
@@ -283,7 +351,7 @@
 
         <!-- Botón de registrar obra -->
         <section class="navigation-section">
-            <a th:href="@{/obras/agregarObra}"
+            <a th:href="@{/obras/agregarObra(idProyecto=${idProyectoSeleccionado})}"
                th:if="${puedeCrearObra}"
                class="btn btn-success">
                 <i class='bx bx-plus'></i> Registrar Nueva Obra

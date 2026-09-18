@@ -50,6 +50,9 @@ public class ObraServicioImp implements ObraServicio {
     private EquipoServicio equipoServicio;
 
     @Autowired
+    private PreciarioServicio preciarioServicio;
+
+    @Autowired
     private EntityManager entityManager;
 
 
@@ -1068,6 +1071,34 @@ public class ObraServicioImp implements ObraServicio {
             if (actividades.isEmpty()) {
                 throw new IllegalArgumentException("No se encontraron APUs válidos en el archivo");
             }
+
+            // Validar que los APUs pertenezcan al preciario del proyecto
+            if (proyecto.getPreciario() != null) {
+                List<Apu> apusPreciario = preciarioServicio.obtenerApusDePreciario(
+                        proyecto.getPreciario().getIdPreciario());
+                Set<Long> idsApusPermitidos = apusPreciario.stream()
+                        .map(Apu::getIdAPU)
+                        .collect(Collectors.toSet());
+
+                List<String> apusNoPermitidos = new ArrayList<>();
+                for (Long apuId : actividades.keySet()) {
+                    if (!idsApusPermitidos.contains(apuId)) {
+                        Apu apu = apuDao.findById(apuId).orElse(null);
+                        if (apu != null) {
+                            apusNoPermitidos.add(apu.getNombreAPU() + " (ID: " + apuId + ")");
+                        }
+                    }
+                }
+
+                if (!apusNoPermitidos.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Los siguientes APUs no pertenecen al preciario del proyecto '" +
+                                    proyecto.getPreciario().getNombrePreciario() + "':\n" +
+                                    String.join("\n", apusNoPermitidos)
+                    );
+                }
+            }
+
 
             // Crear obra
             return crearObraPresupuesto(
